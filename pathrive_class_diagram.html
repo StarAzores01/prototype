@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAThrive – Class Diagram</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── Print / PDF: A1 landscape, scale to fit one page ── */
+  @page {
+    size: A1 landscape;
+    margin: 10mm;
+  }
+  @media print {
+    body {
+      background: #fff !important;
+      padding: 0 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .diagram-wrapper {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
+    #scale-wrap {
+      transform: scale(0.52);
+      transform-origin: top left;
+      width: 1700px;
+    }
+    .diagram-canvas, #scale-wrap { page-break-inside: avoid; break-inside: avoid; }
+    .print-footer, .page-title button, .legend { display: none; }
+  }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f4f8;
+    padding: 20px;
+  }
+  .page-title {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .page-title h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1A56DB;
+    letter-spacing: 0.5px;
+  }
+  .page-title p {
+    font-size: 12px;
+    color: #555;
+    margin-top: 3px;
+  }
+  .legend {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin: 10px 0 14px 0;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    color: #333;
+  }
+  .legend-line {
+    width: 38px;
+    height: 2px;
+    display: inline-block;
+  }
+  .legend-line.solid { background: #1A56DB; }
+  .legend-line.dashed {
+    background: none;
+    border-top: 2px dashed #e67e22;
+  }
+  .diagram-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #d0d7e3;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(26,86,219,0.08);
+    padding: 10px;
+  }
+  .diagram-canvas {
+    position: relative;
+    width: 1700px;
+    height: 1320px;
+  }
+  /* SVG layer behind boxes */
+  .svg-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1700px;
+    height: 1320px;
+    pointer-events: none;
+  }
+  /* UML Class Box */
+  .uml-class {
+    position: absolute;
+    background: #fff;
+    border: 1.5px solid #1A56DB;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 10.5px;
+    min-width: 200px;
+    box-shadow: 0 2px 8px rgba(26,86,219,0.10);
+  }
+  .uml-class .class-header {
+    background: #1A56DB;
+    color: #fff;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-align: center;
+    padding: 5px 8px;
+    letter-spacing: 0.3px;
+  }
+  .uml-class .class-header .stereotype {
+    font-size: 9px;
+    font-weight: 400;
+    opacity: 0.85;
+    display: block;
+    margin-bottom: 1px;
+  }
+  .uml-class .section {
+    padding: 4px 8px;
+    border-top: 1px solid #c5d5f5;
+  }
+  .uml-class .section .row {
+    padding: 1.5px 0;
+    color: #1a1a2e;
+    white-space: nowrap;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 10px;
+  }
+  .uml-class .section .row.method {
+    color: #1A56DB;
+  }
+  .uml-class .section-label {
+    font-size: 9px;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 2px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>PAThrive – Class Diagram</h1>
+  <p>PAThrive Extension Training Management &amp; Impact Assessment Tracking System &nbsp;·&nbsp; College of Industrial Technology, SLSU</p>
+  <button onclick="window.print()" style="margin-top:10px;padding:8px 22px;background:#1A56DB;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">🖨 Print / Save as PDF</button>
+</div>
+
+<div class="legend">
+  <div class="legend-item">
+    <svg width="44" height="14"><defs><marker id="la1" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><polygon points="0 0, 7 3.5, 0 7" fill="#1A56DB"/></marker></defs><line x1="2" y1="7" x2="36" y2="7" stroke="#1A56DB" stroke-width="2" marker-end="url(#la1)"/></svg>
+    Solid – Association / Composition
+  </div>
+  <div class="legend-item">
+    <svg width="44" height="14"><defs><marker id="la2" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><polygon points="0 0, 7 3.5, 0 7" fill="#e67e22"/></marker></defs><line x1="2" y1="7" x2="36" y2="7" stroke="#e67e22" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#la2)"/></svg>
+    Dashed – Dependency / Link
+  </div>
+  <div class="legend-item">
+    <svg width="44" height="14"><defs><marker id="la3" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><polygon points="0 0, 7 3.5, 0 7" fill="#1A56DB"/></marker></defs><line x1="2" y1="7" x2="36" y2="7" stroke="#1A56DB" stroke-width="2.5" marker-end="url(#la3)"/></svg>
+    Thick – Composition (strong ownership)
+  </div>
+  <div class="legend-item" style="font-size:11px; color:#555;">
+    <b>+</b> = public &nbsp; <b>visibility</b> markers shown on all members
+  </div>
+</div>
+
+<div class="diagram-wrapper">
+<div id="scale-wrap">
+<div class="diagram-canvas" id="canvas">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  CLASS BOXES                                           -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<!-- 1. User -->
+<div class="uml-class" id="cls-User" style="top:30px;left:30px;width:255px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>User</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ username : VARCHAR(60)</div>
+    <div class="row">+ first_name : VARCHAR(80)</div>
+    <div class="row">+ last_name : VARCHAR(80)</div>
+    <div class="row">+ email : VARCHAR(120)</div>
+    <div class="row">+ id_number : VARCHAR(40)</div>
+    <div class="row">+ position : ENUM</div>
+    <div class="row">+ role : ENUM</div>
+    <div class="row">+ password_hash : VARCHAR(255)</div>
+    <div class="row">+ is_active : TINYINT</div>
+    <div class="row">+ reset_token : VARCHAR(100)</div>
+    <div class="row">+ reset_expires : DATETIME</div>
+    <div class="row">+ last_login : DATETIME</div>
+    <div class="row">+ created_at : DATETIME</div>
+    <div class="row">+ updated_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ login() : void</div>
+    <div class="row method">+ logout() : void</div>
+    <div class="row method">+ updateProfile() : void</div>
+    <div class="row method">+ resetPassword() : void</div>
+  </div>
+</div>
+
+<!-- 2. TrainerWhitelist -->
+<div class="uml-class" id="cls-TrainerWhitelist" style="top:30px;left:310px;width:240px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>TrainerWhitelist</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ first_name : VARCHAR(80)</div>
+    <div class="row">+ last_name : VARCHAR(80)</div>
+    <div class="row">+ specialization : VARCHAR(120)</div>
+    <div class="row">+ id_number : VARCHAR(20)</div>
+    <div class="row">+ is_registered : TINYINT</div>
+    <div class="row">+ created_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ add() : void</div>
+    <div class="row method">+ remove() : void</div>
+    <div class="row method">+ checkEligibility() : bool</div>
+  </div>
+</div>
+
+<!-- 3. Training -->
+<div class="uml-class" id="cls-Training" style="top:30px;left:620px;width:255px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>Training</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ title : VARCHAR(200)</div>
+    <div class="row">+ area : VARCHAR(120)</div>
+    <div class="row">+ description : TEXT</div>
+    <div class="row">+ date_start : DATE</div>
+    <div class="row">+ date_end : DATE</div>
+    <div class="row">+ status : ENUM</div>
+    <div class="row">+ trainer_id : INT (FK→User)</div>
+    <div class="row">+ target_participants : INT</div>
+    <div class="row">+ created_by : INT (FK→User)</div>
+    <div class="row">+ created_at : DATETIME</div>
+    <div class="row">+ updated_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ create() : void</div>
+    <div class="row method">+ updateStatus() : void</div>
+    <div class="row method">+ delete() : void</div>
+    <div class="row method">+ getParticipants() : array</div>
+    <div class="row method">+ getDocuments() : array</div>
+    <div class="row method">+ getEvaluations() : array</div>
+  </div>
+</div>
+
+<!-- 4. Notification -->
+<div class="uml-class" id="cls-Notification" style="top:30px;left:1100px;width:240px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>Notification</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ user_id : INT (nullable)</div>
+    <div class="row">+ role : ENUM</div>
+    <div class="row">+ training_id : INT (nullable)</div>
+    <div class="row">+ message : TEXT</div>
+    <div class="row">+ link : VARCHAR(255)</div>
+    <div class="row">+ is_read : TINYINT</div>
+    <div class="row">+ created_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ send() : void</div>
+    <div class="row method">+ markRead() : void</div>
+    <div class="row method">+ markAllRead() : void</div>
+  </div>
+</div>
+
+<!-- 5. Participant -->
+<div class="uml-class" id="cls-Participant" style="top:30px;left:1380px;width:255px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>Participant</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ full_name : VARCHAR(160)</div>
+    <div class="row">+ id_number : VARCHAR(40)</div>
+    <div class="row">+ training_id : INT (FK→Training)</div>
+    <div class="row">+ beneficiary_id : INT (nullable)</div>
+    <div class="row">+ barangay : VARCHAR(120)</div>
+    <div class="row">+ municipality : VARCHAR(120)</div>
+    <div class="row">+ phone : VARCHAR(30)</div>
+    <div class="row">+ address : VARCHAR(255)</div>
+    <div class="row">+ age : TINYINT</div>
+    <div class="row">+ sex : ENUM</div>
+    <div class="row">+ beneficiary_type : ENUM</div>
+    <div class="row">+ attendance : VARCHAR(20)</div>
+    <div class="row">+ created_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ register() : void</div>
+    <div class="row method">+ update() : void</div>
+    <div class="row method">+ delete() : void</div>
+  </div>
+</div>
+
+<!-- 6. Document -->
+<div class="uml-class" id="cls-Document" style="top:420px;left:30px;width:245px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>Document</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ file_name : VARCHAR(255)</div>
+    <div class="row">+ original_name : VARCHAR(255)</div>
+    <div class="row">+ file_type : VARCHAR(20)</div>
+    <div class="row">+ file_size : INT</div>
+    <div class="row">+ visibility : ENUM</div>
+    <div class="row">+ training_id : INT (nullable)</div>
+    <div class="row">+ uploaded_by : INT (FK→User)</div>
+    <div class="row">+ created_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ upload() : void</div>
+    <div class="row method">+ delete() : void</div>
+    <div class="row method">+ download() : void</div>
+  </div>
+</div>
+
+<!-- 7. TrainingDoc -->
+<div class="uml-class" id="cls-TrainingDoc" style="top:420px;left:310px;width:240px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>TrainingDoc</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ training_id : INT (FK→Training)</div>
+    <div class="row">+ caption : VARCHAR(255)</div>
+    <div class="row">+ file_name : VARCHAR(255)</div>
+    <div class="row">+ file_type : VARCHAR(20)</div>
+    <div class="row">+ uploaded_by : INT (FK→User)</div>
+    <div class="row">+ created_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ upload() : void</div>
+    <div class="row method">+ delete() : void</div>
+  </div>
+</div>
+
+<!-- 8. EvalForm -->
+<div class="uml-class" id="cls-EvalForm" style="top:420px;left:620px;width:245px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>EvalForm</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ training_id : INT (FK→Training)</div>
+    <div class="row">+ title : VARCHAR(200)</div>
+    <div class="row">+ fields : JSON</div>
+    <div class="row">+ created_by : INT (FK→User)</div>
+    <div class="row">+ sent_at : DATETIME</div>
+    <div class="row">+ created_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ create() : void</div>
+    <div class="row method">+ send() : void</div>
+    <div class="row method">+ delete() : void</div>
+    <div class="row method">+ getResponses() : array</div>
+  </div>
+</div>
+
+<!-- 9. SkillsForm -->
+<div class="uml-class" id="cls-SkillsForm" style="top:420px;left:900px;width:245px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>SkillsForm</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ training_id : INT (FK→Training)</div>
+    <div class="row">+ title : VARCHAR(200)</div>
+    <div class="row">+ fields : JSON</div>
+    <div class="row">+ created_by : INT (FK→User)</div>
+    <div class="row">+ sent_at : DATETIME</div>
+    <div class="row">+ created_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ create() : void</div>
+    <div class="row method">+ send() : void</div>
+    <div class="row method">+ delete() : void</div>
+    <div class="row method">+ getResponses() : array</div>
+  </div>
+</div>
+
+<!-- 10. SkillsUtilization -->
+<div class="uml-class" id="cls-SkillsUtilization" style="top:420px;left:1180px;width:245px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>SkillsUtilization</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ training_id : INT (FK→Training)</div>
+    <div class="row">+ personal_use_pct : DECIMAL(5,2)</div>
+    <div class="row">+ income_gen_pct : DECIMAL(5,2)</div>
+    <div class="row">+ employment_pct : DECIMAL(5,2)</div>
+    <div class="row">+ nc2_cert_pct : DECIMAL(5,2)</div>
+    <div class="row">+ recorded_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ record() : void</div>
+    <div class="row method">+ update() : void</div>
+    <div class="row method">+ getAverages() : array</div>
+  </div>
+</div>
+
+<!-- 11. Attendance -->
+<div class="uml-class" id="cls-Attendance" style="top:420px;left:1460px;width:245px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>Attendance</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ training_id : INT (FK→Training)</div>
+    <div class="row">+ participant_id : INT (FK→Participant)</div>
+    <div class="row">+ session_date : DATE</div>
+    <div class="row">+ status : ENUM</div>
+    <div class="row">+ time_in : TIME</div>
+    <div class="row">+ time_out : TIME</div>
+    <div class="row">+ recorded_by : INT (FK→User)</div>
+    <div class="row">+ created_at : DATETIME</div>
+    <div class="row">+ updated_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ record() : void</div>
+    <div class="row method">+ update() : void</div>
+    <div class="row method">+ getSummary() : array</div>
+  </div>
+</div>
+
+<!-- 12. Beneficiary -->
+<div class="uml-class" id="cls-Beneficiary" style="top:820px;left:30px;width:255px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>Beneficiary</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ username : VARCHAR(60)</div>
+    <div class="row">+ first_name : VARCHAR(80)</div>
+    <div class="row">+ last_name : VARCHAR(80)</div>
+    <div class="row">+ email : VARCHAR(120)</div>
+    <div class="row">+ phone : VARCHAR(30)</div>
+    <div class="row">+ address : VARCHAR(255)</div>
+    <div class="row">+ age : TINYINT</div>
+    <div class="row">+ sex : ENUM</div>
+    <div class="row">+ contact : VARCHAR(30)</div>
+    <div class="row">+ barangay : VARCHAR(120)</div>
+    <div class="row">+ municipality : VARCHAR(120)</div>
+    <div class="row">+ password_hash : VARCHAR(255)</div>
+    <div class="row">+ is_active : TINYINT</div>
+    <div class="row">+ created_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ register() : void</div>
+    <div class="row method">+ login() : void</div>
+    <div class="row method">+ logout() : void</div>
+    <div class="row method">+ updateProfile() : void</div>
+    <div class="row method">+ viewTrainings() : array</div>
+    <div class="row method">+ submitEvaluation() : void</div>
+    <div class="row method">+ submitSkillsSurvey() : void</div>
+    <div class="row method">+ viewNotifications() : array</div>
+  </div>
+</div>
+
+<!-- 13. EvalResponse -->
+<div class="uml-class" id="cls-EvalResponse" style="top:820px;left:380px;width:245px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>EvalResponse</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ form_id : INT (FK→EvalForm)</div>
+    <div class="row">+ training_id : INT (FK→Training)</div>
+    <div class="row">+ beneficiary_id : INT (FK→Beneficiary)</div>
+    <div class="row">+ responses : JSON</div>
+    <div class="row">+ submitted_at : DATETIME</div>
+    <div class="row">+ updated_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ submit() : void</div>
+    <div class="row method">+ update() : void</div>
+  </div>
+</div>
+
+<!-- 14. SkillsResponse -->
+<div class="uml-class" id="cls-SkillsResponse" style="top:820px;left:700px;width:245px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>SkillsResponse</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ form_id : INT (FK→SkillsForm)</div>
+    <div class="row">+ training_id : INT (FK→Training)</div>
+    <div class="row">+ beneficiary_id : INT (FK→Beneficiary)</div>
+    <div class="row">+ responses : JSON</div>
+    <div class="row">+ submitted_at : DATETIME</div>
+    <div class="row">+ updated_at : DATETIME</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ submit() : void</div>
+    <div class="row method">+ update() : void</div>
+  </div>
+</div>
+
+<!-- 15. Evaluation -->
+<div class="uml-class" id="cls-Evaluation" style="top:820px;left:1020px;width:245px;">
+  <div class="class-header"><span class="stereotype">«entity»</span>Evaluation</div>
+  <div class="section">
+    <div class="section-label">attributes</div>
+    <div class="row">+ id : INT (PK)</div>
+    <div class="row">+ training_id : INT (FK→Training)</div>
+    <div class="row">+ participant_id : INT (FK→Participant)</div>
+    <div class="row">+ rating : TINYINT (1–5)</div>
+    <div class="row">+ feedback : TEXT</div>
+    <div class="row">+ submitted_at : DATETIME</div>
+    <div class="row">+ status : ENUM</div>
+  </div>
+  <div class="section">
+    <div class="section-label">methods</div>
+    <div class="row method">+ submit() : void</div>
+    <div class="row method">+ update() : void</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SVG RELATIONSHIP ARROWS                               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<svg class="svg-layer" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Solid blue arrowhead -->
+    <marker id="arr-solid" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1A56DB"/>
+    </marker>
+    <!-- Dashed orange arrowhead -->
+    <marker id="arr-dashed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#e67e22"/>
+    </marker>
+    <!-- Thick solid arrowhead (composition) -->
+    <marker id="arr-comp" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1A56DB"/>
+    </marker>
+    <!-- Diamond for composition start -->
+    <marker id="diamond" markerWidth="10" markerHeight="10" refX="1" refY="5" orient="auto">
+      <polygon points="0 5, 4 2, 8 5, 4 8" fill="#1A56DB"/>
+    </marker>
+  </defs>
+
+  <!-- Helper: all coords are center-bottom or center-top of boxes based on layout -->
+
+  <!-- ── ROW 1 → ROW 2 connections ── -->
+
+  <!-- 1. User → Training (trainer_id) : "assigns" DASHED -->
+  <!-- User right edge ~(285,120) → Training left edge (620,120) -->
+  <path d="M 285,100 C 450,100 450,120 620,120"
+        stroke="#e67e22" stroke-width="1.8" stroke-dasharray="6,3" fill="none" marker-end="url(#arr-dashed)"/>
+  <text x="420" y="108" font-size="9" fill="#e67e22" text-anchor="middle">assigns [trainer]</text>
+
+  <!-- 2. User → Training (created_by) : "creates" SOLID -->
+  <!-- User bottom ~(157,380) → Training left (620,140) via bend -->
+  <path d="M 285,140 C 500,140 500,155 620,155"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="430" y="148" font-size="9" fill="#1A56DB" text-anchor="middle">creates</text>
+
+  <!-- 3. Training → Participant : "enrolls" SOLID COMPOSITION -->
+  <!-- Training right (875,120) → Participant left (1380,120) -->
+  <path d="M 875,120 C 1100,120 1100,120 1380,120"
+        stroke="#1A56DB" stroke-width="2.2" fill="none" marker-end="url(#arr-comp)"/>
+  <text x="1128" y="113" font-size="9" fill="#1A56DB" text-anchor="middle">enrolls [1..*]</text>
+
+  <!-- 17. Training → Notification : "triggers" DASHED -->
+  <!-- Training right (875,160) → Notification left (1100,160) -->
+  <path d="M 875,160 C 980,160 980,160 1100,160"
+        stroke="#e67e22" stroke-width="1.8" stroke-dasharray="6,3" fill="none" marker-end="url(#arr-dashed)"/>
+  <text x="988" y="153" font-size="9" fill="#e67e22" text-anchor="middle">triggers</text>
+
+  <!-- ── ROW 1 → ROW 2 (middle row) ── -->
+
+  <!-- 5. Training → Document : "has" SOLID -->
+  <!-- Training bottom-left area (700,~310) → Document top (157,420) -->
+  <path d="M 700,310 L 700,370 L 157,370 L 157,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="420" y="365" font-size="9" fill="#1A56DB" text-anchor="middle">has [Document]</text>
+
+  <!-- 6. User → Document : "uploads" SOLID -->
+  <!-- User bottom (157,~380) → Document top (157,420) -->
+  <path d="M 100,380 L 100,400 L 130,400 L 130,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="60" y="405" font-size="9" fill="#1A56DB" text-anchor="middle">uploads</text>
+
+  <!-- 18. Training → TrainingDoc : "has" SOLID -->
+  <!-- Training bottom (720,310) → TrainingDoc top (430,420) -->
+  <path d="M 720,310 L 720,355 L 430,355 L 430,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="575" y="350" font-size="9" fill="#1A56DB" text-anchor="middle">has [TrainingDoc]</text>
+
+  <!-- 19. User → TrainingDoc : "uploads" SOLID -->
+  <!-- User bottom (200,380) → TrainingDoc top (430,420) via bend -->
+  <path d="M 200,380 L 200,395 L 390,395 L 390,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="295" y="390" font-size="9" fill="#1A56DB" text-anchor="middle">uploads</text>
+
+  <!-- 7. Training → EvalForm : "has" SOLID -->
+  <!-- Training bottom (742,310) → EvalForm top (742,420) -->
+  <path d="M 742,310 L 742,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="760" y="370" font-size="9" fill="#1A56DB">has</text>
+
+  <!-- 10. Training → SkillsForm : "has" SOLID -->
+  <!-- Training bottom (780,310) → SkillsForm top (1022,420) -->
+  <path d="M 780,310 L 780,340 L 1022,340 L 1022,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="900" y="335" font-size="9" fill="#1A56DB" text-anchor="middle">has [SkillsForm]</text>
+
+  <!-- 13. Training → SkillsUtilization : "tracks" SOLID -->
+  <!-- Training right (875,200) → SkillsUtilization top (1302,420) via bend -->
+  <path d="M 875,200 L 1302,200 L 1302,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="1090" y="193" font-size="9" fill="#1A56DB" text-anchor="middle">tracks</text>
+
+  <!-- 14. Training → Attendance : "records" SOLID -->
+  <!-- Training right (875,240) → Attendance top (1582,420) via bend -->
+  <path d="M 875,240 L 1582,240 L 1582,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="1230" y="233" font-size="9" fill="#1A56DB" text-anchor="middle">records attendance</text>
+
+  <!-- 15. Participant → Attendance : "has" SOLID -->
+  <!-- Participant bottom (1507,~310) → Attendance top (1582,420) -->
+  <path d="M 1507,310 L 1507,360 L 1582,360 L 1582,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="1560" y="355" font-size="9" fill="#1A56DB" text-anchor="end">has</text>
+
+  <!-- 16. User → Attendance : "recorded by" SOLID -->
+  <!-- User right (285,180) → Attendance top (1620,420) via top bend -->
+  <path d="M 285,180 L 1620,180 L 1620,420"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="950" y="173" font-size="9" fill="#1A56DB" text-anchor="middle">recorded by</text>
+
+  <!-- 20. Training → Evaluation : "has" SOLID -->
+  <!-- Training bottom (800,310) → Evaluation top (1142,820) via bend -->
+  <path d="M 800,310 L 800,790 L 1142,790 L 1142,820"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="970" y="785" font-size="9" fill="#1A56DB" text-anchor="middle">has [Evaluation]</text>
+
+  <!-- ── ROW 2 → ROW 3 connections ── -->
+
+  <!-- 8. EvalForm → EvalResponse : "receives" SOLID -->
+  <!-- EvalForm bottom (742,~680) → EvalResponse top (502,820) -->
+  <path d="M 742,680 L 742,750 L 502,750 L 502,820"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="622" y="745" font-size="9" fill="#1A56DB" text-anchor="middle">receives</text>
+
+  <!-- 11. SkillsForm → SkillsResponse : "receives" SOLID -->
+  <!-- SkillsForm bottom (1022,~680) → SkillsResponse top (822,820) -->
+  <path d="M 1022,680 L 1022,750 L 822,750 L 822,820"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="922" y="745" font-size="9" fill="#1A56DB" text-anchor="middle">receives</text>
+
+  <!-- 4. Beneficiary → Participant : "linked to" DASHED -->
+  <!-- Beneficiary right (285,900) → Participant bottom (1507,~310) via long path -->
+  <path d="M 285,900 L 1507,900 L 1507,310"
+        stroke="#e67e22" stroke-width="1.8" stroke-dasharray="6,3" fill="none" marker-end="url(#arr-dashed)"/>
+  <text x="900" y="893" font-size="9" fill="#e67e22" text-anchor="middle">linked to [0..1]</text>
+
+  <!-- 9. Beneficiary → EvalResponse : "submits" SOLID -->
+  <!-- Beneficiary right (285,940) → EvalResponse left (380,900) -->
+  <path d="M 285,940 L 330,940 L 330,900 L 380,900"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="310" y="925" font-size="9" fill="#1A56DB" text-anchor="middle">submits</text>
+
+  <!-- 12. Beneficiary → SkillsResponse : "submits" SOLID -->
+  <!-- Beneficiary right (285,960) → SkillsResponse left (700,940) -->
+  <path d="M 285,960 L 640,960 L 640,940 L 700,940"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="490" y="955" font-size="9" fill="#1A56DB" text-anchor="middle">submits</text>
+
+  <!-- 21. Participant → Evaluation : "receives" SOLID -->
+  <!-- Participant bottom (1507,310) → Evaluation right (1265,900) via bend -->
+  <path d="M 1507,310 L 1507,870 L 1265,870 L 1265,900"
+        stroke="#1A56DB" stroke-width="1.8" fill="none" marker-end="url(#arr-solid)"/>
+  <text x="1390" y="865" font-size="9" fill="#1A56DB" text-anchor="middle">receives eval</text>
+
+</svg>
+
+</div><!-- end diagram-canvas -->
+</div><!-- end scale-wrap -->
+</div><!-- end diagram-wrapper -->
+
+<div class="print-footer" style="text-align:center; margin-top:12px; font-size:10px; color:#aaa;">
+  PAThrive &copy; College of Industrial Technology, SLSU &nbsp;|&nbsp; UML Class Diagram &nbsp;|&nbsp; Generated for academic documentation
+</div>
+
+</body>
+</html>

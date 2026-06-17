@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAThrive – Class Diagram</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f5f5;padding:16px}
+h1{text-align:center;font-size:20px;font-weight:600;color:#222;margin-bottom:4px}
+p.sub{text-align:center;font-size:11px;color:#777;margin-bottom:14px}
+.wrap{overflow:auto;background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.canvas{position:relative;width:1780px;height:1460px}
+svg.lines{position:absolute;top:0;left:0;width:1780px;height:1460px;pointer-events:none}
+.cls{position:absolute;background:#fff;border:1px solid #ccc;border-radius:6px;font-size:10.5px;font-family:'Consolas','Courier New',monospace;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.cls .hd{background:#f0f0f0;border-bottom:1px solid #ccc;padding:5px 9px}
+.cls .hd .st{display:block;font-size:9px;color:#888;font-style:italic;margin-bottom:1px}
+.cls .hd .nm{font-size:12px;font-weight:600;color:#111}
+.cls .sec{padding:4px 9px;border-top:1px solid #eee}
+.cls .sec .lbl{font-size:9px;color:#aaa;font-style:italic;margin-bottom:2px;font-family:'Segoe UI',Arial,sans-serif}
+.cls .r{padding:1.5px 0;white-space:nowrap;color:#444;font-size:10px}
+.cls .r.m{color:#1a56db}
+line,path{stroke-width:1.2;fill:none}
+.sa{stroke:#777}
+.da{stroke:#aaa;stroke-dasharray:5,3}
+text.lbl{font-size:9px;font-family:'Segoe UI',Arial,sans-serif;fill:#888}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="canvas">
+
+<!-- ROW 1 -->
+<div class="cls" style="top:20px;left:20px;width:230px">
+ <div class="hd"><span class="nm">User</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ username : VARCHAR(60)</div>
+  <div class="r">+ first_name / last_name</div>
+  <div class="r">+ email : VARCHAR(120)</div>
+  <div class="r">+ id_number : VARCHAR(40)</div>
+  <div class="r">+ position : ENUM</div>
+  <div class="r">+ role : ENUM</div>
+  <div class="r">+ password_hash : VARCHAR(255)</div>
+  <div class="r">+ is_active : TINYINT</div>
+  <div class="r">+ reset_token / reset_expires</div>
+  <div class="r">+ last_login / created_at</div>
+ </div>
+ <div class="sec"> 
+  <div class="r m">+ login() / logout()</div>
+  <div class="r m">+ updateProfile()</div>
+  <div class="r m">+ resetPassword()</div>
+ </div>
+</div>
+
+<div class="cls" style="top:20px;left:275px;width:220px">
+ <div class="hd"><span class="nm">TrainerWhitelist</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ first_name / last_name</div>
+  <div class="r">+ specialization : VARCHAR(120)</div>
+  <div class="r">+ id_number : VARCHAR(20)</div>
+  <div class="r">+ is_registered : TINYINT</div>
+  <div class="r">+ created_at : DATETIME</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ add() / remove()</div>
+  <div class="r m">+ checkEligibility() : bool</div>
+ </div>
+</div>
+
+<div class="cls" style="top:20px;left:520px;width:235px">
+ <div class="hd"><span class="nm">Training</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ title : VARCHAR(200)</div>
+  <div class="r">+ area / description</div>
+  <div class="r">+ date_start / date_end : DATE</div>
+  <div class="r">+ status : ENUM</div>
+  <div class="r">+ trainer_id : INT (FK→User)</div>
+  <div class="r">+ target_participants : INT</div>
+  <div class="r">+ created_by : INT (FK→User)</div>
+  <div class="r">+ created_at / updated_at</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ create() / updateStatus()</div>
+  <div class="r m">+ getParticipants() : array</div>
+  <div class="r m">+ getDocuments() : array</div>
+  <div class="r m">+ getEvaluations() : array</div>
+ </div>
+</div>
+
+<div class="cls" style="top:20px;left:1060px;width:225px">
+ <div class="hd"><span class="nm">Notification</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ user_id : INT (nullable)</div>
+  <div class="r">+ role : ENUM</div>
+  <div class="r">+ training_id : INT (nullable)</div>
+  <div class="r">+ message : TEXT</div>
+  <div class="r">+ link : VARCHAR(255)</div>
+  <div class="r">+ is_read : TINYINT</div>
+  <div class="r">+ created_at : DATETIME</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ send() / markRead()</div>
+  <div class="r m">+ markAllRead()</div>
+ </div>
+</div>
+
+<div class="cls" style="top:20px;left:1320px;width:235px">
+ <div class="hd"><span class="nm">Participant</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ full_name : VARCHAR(160)</div>
+  <div class="r">+ id_number : VARCHAR(40)</div>
+  <div class="r">+ training_id : INT (FK→Training)</div>
+  <div class="r">+ beneficiary_id : INT (nullable)</div>
+  <div class="r">+ barangay / municipality</div>
+  <div class="r">+ phone / address</div>
+  <div class="r">+ age : TINYINT</div>
+  <div class="r">+ sex : ENUM</div>
+  <div class="r">+ beneficiary_type : ENUM</div>
+  <div class="r">+ attendance : VARCHAR(20)</div>
+  <div class="r">+ created_at : DATETIME</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ register() / update()</div>
+  <div class="r m">+ delete()</div>
+ </div>
+</div>
+
+<!-- ROW 2 -->
+<div class="cls" style="top:480px;left:20px;width:220px">
+ <div class="hd"><span class="nm">Document</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ file_name / original_name</div>
+  <div class="r">+ file_type : VARCHAR(20)</div>
+  <div class="r">+ file_size : INT</div>
+  <div class="r">+ visibility : ENUM</div>
+  <div class="r">+ training_id : INT (nullable)</div>
+  <div class="r">+ uploaded_by : INT (FK→User)</div>
+  <div class="r">+ created_at : DATETIME</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ upload() / delete()</div>
+  <div class="r m">+ download()</div>
+ </div>
+</div>
+
+<div class="cls" style="top:480px;left:265px;width:220px">
+ <div class="hd"><span class="nm">TrainingDoc</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ training_id : INT (FK→Training)</div>
+  <div class="r">+ caption : VARCHAR(255)</div>
+  <div class="r">+ file_name / file_type</div>
+  <div class="r">+ uploaded_by : INT (FK→User)</div>
+  <div class="r">+ created_at : DATETIME</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ upload() / delete()</div>
+ </div>
+</div>
+
+<div class="cls" style="top:480px;left:510px;width:225px">
+ <div class="hd"><span class="nm">EvalForm</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ training_id : INT (FK→Training)</div>
+  <div class="r">+ title : VARCHAR(200)</div>
+  <div class="r">+ fields : JSON</div>
+  <div class="r">+ created_by : INT (FK→User)</div>
+  <div class="r">+ sent_at / created_at</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ create() / send()</div>
+  <div class="r m">+ delete()</div>
+  <div class="r m">+ getResponses() : array</div>
+ </div>
+</div>
+
+<div class="cls" style="top:480px;left:760px;width:225px">
+ <div class="hd"><span class="nm">SkillsForm</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ training_id : INT (FK→Training)</div>
+  <div class="r">+ title : VARCHAR(200)</div>
+  <div class="r">+ fields : JSON</div>
+  <div class="r">+ created_by : INT (FK→User)</div>
+  <div class="r">+ sent_at / created_at</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ create() / send()</div>
+  <div class="r m">+ delete()</div>
+  <div class="r m">+ getResponses() : array</div>
+ </div>
+</div>
+
+<div class="cls" style="top:480px;left:1010px;width:235px">
+ <div class="hd"><span class="nm">SkillsUtilization</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ training_id : INT (FK→Training)</div>
+  <div class="r">+ personal_use_pct : DECIMAL</div>
+  <div class="r">+ income_gen_pct : DECIMAL</div>
+  <div class="r">+ employment_pct : DECIMAL</div>
+  <div class="r">+ nc2_cert_pct : DECIMAL</div>
+  <div class="r">+ recorded_at : DATETIME</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ record() / update()</div>
+  <div class="r m">+ getAverages() : array</div>
+ </div>
+</div>
+
+<div class="cls" style="top:480px;left:1270px;width:235px">
+ <div class="hd"><span class="nm">Attendance</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ training_id : INT (FK→Training)</div>
+  <div class="r">+ participant_id : INT (FK→Participant)</div>
+  <div class="r">+ session_date : DATE</div>
+  <div class="r">+ status : ENUM</div>
+  <div class="r">+ time_in / time_out : TIME</div>
+  <div class="r">+ recorded_by : INT (FK→User)</div>
+  <div class="r">+ created_at / updated_at</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ record() / update()</div>
+  <div class="r m">+ getSummary() : array</div>
+ </div>
+</div>
+
+<!-- ROW 3 -->
+<div class="cls" style="top:920px;left:20px;width:235px">
+ <div class="hd"><span class="nm">Beneficiary</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ username : VARCHAR(60)</div>
+  <div class="r">+ first_name / last_name</div>
+  <div class="r">+ email / phone / address</div>
+  <div class="r">+ age : TINYINT</div>
+  <div class="r">+ sex : ENUM</div>
+  <div class="r">+ barangay / municipality</div>
+  <div class="r">+ password_hash : VARCHAR(255)</div>
+  <div class="r">+ is_active : TINYINT</div>
+  <div class="r">+ created_at : DATETIME</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ register() / login() / logout()</div>
+  <div class="r m">+ updateProfile()</div>
+  <div class="r m">+ viewTrainings() : array</div>
+  <div class="r m">+ submitEvaluation()</div>
+  <div class="r m">+ submitSkillsSurvey()</div>
+  <div class="r m">+ viewNotifications() : array</div>
+ </div>
+</div>
+
+<div class="cls" style="top:920px;left:290px;width:230px">
+ <div class="hd"><span class="nm">EvalResponse</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ form_id : INT (FK→EvalForm)</div>
+  <div class="r">+ training_id : INT (FK→Training)</div>
+  <div class="r">+ beneficiary_id : INT (FK→Beneficiary)</div>
+  <div class="r">+ responses : JSON</div>
+  <div class="r">+ submitted_at / updated_at</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ submit() / update()</div>
+ </div>
+</div>
+
+<div class="cls" style="top:920px;left:550px;width:230px">
+ <div class="hd"><span class="nm">SkillsResponse</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ form_id : INT (FK→SkillsForm)</div>
+  <div class="r">+ training_id : INT (FK→Training)</div>
+  <div class="r">+ beneficiary_id : INT (FK→Beneficiary)</div>
+  <div class="r">+ responses : JSON</div>
+  <div class="r">+ submitted_at / updated_at</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ submit() / update()</div>
+ </div>
+</div>
+
+<div class="cls" style="top:920px;left:810px;width:225px">
+ <div class="hd"><span class="nm">Evaluation</span></div>
+ <div class="sec"><div class="lbl">attributes</div>
+  <div class="r">+ id : INT (PK)</div>
+  <div class="r">+ training_id : INT (FK→Training)</div>
+  <div class="r">+ participant_id : INT (FK→Participant)</div>
+  <div class="r">+ rating : TINYINT (1–5)</div>
+  <div class="r">+ feedback : TEXT</div>
+  <div class="r">+ submitted_at : DATETIME</div>
+  <div class="r">+ status : ENUM</div>
+ </div>
+ <div class="sec">
+  <div class="r m">+ submit() / update()</div>
+ </div>
+</div>
+
+<!-- SVG LINES -->
+<svg class="lines" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <marker id="arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+  <polygon points="0 0,7 3.5,0 7" fill="#777"/>
+ </marker>
+ <marker id="arrd" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+  <polygon points="0 0,7 3.5,0 7" fill="#aaa"/>
+ </marker>
+</defs>
+
+<!-- LEGEND -->
+<line x1="20" y1="1391" x2="55" y2="1391" class="sa" marker-end="url(#arr)"/>
+<text class="lbl" x="62" y="1395">Association / Composition</text>
+<line x1="220" y1="1391" x2="255" y2="1391" class="da" marker-end="url(#arrd)"/>
+<text class="lbl" x="262" y="1395">Dependency / Link</text>
+
+<!-- User → Training (creates) -->
+<path class="sa" d="M 135,310 L 135,340 L 637,340 L 637,270" marker-end="url(#arr)"/>
+<text class="lbl" x="350" y="335">creates</text>
+
+<!-- User → Training (assigns trainer) -->
+<path class="da" d="M 250,45 L 260,45 L 260,12 L 637,12 L 637,20" marker-end="url(#arrd)"/>
+<text class="lbl" x="380" y="11">assigns [trainer]</text>
+
+<!-- TrainerWhitelist → Training -->
+<path class="da" d="M 495,60 L 510,60 L 510,28 L 580,28 L 580,20" marker-end="url(#arrd)"/>
+<text class="lbl" x="510" y="25">eligibility check</text>
+
+<!-- Training → Notification -->
+<path class="da" d="M 755,80 L 810,80 L 810,65 L 1060,65 L 1060,80" marker-end="url(#arrd)"/>
+<text class="lbl" x="900" y="62">triggers</text>
+
+<!-- Training → Participant -->
+<path class="sa" d="M 755,110 L 810,110 L 810,46 L 1320,46 L 1320,60" marker-end="url(#arr)"/>
+<text class="lbl" x="1020" y="43">enrolls [1..*]</text>
+
+<!-- Training → Document -->
+<path class="sa" d="M 560,270 L 560,380 L 10,380 L 10,540 L 20,540" marker-end="url(#arr)"/>
+<text class="lbl" x="40" y="378">has [Document]</text>
+
+<!-- User → Document -->
+<path class="sa" d="M 20,180 L 8,180 L 8,595 L 20,595" marker-end="url(#arr)"/>
+<text class="lbl" x="11" y="400">uploads</text>
+
+<!-- Training → TrainingDoc -->
+<path class="sa" d="M 580,270 L 580,360 L 255,360 L 255,480" marker-end="url(#arr)"/>
+<text class="lbl" x="340" y="358">has [TrainingDoc]</text>
+
+<!-- User → TrainingDoc -->
+<path class="sa" d="M 135,310 L 135,460 L 255,460 L 255,480" marker-end="url(#arr)"/>
+<text class="lbl" x="160" y="458">uploads</text>
+
+<!-- Training → EvalForm -->
+<path class="sa" d="M 637,270 L 637,480" marker-end="url(#arr)"/>
+<text class="lbl" x="641" y="390">has</text>
+
+<!-- Training → SkillsForm -->
+<path class="sa" d="M 690,270 L 690,360 L 872,360 L 872,480" marker-end="url(#arr)"/>
+<text class="lbl" x="730" y="358">has [SkillsForm]</text>
+
+<!-- Training → SkillsUtilization -->
+<path class="sa" d="M 755,140 L 770,140 L 770,370 L 1000,370 L 1000,480" marker-end="url(#arr)"/>
+<text class="lbl" x="850" y="368">tracks</text>
+
+<!-- Training → Attendance -->
+<path class="sa" d="M 755,165 L 780,165 L 780,390 L 1255,390 L 1255,480" marker-end="url(#arr)"/>
+<text class="lbl" x="970" y="388">records attendance</text>
+
+<!-- Participant → Attendance -->
+<path class="sa" d="M 1437,360 L 1437,440 L 1390,440 L 1390,480" marker-end="url(#arr)"/>
+<text class="lbl" x="1396" y="438">has</text>
+
+<!-- User → Attendance (recorded_by) -->
+<path class="sa" d="M 250,20 L 250,5 L 1550,5 L 1550,480" marker-end="url(#arr)"/>
+<text class="lbl" x="850" y="9">recorded by</text>
+
+<!-- EvalForm → EvalResponse -->
+<path class="sa" d="M 622,720 L 622,800 L 405,800 L 405,920" marker-end="url(#arr)"/>
+<text class="lbl" x="480" y="798">receives</text>
+
+<!-- SkillsForm → SkillsResponse -->
+<path class="sa" d="M 872,720 L 872,800 L 665,800 L 665,920" marker-end="url(#arr)"/>
+<text class="lbl" x="730" y="798">receives</text>
+
+<!-- Training → Evaluation -->
+<path class="sa" d="M 710,270 L 710,455 L 795,455 L 795,820 L 922,820 L 922,920" marker-end="url(#arr)"/>
+<text class="lbl" x="800" y="818">has [Evaluation]</text>
+
+<!-- Beneficiary → EvalResponse -->
+<path class="sa" d="M 255,1020 L 290,1020" marker-end="url(#arr)"/>
+<text class="lbl" x="258" y="1015">submits eval</text>
+
+<!-- Beneficiary → SkillsResponse -->
+<path class="sa" d="M 255,1060 L 540,1060 L 540,1020 L 550,1020" marker-end="url(#arr)"/>
+<text class="lbl" x="330" y="1058">submits skills</text>
+
+<!-- Beneficiary → Participant (linked to) -->
+<path class="da" d="M 137,920 L 137,860 L 1600,860 L 1600,380 L 1555,380 L 1555,360" marker-end="url(#arrd)"/>
+<text class="lbl" x="860" y="858">linked to [0..1]</text>
+
+<!-- Participant → Evaluation -->
+<path class="sa" d="M 1555,360 L 1555,810 L 1040,810 L 1040,920" marker-end="url(#arr)"/>
+<text class="lbl" x="1200" y="808">receives eval</text>
+
+</svg>
+</div></div>
+
+<p style="text-align:center;margin-top:12px;font-size:10px;color:#bbb;">
+  PAThrive © College of Industrial Technology, SLSU &nbsp;|&nbsp; UML Class Diagram
+</p>
+</body>
+</html>

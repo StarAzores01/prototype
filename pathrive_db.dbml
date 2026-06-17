@@ -1,0 +1,222 @@
+// ============================================================
+// PAThrive – Database Markup Language (DBML)
+// System: PAThrive Extension Training Management &
+//         Skills Utilization Tracking System
+// College of Industrial Technology, SLSU
+// ============================================================
+
+Project PAThrive {
+  database_type: 'MySQL'
+  Note: 'PAThrive Extension Training Management & Skills Utilization Tracking System – CIT, SLSU'
+}
+
+// ── Users (Extension Coordinators & Trainers) ──────────────
+Table users {
+  id            int           [pk, increment]
+  username      varchar(60)   [not null, unique]
+  first_name    varchar(80)   [not null]
+  last_name     varchar(80)   [not null]
+  email         varchar(120)  [not null, unique]
+  id_number     varchar(40)   [not null, unique]
+  position      varchar(50)   [not null, note: 'ENUM: Professor, Assistant Professor, Instructor']
+  role          varchar(30)   [not null, default: 'trainer', note: 'ENUM: extension_coordinator, trainer']
+  password_hash varchar(255)  [not null]
+  is_active     tinyint       [not null, default: 1]
+  reset_token   varchar(100)  [null]
+  reset_expires datetime      [null]
+  last_login    datetime      [null]
+  created_at    datetime      [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at    datetime      [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Trainer Whitelist (pre-approved by EC) ─────────────────
+Table trainer_whitelist {
+  id             int          [pk, increment]
+  first_name     varchar(80)  [not null]
+  last_name      varchar(80)  [not null]
+  specialization varchar(120) [not null]
+  id_number      varchar(20)  [null]
+  is_registered  tinyint      [not null, default: 0]
+  created_at     datetime     [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Trainings ──────────────────────────────────────────────
+Table trainings {
+  id                  int          [pk, increment]
+  title               varchar(200) [not null]
+  area                varchar(120) [not null]
+  description         text         [null]
+  date_start          date         [null]
+  date_end            date         [null]
+  status              varchar(20)  [not null, default: 'Proposed', note: 'ENUM: Proposed, Approved, Ongoing, Completed']
+  trainer_id          int          [null, ref: > users.id]
+  target_participants int          [not null, default: 0]
+  created_by          int          [not null, ref: > users.id]
+  created_at          datetime     [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at          datetime     [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Participants / Beneficiaries enrolled in a training ────
+Table participants {
+  id               int          [pk, increment]
+  full_name        varchar(160) [not null]
+  id_number        varchar(40)  [null]
+  training_id      int          [not null, ref: > trainings.id]
+  beneficiary_id   int          [null, ref: > beneficiaries.id]
+  barangay         varchar(120) [null]
+  municipality     varchar(120) [null]
+  phone            varchar(30)  [null]
+  address          varchar(255) [null]
+  age              tinyint      [null]
+  sex              varchar(10)  [null, note: 'ENUM: Male, Female, Other']
+  beneficiary_type varchar(40)  [not null, default: 'Other', note: 'ENUM: Out-of-School Youth, Displaced Worker, Solo Parent, Farmer, Retiree, Other']
+  attendance       varchar(20)  [null, default: '0/0']
+  created_at       datetime     [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Beneficiaries (self-registered portal users) ───────────
+Table beneficiaries {
+  id            int          [pk, increment]
+  username      varchar(60)  [not null, unique]
+  first_name    varchar(80)  [not null]
+  last_name     varchar(80)  [not null]
+  email         varchar(120) [not null, unique]
+  phone         varchar(30)  [null]
+  address       varchar(255) [null]
+  age           tinyint      [null]
+  sex           varchar(10)  [null, note: 'ENUM: Male, Female, Other']
+  contact       varchar(30)  [null]
+  barangay      varchar(120) [null]
+  municipality  varchar(120) [null]
+  password_hash varchar(255) [not null]
+  is_active     tinyint      [not null, default: 1]
+  created_at    datetime     [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Documents (uploaded by EC or Trainer) ─────────────────
+Table documents {
+  id            int          [pk, increment]
+  file_name     varchar(255) [not null]
+  original_name varchar(255) [not null]
+  file_type     varchar(20)  [not null]
+  file_size     int          [not null, default: 0]
+  visibility    varchar(20)  [not null, default: 'public', note: 'ENUM: private, ec_trainer, public']
+  training_id   int          [null, ref: > trainings.id]
+  uploaded_by   int          [not null, ref: > users.id]
+  created_at    datetime     [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Training Documentation Photos ─────────────────────────
+Table training_docs {
+  id          int          [pk, increment]
+  training_id int          [not null, ref: > trainings.id]
+  caption     varchar(255) [null]
+  file_name   varchar(255) [not null]
+  file_type   varchar(20)  [not null]
+  uploaded_by int          [not null, ref: > users.id]
+  created_at  datetime     [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Evaluation Forms (built by EC) ────────────────────────
+Table eval_forms {
+  id          int          [pk, increment]
+  training_id int          [not null, ref: > trainings.id]
+  title       varchar(200) [not null, default: 'Training Evaluation Form']
+  fields      json         [not null]
+  created_by  int          [not null, ref: > users.id]
+  sent_at     datetime     [null]
+  created_at  datetime     [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Evaluation Responses (submitted by Beneficiaries) ─────
+Table eval_responses {
+  id             int      [pk, increment]
+  form_id        int      [not null, ref: > eval_forms.id]
+  training_id    int      [not null, ref: > trainings.id]
+  beneficiary_id int      [not null, ref: > beneficiaries.id]
+  responses      json     [not null]
+  submitted_at   datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at     datetime [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (form_id, beneficiary_id) [unique]
+  }
+}
+
+// ── Skills Utilization Forms (built by Trainer) ───────────
+Table skills_forms {
+  id          int          [pk, increment]
+  training_id int          [not null, ref: > trainings.id]
+  title       varchar(200) [not null, default: 'Skills Utilization Survey']
+  fields      json         [not null]
+  created_by  int          [not null, ref: > users.id]
+  sent_at     datetime     [null]
+  created_at  datetime     [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Skills Responses (submitted by Beneficiaries) ─────────
+Table skills_responses {
+  id             int      [pk, increment]
+  form_id        int      [not null, ref: > skills_forms.id]
+  training_id    int      [not null, ref: > trainings.id]
+  beneficiary_id int      [not null, ref: > beneficiaries.id]
+  responses      json     [not null]
+  submitted_at   datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at     datetime [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (form_id, beneficiary_id) [unique]
+  }
+}
+
+// ── Skills Utilization Aggregates ─────────────────────────
+Table skills_utilization {
+  id               int           [pk, increment]
+  training_id      int           [not null, ref: > trainings.id]
+  personal_use_pct decimal(5,2)  [not null, default: 0]
+  income_gen_pct   decimal(5,2)  [not null, default: 0]
+  employment_pct   decimal(5,2)  [not null, default: 0]
+  nc2_cert_pct     decimal(5,2)  [not null, default: 0]
+  recorded_at      datetime      [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ── Attendance ────────────────────────────────────────────
+Table attendance {
+  id             int      [pk, increment]
+  training_id    int      [not null, ref: > trainings.id]
+  participant_id int      [not null, ref: > participants.id]
+  session_date   date     [not null]
+  status         varchar(10) [not null, default: 'Absent', note: 'ENUM: Present, Absent, Late']
+  time_in        time     [null]
+  time_out       time     [null]
+  recorded_by    int      [not null, ref: > users.id]
+  created_at     datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at     datetime [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (training_id, participant_id, session_date) [unique]
+  }
+}
+
+// ── Evaluations (legacy per-participant rating) ───────────
+Table evaluations {
+  id             int      [pk, increment]
+  training_id    int      [not null, ref: > trainings.id]
+  participant_id int      [not null, ref: > participants.id]
+  rating         tinyint  [null, note: 'CHECK: 1–5']
+  feedback       text     [null]
+  submitted_at   datetime [null]
+  status         varchar(10) [not null, default: 'Pending', note: 'ENUM: Pending, Submitted']
+}
+
+// ── Notifications ─────────────────────────────────────────
+Table notifications {
+  id          int          [pk, increment]
+  user_id     int          [null]
+  role        varchar(15)  [not null, default: 'all', note: 'ENUM: trainer, beneficiary, all']
+  training_id int          [null]
+  message     text         [not null]
+  link        varchar(255) [null]
+  is_read     tinyint      [not null, default: 0]
+  created_at  datetime     [not null, default: `CURRENT_TIMESTAMP`]
+}

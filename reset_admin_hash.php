@@ -30,13 +30,13 @@ try {
     $stmt->execute([$hash, $username]);
 
     if ($stmt->rowCount() > 0) {
-        echo "✅ Password hash updated successfully for user: <strong>$username</strong><br>";
-        echo "🔑 New password: <strong>$newPassword</strong><br>";
-        echo "<br><strong style='color:red'>⚠️ Delete this file immediately after use!</strong>";
+        echo "Password hash updated successfully for user: <strong>$username</strong><br>";
+        echo "New password: <strong>$newPassword</strong><br>";
+        echo "<br><strong style='color:red'>Delete this file immediately after use!</strong>";
     } else {
-        echo "❌ User '$username' not found. No changes made.";
+        echo "User '$username' not found. No changes made.";
     }
 
 } catch (PDOException $e) {
-    echo "❌ Database error: " . htmlspecialchars($e->getMessage());
+    echo "Database error: " . htmlspecialchars($e->getMessage());
 }

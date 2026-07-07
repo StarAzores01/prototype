@@ -11,6 +11,11 @@
                 <div class="p-6 text-gray-900">
                     {{ __('Welcome, :name! You are logged in as Project Leader.', ['name' => auth()->user()->name]) }}
                 </div>
+                <div class="px-6 pb-6">
+                    <a href="{{ route('project-leader.trainings.index') }}" class="text-indigo-600 hover:underline">
+                        {{ __('My Trainings') }} &rarr;
+                    </a>
+                </div>
             </div>
         </div>
     </div>

@@ -27,6 +27,9 @@
                     <a href="{{ route('extension-coordinator.trainings.participants.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
                         {{ __('Manage Participants') }} &rarr;
                     </a>
+                    <a href="{{ route('extension-coordinator.trainings.attendance.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
+                        {{ __('Manage Attendance') }} &rarr;
+                    </a>
                 </div>
 
                 <div class="flex items-center gap-4 pt-4">

@@ -3,10 +3,12 @@
 use App\Http\Controllers\BeneficiaryDashboardController;
 use App\Http\Controllers\EvaluatorDashboardController;
 use App\Http\Controllers\ExtensionCoordinatorDashboardController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ExtensionCoordinatorParticipantController;
 use App\Http\Controllers\ExtensionCoordinatorTrainingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectLeaderDashboardController;
+use App\Http\Controllers\ProjectLeaderTrainingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -34,11 +36,28 @@ Route::middleware(['auth', 'role:extension_coordinator'])->group(function () {
             Route::put('/{participant}', [ExtensionCoordinatorParticipantController::class, 'update'])->name('update');
             Route::delete('/{participant}', [ExtensionCoordinatorParticipantController::class, 'destroy'])->name('destroy');
         });
+
+    Route::prefix('extension-coordinator/trainings/{training}/attendance')
+        ->name('extension-coordinator.trainings.attendance.')
+        ->group(function () {
+            Route::get('/', [AttendanceController::class, 'index'])->name('index');
+            Route::post('/', [AttendanceController::class, 'store'])->name('store');
+        });
 });
 
 Route::middleware(['auth', 'role:project_leader'])->group(function () {
     Route::get('/project-leader/dashboard', [ProjectLeaderDashboardController::class, 'index'])
         ->name('project-leader.dashboard');
+
+    Route::get('/project-leader/trainings', [ProjectLeaderTrainingController::class, 'index'])
+        ->name('project-leader.trainings.index');
+
+    Route::prefix('project-leader/trainings/{training}/attendance')
+        ->name('project-leader.trainings.attendance.')
+        ->group(function () {
+            Route::get('/', [AttendanceController::class, 'index'])->name('index');
+            Route::post('/', [AttendanceController::class, 'store'])->name('store');
+        });
 });
 
 Route::middleware(['auth', 'role:beneficiary'])->group(function () {

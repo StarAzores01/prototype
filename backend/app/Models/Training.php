@@ -11,12 +11,21 @@ class Training extends Model
     protected $fillable = [
         'title',
         'description',
+        'location',
         'start_date',
         'end_date',
         'status',
         'created_by',
         'project_leader_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'start_date' => 'date',
+            'end_date' => 'date',
+        ];
+    }
 
     public function creator(): BelongsTo
     {

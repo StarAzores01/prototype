@@ -3,6 +3,7 @@
 use App\Http\Controllers\BeneficiaryDashboardController;
 use App\Http\Controllers\EvaluatorDashboardController;
 use App\Http\Controllers\ExtensionCoordinatorDashboardController;
+use App\Http\Controllers\ExtensionCoordinatorTrainingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectLeaderDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,9 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'role:extension_coordinator'])->group(function () {
     Route::get('/extension-coordinator/dashboard', [ExtensionCoordinatorDashboardController::class, 'index'])
         ->name('extension-coordinator.dashboard');
+
+    Route::resource('extension-coordinator/trainings', ExtensionCoordinatorTrainingController::class)
+        ->names('extension-coordinator.trainings');
 });
 
 Route::middleware(['auth', 'role:project_leader'])->group(function () {

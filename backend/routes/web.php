@@ -3,6 +3,7 @@
 use App\Http\Controllers\BeneficiaryDashboardController;
 use App\Http\Controllers\EvaluatorDashboardController;
 use App\Http\Controllers\ExtensionCoordinatorDashboardController;
+use App\Http\Controllers\ExtensionCoordinatorParticipantController;
 use App\Http\Controllers\ExtensionCoordinatorTrainingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectLeaderDashboardController;
@@ -22,6 +23,17 @@ Route::middleware(['auth', 'role:extension_coordinator'])->group(function () {
 
     Route::resource('extension-coordinator/trainings', ExtensionCoordinatorTrainingController::class)
         ->names('extension-coordinator.trainings');
+
+    Route::prefix('extension-coordinator/trainings/{training}/participants')
+        ->name('extension-coordinator.trainings.participants.')
+        ->group(function () {
+            Route::get('/', [ExtensionCoordinatorParticipantController::class, 'index'])->name('index');
+            Route::get('/create', [ExtensionCoordinatorParticipantController::class, 'create'])->name('create');
+            Route::post('/', [ExtensionCoordinatorParticipantController::class, 'store'])->name('store');
+            Route::get('/{participant}/edit', [ExtensionCoordinatorParticipantController::class, 'edit'])->name('edit');
+            Route::put('/{participant}', [ExtensionCoordinatorParticipantController::class, 'update'])->name('update');
+            Route::delete('/{participant}', [ExtensionCoordinatorParticipantController::class, 'destroy'])->name('destroy');
+        });
 });
 
 Route::middleware(['auth', 'role:project_leader'])->group(function () {

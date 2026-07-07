@@ -22,7 +22,12 @@
                 <div><span class="font-semibold">{{ __('End Date') }}:</span> {{ $training->end_date?->format('Y-m-d') ?? '—' }}</div>
                 <div><span class="font-semibold">{{ __('Project Leader') }}:</span> {{ $training->projectLeader?->name ?? '—' }}</div>
                 <div><span class="font-semibold">{{ __('Created By') }}:</span> {{ $training->creator?->name ?? '—' }}</div>
-                <div><span class="font-semibold">{{ __('Participants') }}:</span> {{ $training->participants->count() }}</div>
+                <div>
+                    <span class="font-semibold">{{ __('Participants') }}:</span> {{ $training->participants->count() }}
+                    <a href="{{ route('extension-coordinator.trainings.participants.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
+                        {{ __('Manage Participants') }} &rarr;
+                    </a>
+                </div>
 
                 <div class="flex items-center gap-4 pt-4">
                     <a href="{{ route('extension-coordinator.trainings.edit', $training) }}"

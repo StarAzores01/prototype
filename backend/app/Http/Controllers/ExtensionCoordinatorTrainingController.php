@@ -21,7 +21,7 @@ class ExtensionCoordinatorTrainingController extends Controller
             ->latest()
             ->get();
 
-        return view('extension-coordinator.trainings.index', [
+        return view('ec.trainings.index', [
             'trainings' => $trainings,
         ]);
     }
@@ -31,7 +31,7 @@ class ExtensionCoordinatorTrainingController extends Controller
      */
     public function create(): View
     {
-        return view('extension-coordinator.trainings.create', [
+        return view('ec.trainings.create', [
             'projectLeaders' => $this->projectLeaders(),
         ]);
     }
@@ -59,7 +59,7 @@ class ExtensionCoordinatorTrainingController extends Controller
     {
         $training->load(['creator', 'projectLeader', 'participants.user']);
 
-        return view('extension-coordinator.trainings.show', [
+        return view('ec.trainings.show', [
             'training' => $training,
         ]);
     }
@@ -69,7 +69,7 @@ class ExtensionCoordinatorTrainingController extends Controller
      */
     public function edit(Training $training): View
     {
-        return view('extension-coordinator.trainings.edit', [
+        return view('ec.trainings.edit', [
             'training' => $training,
             'projectLeaders' => $this->projectLeaders(),
         ]);

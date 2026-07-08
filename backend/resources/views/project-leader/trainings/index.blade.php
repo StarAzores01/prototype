@@ -33,6 +33,9 @@
                                     <a href="{{ route('project-leader.trainings.evaluation-forms.index', $training) }}" class="text-indigo-600 hover:underline">
                                         {{ __('Manage Evaluation Forms') }}
                                     </a>
+                                    <a href="{{ route('project-leader.trainings.impact-assessments.index', $training) }}" class="text-indigo-600 hover:underline">
+                                        {{ __('Manage Impact Assessments') }}
+                                    </a>
                                 </td>
                             </tr>
                         @empty

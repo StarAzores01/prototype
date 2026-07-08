@@ -15,6 +15,9 @@
                     <a href="{{ route('beneficiary.evaluation-forms.index') }}" class="text-indigo-600 hover:underline">
                         {{ __('Evaluation Forms') }} &rarr;
                     </a>
+                    <a href="{{ route('beneficiary.impact-assessments.index') }}" class="text-indigo-600 hover:underline ml-4">
+                        {{ __('Impact Assessments') }} &rarr;
+                    </a>
                 </div>
             </div>
         </div>

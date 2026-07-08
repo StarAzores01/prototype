@@ -4,12 +4,15 @@ use App\Http\Controllers\BeneficiaryDashboardController;
 use App\Http\Controllers\EvaluatorDashboardController;
 use App\Http\Controllers\ExtensionCoordinatorDashboardController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\BeneficiaryImpactAssessmentController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EvaluationFormController;
 use App\Http\Controllers\EvaluationQuestionController;
 use App\Http\Controllers\EvaluationResponseController;
+use App\Http\Controllers\EvaluatorImpactAssessmentController;
 use App\Http\Controllers\ExtensionCoordinatorParticipantController;
 use App\Http\Controllers\ExtensionCoordinatorTrainingController;
+use App\Http\Controllers\ImpactAssessmentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectLeaderDashboardController;
 use App\Http\Controllers\ProjectLeaderTrainingController;
@@ -67,6 +70,14 @@ Route::middleware(['auth', 'role:extension_coordinator'])->group(function () {
             Route::post('/{evaluationForm}/publish', [EvaluationFormController::class, 'publish'])->name('publish');
             Route::post('/{evaluationForm}/questions', [EvaluationQuestionController::class, 'store'])->name('questions.store');
         });
+
+    Route::prefix('extension-coordinator/trainings/{training}/impact-assessments')
+        ->name('extension-coordinator.trainings.impact-assessments.')
+        ->group(function () {
+            Route::get('/', [ImpactAssessmentController::class, 'index'])->name('index');
+            Route::get('/create', [ImpactAssessmentController::class, 'create'])->name('create');
+            Route::post('/', [ImpactAssessmentController::class, 'store'])->name('store');
+        });
 });
 
 Route::middleware(['auth', 'role:project_leader'])->group(function () {
@@ -102,6 +113,14 @@ Route::middleware(['auth', 'role:project_leader'])->group(function () {
             Route::post('/{evaluationForm}/publish', [EvaluationFormController::class, 'publish'])->name('publish');
             Route::post('/{evaluationForm}/questions', [EvaluationQuestionController::class, 'store'])->name('questions.store');
         });
+
+    Route::prefix('project-leader/trainings/{training}/impact-assessments')
+        ->name('project-leader.trainings.impact-assessments.')
+        ->group(function () {
+            Route::get('/', [ImpactAssessmentController::class, 'index'])->name('index');
+            Route::get('/create', [ImpactAssessmentController::class, 'create'])->name('create');
+            Route::post('/', [ImpactAssessmentController::class, 'store'])->name('store');
+        });
 });
 
 Route::middleware(['auth', 'role:beneficiary'])->group(function () {
@@ -115,11 +134,27 @@ Route::middleware(['auth', 'role:beneficiary'])->group(function () {
             Route::get('/{evaluationForm}', [EvaluationResponseController::class, 'show'])->name('show');
             Route::post('/{evaluationForm}', [EvaluationResponseController::class, 'store'])->name('store');
         });
+
+    Route::prefix('beneficiary/impact-assessments')
+        ->name('beneficiary.impact-assessments.')
+        ->group(function () {
+            Route::get('/', [BeneficiaryImpactAssessmentController::class, 'index'])->name('index');
+            Route::get('/{impactAssessment}/edit', [BeneficiaryImpactAssessmentController::class, 'edit'])->name('edit');
+            Route::put('/{impactAssessment}', [BeneficiaryImpactAssessmentController::class, 'update'])->name('update');
+        });
 });
 
 Route::middleware(['auth', 'role:evaluator'])->group(function () {
     Route::get('/evaluator/dashboard', [EvaluatorDashboardController::class, 'index'])
         ->name('evaluator.dashboard');
+
+    Route::prefix('evaluator/impact-assessments')
+        ->name('evaluator.impact-assessments.')
+        ->group(function () {
+            Route::get('/', [EvaluatorImpactAssessmentController::class, 'index'])->name('index');
+            Route::get('/{impactAssessment}', [EvaluatorImpactAssessmentController::class, 'show'])->name('show');
+            Route::post('/{impactAssessment}/review', [EvaluatorImpactAssessmentController::class, 'markReviewed'])->name('review');
+        });
 });
 
 Route::middleware('auth')->group(function () {

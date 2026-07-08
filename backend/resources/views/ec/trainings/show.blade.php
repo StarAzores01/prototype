@@ -36,6 +36,9 @@
                     <a href="{{ route('extension-coordinator.trainings.evaluation-forms.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
                         {{ __('Manage Evaluation Forms') }} &rarr;
                     </a>
+                    <a href="{{ route('extension-coordinator.trainings.impact-assessments.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
+                        {{ __('Manage Impact Assessments') }} &rarr;
+                    </a>
                 </div>
 
                 <div class="flex items-center gap-4 pt-4">

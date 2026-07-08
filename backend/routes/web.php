@@ -13,6 +13,7 @@ use App\Http\Controllers\EvaluatorImpactAssessmentController;
 use App\Http\Controllers\ExtensionCoordinatorParticipantController;
 use App\Http\Controllers\ExtensionCoordinatorTrainingController;
 use App\Http\Controllers\ImpactAssessmentController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectLeaderDashboardController;
 use App\Http\Controllers\ProjectLeaderTrainingController;
@@ -161,6 +162,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 });
 
 require __DIR__.'/auth.php';

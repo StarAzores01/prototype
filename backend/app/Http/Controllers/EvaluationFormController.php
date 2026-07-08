@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\EvaluationForm;
+use App\Models\Notification;
 use App\Models\Training;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -87,6 +88,15 @@ class EvaluationFormController extends Controller
         $this->ensureFormBelongsToTraining($training, $evaluationForm);
 
         $evaluationForm->update(['status' => 'published']);
+
+        $training->participants()->pluck('user_id')->each(
+            fn (int $userId) => Notification::notify(
+                $userId,
+                'New Evaluation Form Available',
+                "A new evaluation form \"{$evaluationForm->title}\" is available for \"{$training->title}\".",
+                'evaluation_form_available'
+            )
+        );
 
         return redirect()
             ->route($this->routePrefix($request).'.evaluation-forms.show', [$training, $evaluationForm])

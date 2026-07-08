@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\ImpactAssessment;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -55,6 +57,17 @@ class BeneficiaryImpactAssessmentController extends Controller
             'status' => 'submitted',
             'submitted_at' => now(),
         ]);
+
+        $impactAssessment->load('training');
+
+        User::where('role', 'evaluator')->pluck('id')->each(
+            fn (int $userId) => Notification::notify(
+                $userId,
+                'Impact Assessment Submitted',
+                "{$request->user()->name} submitted an impact assessment for \"{$impactAssessment->training->title}\".",
+                'impact_assessment_submitted'
+            )
+        );
 
         return redirect()
             ->route('beneficiary.impact-assessments.index')

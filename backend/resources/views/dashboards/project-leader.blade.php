@@ -15,6 +15,13 @@
                     <a href="{{ route('project-leader.trainings.index') }}" class="text-indigo-600 hover:underline">
                         {{ __('My Trainings') }} &rarr;
                     </a>
+                    <a href="{{ route('notifications.index') }}" class="text-indigo-600 hover:underline ml-4">
+                        {{ __('Notifications') }}
+                        @if ($unreadNotifications > 0)
+                            <span class="ml-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">{{ $unreadNotifications }}</span>
+                        @endif
+                        &rarr;
+                    </a>
                 </div>
             </div>
         </div>

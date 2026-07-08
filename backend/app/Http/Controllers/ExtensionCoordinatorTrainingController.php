@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use App\Models\Training;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -45,7 +46,11 @@ class ExtensionCoordinatorTrainingController extends Controller
 
         $validated['created_by'] = $request->user()->id;
 
-        Training::create($validated);
+        $training = Training::create($validated);
+
+        if ($training->project_leader_id) {
+            $this->notifyProjectLeaderAssigned($training);
+        }
 
         return redirect()
             ->route('extension-coordinator.trainings.index')
@@ -82,7 +87,13 @@ class ExtensionCoordinatorTrainingController extends Controller
     {
         $validated = $this->validateTraining($request);
 
+        $previousProjectLeaderId = $training->project_leader_id;
+
         $training->update($validated);
+
+        if ($training->project_leader_id && $training->project_leader_id !== $previousProjectLeaderId) {
+            $this->notifyProjectLeaderAssigned($training);
+        }
 
         return redirect()
             ->route('extension-coordinator.trainings.show', $training)
@@ -129,5 +140,15 @@ class ExtensionCoordinatorTrainingController extends Controller
     private function projectLeaders(): Collection
     {
         return User::where('role', 'project_leader')->orderBy('name')->get();
+    }
+
+    private function notifyProjectLeaderAssigned(Training $training): void
+    {
+        Notification::notify(
+            $training->project_leader_id,
+            'Assigned to Training',
+            "You have been assigned as Project Leader for \"{$training->title}\".",
+            'training_assignment'
+        );
     }
 }

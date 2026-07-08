@@ -23,9 +23,12 @@
                                 <td class="px-4 py-2">{{ $training->title }}</td>
                                 <td class="px-4 py-2">{{ $training->status }}</td>
                                 <td class="px-4 py-2">{{ $training->start_date?->format('Y-m-d') }}</td>
-                                <td class="px-4 py-2">
+                                <td class="px-4 py-2 space-x-2">
                                     <a href="{{ route('project-leader.trainings.attendance.index', $training) }}" class="text-indigo-600 hover:underline">
                                         {{ __('Manage Attendance') }}
+                                    </a>
+                                    <a href="{{ route('project-leader.trainings.documents.index', $training) }}" class="text-indigo-600 hover:underline">
+                                        {{ __('Manage Documents') }}
                                     </a>
                                 </td>
                             </tr>

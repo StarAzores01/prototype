@@ -11,6 +11,7 @@ class Document extends Model
         'training_id',
         'uploaded_by',
         'title',
+        'visibility',
         'file_path',
         'file_type',
     ];

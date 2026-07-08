@@ -4,6 +4,7 @@ use App\Http\Controllers\BeneficiaryDashboardController;
 use App\Http\Controllers\EvaluatorDashboardController;
 use App\Http\Controllers\ExtensionCoordinatorDashboardController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ExtensionCoordinatorParticipantController;
 use App\Http\Controllers\ExtensionCoordinatorTrainingController;
 use App\Http\Controllers\ProfileController;
@@ -43,6 +44,15 @@ Route::middleware(['auth', 'role:extension_coordinator'])->group(function () {
             Route::get('/', [AttendanceController::class, 'index'])->name('index');
             Route::post('/', [AttendanceController::class, 'store'])->name('store');
         });
+
+    Route::prefix('extension-coordinator/trainings/{training}/documents')
+        ->name('extension-coordinator.trainings.documents.')
+        ->group(function () {
+            Route::get('/', [DocumentController::class, 'index'])->name('index');
+            Route::post('/', [DocumentController::class, 'store'])->name('store');
+            Route::get('/{document}/download', [DocumentController::class, 'download'])->name('download');
+            Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
+        });
 });
 
 Route::middleware(['auth', 'role:project_leader'])->group(function () {
@@ -57,6 +67,15 @@ Route::middleware(['auth', 'role:project_leader'])->group(function () {
         ->group(function () {
             Route::get('/', [AttendanceController::class, 'index'])->name('index');
             Route::post('/', [AttendanceController::class, 'store'])->name('store');
+        });
+
+    Route::prefix('project-leader/trainings/{training}/documents')
+        ->name('project-leader.trainings.documents.')
+        ->group(function () {
+            Route::get('/', [DocumentController::class, 'index'])->name('index');
+            Route::post('/', [DocumentController::class, 'store'])->name('store');
+            Route::get('/{document}/download', [DocumentController::class, 'download'])->name('download');
+            Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
         });
 });
 

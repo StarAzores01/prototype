@@ -30,6 +30,9 @@
                     <a href="{{ route('extension-coordinator.trainings.attendance.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
                         {{ __('Manage Attendance') }} &rarr;
                     </a>
+                    <a href="{{ route('extension-coordinator.trainings.documents.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
+                        {{ __('Manage Documents') }} &rarr;
+                    </a>
                 </div>
 
                 <div class="flex items-center gap-4 pt-4">

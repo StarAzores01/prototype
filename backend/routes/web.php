@@ -5,6 +5,9 @@ use App\Http\Controllers\EvaluatorDashboardController;
 use App\Http\Controllers\ExtensionCoordinatorDashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\EvaluationFormController;
+use App\Http\Controllers\EvaluationQuestionController;
+use App\Http\Controllers\EvaluationResponseController;
 use App\Http\Controllers\ExtensionCoordinatorParticipantController;
 use App\Http\Controllers\ExtensionCoordinatorTrainingController;
 use App\Http\Controllers\ProfileController;
@@ -53,6 +56,17 @@ Route::middleware(['auth', 'role:extension_coordinator'])->group(function () {
             Route::get('/{document}/download', [DocumentController::class, 'download'])->name('download');
             Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
         });
+
+    Route::prefix('extension-coordinator/trainings/{training}/evaluation-forms')
+        ->name('extension-coordinator.trainings.evaluation-forms.')
+        ->group(function () {
+            Route::get('/', [EvaluationFormController::class, 'index'])->name('index');
+            Route::get('/create', [EvaluationFormController::class, 'create'])->name('create');
+            Route::post('/', [EvaluationFormController::class, 'store'])->name('store');
+            Route::get('/{evaluationForm}', [EvaluationFormController::class, 'show'])->name('show');
+            Route::post('/{evaluationForm}/publish', [EvaluationFormController::class, 'publish'])->name('publish');
+            Route::post('/{evaluationForm}/questions', [EvaluationQuestionController::class, 'store'])->name('questions.store');
+        });
 });
 
 Route::middleware(['auth', 'role:project_leader'])->group(function () {
@@ -77,11 +91,30 @@ Route::middleware(['auth', 'role:project_leader'])->group(function () {
             Route::get('/{document}/download', [DocumentController::class, 'download'])->name('download');
             Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
         });
+
+    Route::prefix('project-leader/trainings/{training}/evaluation-forms')
+        ->name('project-leader.trainings.evaluation-forms.')
+        ->group(function () {
+            Route::get('/', [EvaluationFormController::class, 'index'])->name('index');
+            Route::get('/create', [EvaluationFormController::class, 'create'])->name('create');
+            Route::post('/', [EvaluationFormController::class, 'store'])->name('store');
+            Route::get('/{evaluationForm}', [EvaluationFormController::class, 'show'])->name('show');
+            Route::post('/{evaluationForm}/publish', [EvaluationFormController::class, 'publish'])->name('publish');
+            Route::post('/{evaluationForm}/questions', [EvaluationQuestionController::class, 'store'])->name('questions.store');
+        });
 });
 
 Route::middleware(['auth', 'role:beneficiary'])->group(function () {
     Route::get('/beneficiary/dashboard', [BeneficiaryDashboardController::class, 'index'])
         ->name('beneficiary.dashboard');
+
+    Route::prefix('beneficiary/evaluation-forms')
+        ->name('beneficiary.evaluation-forms.')
+        ->group(function () {
+            Route::get('/', [EvaluationResponseController::class, 'index'])->name('index');
+            Route::get('/{evaluationForm}', [EvaluationResponseController::class, 'show'])->name('show');
+            Route::post('/{evaluationForm}', [EvaluationResponseController::class, 'store'])->name('store');
+        });
 });
 
 Route::middleware(['auth', 'role:evaluator'])->group(function () {

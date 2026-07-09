@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BeneficiaryDashboardController;
+use App\Http\Controllers\BeneficiaryTrainingController;
 use App\Http\Controllers\EvaluatorDashboardController;
 use App\Http\Controllers\ExtensionCoordinatorDashboardController;
 use App\Http\Controllers\AttendanceController;
@@ -16,12 +17,16 @@ use App\Http\Controllers\ImpactAssessmentController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectLeaderDashboardController;
+use App\Http\Controllers\ProjectLeaderParticipantController;
 use App\Http\Controllers\ProjectLeaderTrainingController;
+use App\Http\Controllers\PublicPageController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [PublicPageController::class, 'home'])->name('public.home');
+Route::get('/about', [PublicPageController::class, 'about'])->name('public.about');
+Route::get('/trainings', [PublicPageController::class, 'trainings'])->name('public.trainings');
+Route::get('/contact', [PublicPageController::class, 'contact'])->name('public.contact');
+Route::post('/contact', [PublicPageController::class, 'submitContact'])->name('public.contact.submit');
 
 Route::get('/dashboard', function () {
     return redirect()->route(auth()->user()->dashboardRouteName());
@@ -88,6 +93,9 @@ Route::middleware(['auth', 'role:project_leader'])->group(function () {
     Route::get('/project-leader/trainings', [ProjectLeaderTrainingController::class, 'index'])
         ->name('project-leader.trainings.index');
 
+    Route::get('/project-leader/trainings/{training}/participants', [ProjectLeaderParticipantController::class, 'index'])
+        ->name('project-leader.trainings.participants.index');
+
     Route::prefix('project-leader/trainings/{training}/attendance')
         ->name('project-leader.trainings.attendance.')
         ->group(function () {
@@ -127,6 +135,9 @@ Route::middleware(['auth', 'role:project_leader'])->group(function () {
 Route::middleware(['auth', 'role:beneficiary'])->group(function () {
     Route::get('/beneficiary/dashboard', [BeneficiaryDashboardController::class, 'index'])
         ->name('beneficiary.dashboard');
+
+    Route::get('/beneficiary/trainings', [BeneficiaryTrainingController::class, 'index'])
+        ->name('beneficiary.trainings.index');
 
     Route::prefix('beneficiary/evaluation-forms')
         ->name('beneficiary.evaluation-forms.')

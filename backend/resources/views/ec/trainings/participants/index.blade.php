@@ -5,61 +5,49 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-
-            @if (session('status'))
-                <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">
-                    {{ session('status') }}
-                </div>
-            @endif
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <a href="{{ route('extension-coordinator.trainings.show', $training) }}" class="text-sm text-gray-600 hover:text-gray-900">
-                        &larr; {{ __('Back to Training') }}
-                    </a>
-                    <a href="{{ route('extension-coordinator.trainings.participants.create', $training) }}"
-                       class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                        {{ __('Add Participant') }}
-                    </a>
-                </div>
-
-                <table class="min-w-full text-sm text-left text-gray-700">
-                    <thead class="border-b">
-                        <tr>
-                            <th class="px-4 py-2">{{ __('Name') }}</th>
-                            <th class="px-4 py-2">{{ __('Email') }}</th>
-                            <th class="px-4 py-2">{{ __('Status') }}</th>
-                            <th class="px-4 py-2">{{ __('Actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($training->participants as $participant)
-                            <tr class="border-b">
-                                <td class="px-4 py-2">{{ $participant->user->name }}</td>
-                                <td class="px-4 py-2">{{ $participant->user->email }}</td>
-                                <td class="px-4 py-2">{{ $participant->status }}</td>
-                                <td class="px-4 py-2 space-x-2">
-                                    <a href="{{ route('extension-coordinator.trainings.participants.edit', [$training, $participant]) }}" class="text-indigo-600 hover:underline">
-                                        {{ __('Edit Status') }}
-                                    </a>
-                                    <form method="POST" action="{{ route('extension-coordinator.trainings.participants.destroy', [$training, $participant]) }}"
-                                          class="inline" onsubmit="return confirm('{{ __('Remove this participant?') }}');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:underline">{{ __('Remove') }}</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td class="px-4 py-2" colspan="4">{{ __('No participants enrolled yet.') }}</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+    <div class="page-header">
+        <div class="page-header-left">
+            <div class="breadcrumb">
+                PAThrive &rsaquo;
+                <a href="{{ route('extension-coordinator.trainings.show', $training) }}" style="color:var(--blue-primary)">{{ $training->title }}</a>
+                &rsaquo; <span>Participants</span>
             </div>
+            <h1>Participants</h1>
+        </div>
+        <a href="{{ route('extension-coordinator.trainings.participants.create', $training) }}" class="btn btn-primary">&#43; Add Participant</a>
+    </div>
+
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    @forelse ($training->participants as $participant)
+                        <tr>
+                            <td><strong>{{ $participant->user->name }}</strong></td>
+                            <td style="font-size:12px;color:var(--gray-500)">{{ $participant->user->email }}</td>
+                            <td>
+                                <span class="badge {{ $participant->status === 'enrolled' ? 'badge-active' : ($participant->status === 'completed' ? 'badge-completed' : 'badge-inactive') }}">
+                                    {{ ucfirst($participant->status) }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ route('extension-coordinator.trainings.participants.edit', [$training, $participant]) }}" class="btn btn-sm btn-outline">Edit Status</a>
+                                <form method="POST" action="{{ route('extension-coordinator.trainings.participants.destroy', [$training, $participant]) }}"
+                                      style="display:inline" onsubmit="return confirm('{{ __('Remove this participant?') }}');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--gray-400)">No participants enrolled yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </x-app-layout>

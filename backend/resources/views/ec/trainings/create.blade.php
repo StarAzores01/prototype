@@ -5,22 +5,29 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <form method="POST" action="{{ route('extension-coordinator.trainings.store') }}">
-                    @csrf
-
-                    @include('ec.trainings._form', ['projectLeaders' => $projectLeaders])
-
-                    <div class="flex items-center justify-end mt-6 gap-4">
-                        <a href="{{ route('extension-coordinator.trainings.index') }}" class="text-sm text-gray-600 hover:text-gray-900">
-                            {{ __('Cancel') }}
-                        </a>
-                        <x-primary-button>{{ __('Create Training') }}</x-primary-button>
-                    </div>
-                </form>
+    <div class="page-header">
+        <div class="page-header-left">
+            <div class="breadcrumb">
+                PAThrive &rsaquo;
+                <a href="{{ route('extension-coordinator.trainings.index') }}" style="color:var(--blue-primary)">Trainings</a>
+                &rsaquo; <span>New</span>
             </div>
+            <h1>Create New Training</h1>
+        </div>
+    </div>
+
+    <div class="card" style="max-width:640px">
+        <div class="card-body">
+            <form method="POST" action="{{ route('extension-coordinator.trainings.store') }}">
+                @csrf
+
+                @include('ec.trainings._form', ['projectLeaders' => $projectLeaders])
+
+                <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:16px">
+                    <a href="{{ route('extension-coordinator.trainings.index') }}" class="btn btn-outline">{{ __('Cancel') }}</a>
+                    <button type="submit" class="btn btn-primary">&#10003; {{ __('Save Training') }}</button>
+                </div>
+            </form>
         </div>
     </div>
 </x-app-layout>

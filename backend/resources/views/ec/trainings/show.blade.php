@@ -5,60 +5,129 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+    @php
+        $statusColors = [
+            'draft' => '#94A3B8',
+            'scheduled' => '#6366F1',
+            'ongoing' => '#1A56DB',
+            'completed' => '#10B981',
+            'cancelled' => '#EF4444',
+        ];
+    @endphp
 
-            @if (session('status'))
-                <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">
-                    {{ session('status') }}
-                </div>
-            @endif
+    <div class="page-header">
+        <div class="page-header-left">
+            <div class="breadcrumb">
+                PAThrive &rsaquo;
+                <a href="{{ route('extension-coordinator.trainings.index') }}" style="color:var(--blue-primary)">Trainings</a>
+                &rsaquo; <span>{{ $training->title }}</span>
+            </div>
+            <h1>{{ $training->title }}</h1>
+            <p>{{ $training->location ?? 'No location set' }}</p>
+        </div>
+        <div style="display:flex;gap:10px">
+            <a href="{{ route('extension-coordinator.trainings.index') }}" class="btn btn-outline">&larr; Back</a>
+            <a href="{{ route('extension-coordinator.trainings.edit', $training) }}" class="btn btn-primary">&#9998; Edit Training</a>
+        </div>
+    </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 space-y-4 text-gray-900">
-                <div><span class="font-semibold">{{ __('Status') }}:</span> {{ $training->status }}</div>
-                <div><span class="font-semibold">{{ __('Description') }}:</span> {{ $training->description ?? '—' }}</div>
-                <div><span class="font-semibold">{{ __('Location') }}:</span> {{ $training->location ?? '—' }}</div>
-                <div><span class="font-semibold">{{ __('Start Date') }}:</span> {{ $training->start_date?->format('Y-m-d') ?? '—' }}</div>
-                <div><span class="font-semibold">{{ __('End Date') }}:</span> {{ $training->end_date?->format('Y-m-d') ?? '—' }}</div>
-                <div><span class="font-semibold">{{ __('Project Leader') }}:</span> {{ $training->projectLeader?->name ?? '—' }}</div>
-                <div><span class="font-semibold">{{ __('Created By') }}:</span> {{ $training->creator?->name ?? '—' }}</div>
-                <div>
-                    <span class="font-semibold">{{ __('Participants') }}:</span> {{ $training->participants->count() }}
-                    <a href="{{ route('extension-coordinator.trainings.participants.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
-                        {{ __('Manage Participants') }} &rarr;
-                    </a>
-                    <a href="{{ route('extension-coordinator.trainings.attendance.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
-                        {{ __('Manage Attendance') }} &rarr;
-                    </a>
-                    <a href="{{ route('extension-coordinator.trainings.documents.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
-                        {{ __('Manage Documents') }} &rarr;
-                    </a>
-                    <a href="{{ route('extension-coordinator.trainings.evaluation-forms.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
-                        {{ __('Manage Evaluation Forms') }} &rarr;
-                    </a>
-                    <a href="{{ route('extension-coordinator.trainings.impact-assessments.index', $training) }}" class="text-indigo-600 hover:underline ml-2">
-                        {{ __('Manage Impact Assessments') }} &rarr;
-                    </a>
-                </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:24px">
+        <div class="stat-card">
+            <div class="stat-icon blue">&#128197;</div>
+            <div class="stat-body"><div class="stat-value" style="font-size:16px">{{ $training->start_date?->format('M d, Y') ?? '—' }}</div><div class="stat-label">Start Date</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:{{ $statusColors[$training->status] ?? '#94A3B8' }}22;color:{{ $statusColors[$training->status] ?? '#94A3B8' }}">&#8505;</div>
+            <div class="stat-body"><div class="stat-value" style="font-size:16px">{{ ucfirst($training->status) }}</div><div class="stat-label">Status</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon navy">&#128101;</div>
+            <div class="stat-body"><div class="stat-value">{{ $training->participants->count() }}</div><div class="stat-label">Participants</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">&#128100;</div>
+            <div class="stat-body"><div class="stat-value" style="font-size:15px">{{ $training->projectLeader?->name ?? 'TBA' }}</div><div class="stat-label">Project Leader</div></div>
+        </div>
+    </div>
 
-                <div class="flex items-center gap-4 pt-4">
-                    <a href="{{ route('extension-coordinator.trainings.edit', $training) }}"
-                       class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                        {{ __('Edit') }}
-                    </a>
-
-                    <form method="POST" action="{{ route('extension-coordinator.trainings.destroy', $training) }}"
-                          onsubmit="return confirm('{{ __('Cancel this training?') }}');">
-                        @csrf
-                        @method('DELETE')
-                        <x-danger-button>{{ __('Cancel Training') }}</x-danger-button>
-                    </form>
-
-                    <a href="{{ route('extension-coordinator.trainings.index') }}" class="text-sm text-gray-600 hover:text-gray-900">
-                        {{ __('Back to list') }}
-                    </a>
+    <div class="dash-grid">
+        <div class="dash-main">
+            <div class="card" style="margin-bottom:20px">
+                <div class="card-header"><div class="card-title">Description</div></div>
+                <div class="card-body">
+                    @if ($training->description)
+                        <p style="font-size:14px;color:var(--gray-700);line-height:1.8">{{ $training->description }}</p>
+                    @else
+                        <p style="color:var(--gray-400);font-size:13px">No description provided.</p>
+                    @endif
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Participants</div>
+                    <a href="{{ route('extension-coordinator.trainings.participants.index', $training) }}" class="btn btn-sm btn-outline">Manage</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>#</th><th>Name</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($training->participants as $i => $participant)
+                                <tr>
+                                    <td style="color:var(--gray-400)">{{ $i + 1 }}</td>
+                                    <td><strong>{{ $participant->user->name }}</strong></td>
+                                    <td><span class="badge badge-active">{{ ucfirst($participant->status) }}</span></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" style="text-align:center;padding:24px;color:var(--gray-400)">No participants enrolled yet.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-side">
+            <div class="card" style="margin-bottom:20px">
+                <div class="card-header"><div class="card-title">Training Details</div></div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+                    @foreach ([
+                        ['Location', $training->location ?? '—'],
+                        ['End Date', $training->end_date?->format('M d, Y') ?? '—'],
+                        ['Created By', $training->creator?->name ?? '—'],
+                    ] as [$label, $val])
+                        <div>
+                            <div style="font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.4px">{{ $label }}</div>
+                            <div style="font-size:13px;color:var(--gray-800);font-weight:500;margin-top:2px">{{ $val }}</div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><div class="card-title">Manage</div></div>
+                <div class="card-body">
+                    <div class="quick-links">
+                        <a href="{{ route('extension-coordinator.trainings.attendance.index', $training) }}" class="quick-link-item">Attendance</a>
+                        <a href="{{ route('extension-coordinator.trainings.documents.index', $training) }}" class="quick-link-item">Documents</a>
+                        <a href="{{ route('extension-coordinator.trainings.evaluation-forms.index', $training) }}" class="quick-link-item">Evaluation Forms</a>
+                        <a href="{{ route('extension-coordinator.trainings.impact-assessments.index', $training) }}" class="quick-link-item">Impact Assessments</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+        <div class="card-body" style="display:flex;justify-content:flex-end">
+            <form method="POST" action="{{ route('extension-coordinator.trainings.destroy', $training) }}"
+                  onsubmit="return confirm('{{ __('Cancel this training?') }}');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger">Cancel Training</button>
+            </form>
         </div>
     </div>
 </x-app-layout>

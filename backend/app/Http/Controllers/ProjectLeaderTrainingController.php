@@ -12,7 +12,10 @@ class ProjectLeaderTrainingController extends Controller
      */
     public function index(Request $request): View
     {
-        $trainings = $request->user()->trainingsLed()->latest()->get();
+        $trainings = $request->user()->trainingsLed()
+            ->withCount('participants')
+            ->latest()
+            ->get();
 
         return view('project-leader.trainings.index', [
             'trainings' => $trainings,

@@ -5,45 +5,35 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+    <div class="page-header">
+        <div class="page-header-left">
+            <div class="breadcrumb">PAThrive &rsaquo; <span>Impact Assessments</span></div>
+            <h1>Impact Assessments Awaiting Review</h1>
+            <p>Submitted by beneficiaries across all trainings</p>
+        </div>
+    </div>
 
-            @if (session('status'))
-                <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">
-                    {{ session('status') }}
-                </div>
-            @endif
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <table class="min-w-full text-sm text-left text-gray-700">
-                    <thead class="border-b">
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Training</th><th>Beneficiary</th><th>Submitted</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    @forelse ($assessments as $assessment)
                         <tr>
-                            <th class="px-4 py-2">{{ __('Training') }}</th>
-                            <th class="px-4 py-2">{{ __('Beneficiary') }}</th>
-                            <th class="px-4 py-2">{{ __('Submitted') }}</th>
-                            <th class="px-4 py-2">{{ __('Actions') }}</th>
+                            <td><strong>{{ $assessment->training->title }}</strong></td>
+                            <td>{{ $assessment->user->name }}</td>
+                            <td style="font-size:12px;color:var(--gray-400)">{{ $assessment->submitted_at?->format('Y-m-d') }}</td>
+                            <td>
+                                <a href="{{ route('evaluator.impact-assessments.show', $assessment) }}" class="btn btn-sm btn-primary">Review</a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($assessments as $assessment)
-                            <tr class="border-b">
-                                <td class="px-4 py-2">{{ $assessment->training->title }}</td>
-                                <td class="px-4 py-2">{{ $assessment->user->name }}</td>
-                                <td class="px-4 py-2">{{ $assessment->submitted_at?->format('Y-m-d') }}</td>
-                                <td class="px-4 py-2">
-                                    <a href="{{ route('evaluator.impact-assessments.show', $assessment) }}" class="text-indigo-600 hover:underline">
-                                        {{ __('Review') }}
-                                    </a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td class="px-4 py-2" colspan="4">{{ __('Nothing awaiting review right now.') }}</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--gray-400)">Nothing awaiting review right now.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </x-app-layout>

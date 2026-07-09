@@ -5,35 +5,33 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+    <div class="page-header">
+        <div class="page-header-left">
+            <div class="breadcrumb">PAThrive &rsaquo; <span>Notifications</span></div>
+            <h1>Notifications</h1>
+        </div>
+    </div>
 
-            @if (session('status'))
-                <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">
-                    {{ session('status') }}
-                </div>
-            @endif
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 space-y-4">
-                @forelse ($notifications as $notification)
-                    <div class="border-b pb-4 flex items-start justify-between gap-4 {{ $notification->is_read ? 'opacity-60' : '' }}">
-                        <div>
-                            <div class="font-semibold text-gray-900">{{ $notification->title }}</div>
-                            <div class="text-sm text-gray-700">{{ $notification->message }}</div>
-                            <div class="text-xs text-gray-400 mt-1">{{ $notification->created_at->format('Y-m-d H:i') }}</div>
-                        </div>
-                        @unless ($notification->is_read)
-                            <form method="POST" action="{{ route('notifications.read', $notification) }}">
-                                @csrf
-                                @method('PATCH')
-                                <x-primary-button>{{ __('Mark as Read') }}</x-primary-button>
-                            </form>
-                        @endunless
+    <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            @forelse ($notifications as $notification)
+                <div class="upload-item" style="align-items:flex-start;justify-content:space-between;gap:16px;{{ $notification->is_read ? 'opacity:.6' : '' }}">
+                    <div class="upload-item-body">
+                        <div class="upload-item-name">{{ $notification->title }}</div>
+                        <div style="font-size:13px;color:var(--gray-700);margin-top:2px">{{ $notification->message }}</div>
+                        <div class="upload-item-meta">{{ $notification->created_at->format('Y-m-d H:i') }}</div>
                     </div>
-                @empty
-                    <p class="text-gray-600">{{ __('No notifications yet.') }}</p>
-                @endforelse
-            </div>
+                    @unless ($notification->is_read)
+                        <form method="POST" action="{{ route('notifications.read', $notification) }}">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="btn btn-sm btn-primary">Mark as Read</button>
+                        </form>
+                    @endunless
+                </div>
+            @empty
+                <div class="empty-state">&#128276;<p>No notifications yet.</p></div>
+            @endforelse
         </div>
     </div>
 </x-app-layout>

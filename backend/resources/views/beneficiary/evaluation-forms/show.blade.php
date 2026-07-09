@@ -5,58 +5,61 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <a href="{{ route('beneficiary.evaluation-forms.index') }}" class="text-sm text-gray-600 hover:text-gray-900">
-                    &larr; {{ __('Back to Evaluation Forms') }}
-                </a>
-
-                <form method="POST" action="{{ route('beneficiary.evaluation-forms.store', $form) }}" class="mt-6">
-                    @csrf
-
-                    @foreach ($form->questions as $question)
-                        <div class="mb-6 pb-6 border-b last:border-0">
-                            <x-input-label :value="$question->question_text" />
-
-                            @if ($question->question_type === 'rating')
-                                <div class="flex gap-4 mt-2">
-                                    @foreach ([1, 2, 3, 4, 5] as $value)
-                                        <label class="flex items-center gap-1">
-                                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $value }}"
-                                                   @checked(old('answers.'.$question->id) == $value) required>
-                                            {{ $value }}
-                                        </label>
-                                    @endforeach
-                                </div>
-                            @elseif ($question->question_type === 'yes_no')
-                                <div class="flex gap-4 mt-2">
-                                    <label class="flex items-center gap-1">
-                                        <input type="radio" name="answers[{{ $question->id }}]" value="yes"
-                                               @checked(old('answers.'.$question->id) === 'yes') required>
-                                        {{ __('Yes') }}
-                                    </label>
-                                    <label class="flex items-center gap-1">
-                                        <input type="radio" name="answers[{{ $question->id }}]" value="no"
-                                               @checked(old('answers.'.$question->id) === 'no') required>
-                                        {{ __('No') }}
-                                    </label>
-                                </div>
-                            @else
-                                <textarea name="answers[{{ $question->id }}]" rows="3"
-                                          class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                          required>{{ old('answers.'.$question->id) }}</textarea>
-                            @endif
-
-                            <x-input-error :messages="$errors->get('answers.'.$question->id)" class="mt-2" />
-                        </div>
-                    @endforeach
-
-                    <div class="flex justify-end">
-                        <x-primary-button>{{ __('Submit Responses') }}</x-primary-button>
-                    </div>
-                </form>
+    <div class="page-header">
+        <div class="page-header-left">
+            <div class="breadcrumb">
+                PAThrive &rsaquo;
+                <a href="{{ route('beneficiary.evaluation-forms.index') }}" style="color:var(--blue-primary)">Evaluation Forms</a>
+                &rsaquo; <span>{{ $form->title }}</span>
             </div>
+            <h1>{{ $form->title }}</h1>
+        </div>
+    </div>
+
+    <div class="card" style="max-width:640px">
+        <div class="card-body">
+            <form method="POST" action="{{ route('beneficiary.evaluation-forms.store', $form) }}">
+                @csrf
+
+                @foreach ($form->questions as $question)
+                    <div class="form-group" style="padding-bottom:16px;border-bottom:1px solid var(--gray-100);margin-bottom:16px">
+                        <label class="form-label">{{ $question->question_text }}</label>
+
+                        @if ($question->question_type === 'rating')
+                            <div style="display:flex;gap:16px;margin-top:8px">
+                                @foreach ([1, 2, 3, 4, 5] as $value)
+                                    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray-700)">
+                                        <input type="radio" name="answers[{{ $question->id }}]" value="{{ $value }}"
+                                               @checked(old('answers.'.$question->id) == $value) required>
+                                        {{ $value }}
+                                    </label>
+                                @endforeach
+                            </div>
+                        @elseif ($question->question_type === 'yes_no')
+                            <div style="display:flex;gap:16px;margin-top:8px">
+                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray-700)">
+                                    <input type="radio" name="answers[{{ $question->id }}]" value="yes"
+                                           @checked(old('answers.'.$question->id) === 'yes') required>
+                                    {{ __('Yes') }}
+                                </label>
+                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray-700)">
+                                    <input type="radio" name="answers[{{ $question->id }}]" value="no"
+                                           @checked(old('answers.'.$question->id) === 'no') required>
+                                    {{ __('No') }}
+                                </label>
+                            </div>
+                        @else
+                            <textarea name="answers[{{ $question->id }}]" class="form-control" rows="3" required>{{ old('answers.'.$question->id) }}</textarea>
+                        @endif
+
+                        <x-input-error :messages="$errors->get('answers.'.$question->id)" class="mt-2" />
+                    </div>
+                @endforeach
+
+                <div style="display:flex;justify-content:flex-end">
+                    <button type="submit" class="btn btn-primary">&#10003; {{ __('Submit Responses') }}</button>
+                </div>
+            </form>
         </div>
     </div>
 </x-app-layout>

@@ -5,55 +5,68 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    @php
+        $statusColors = [
+            'draft' => '#94A3B8',
+            'scheduled' => '#6366F1',
+            'ongoing' => '#1A56DB',
+            'completed' => '#10B981',
+            'cancelled' => '#EF4444',
+        ];
+    @endphp
 
-            @if (session('status'))
-                <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">
-                    {{ session('status') }}
-                </div>
-            @endif
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <div class="flex justify-end mb-4">
-                    <a href="{{ route('extension-coordinator.trainings.create') }}"
-                       class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                        {{ __('New Training') }}
-                    </a>
-                </div>
-
-                <table class="min-w-full text-sm text-left text-gray-700">
-                    <thead class="border-b">
-                        <tr>
-                            <th class="px-4 py-2">{{ __('Title') }}</th>
-                            <th class="px-4 py-2">{{ __('Status') }}</th>
-                            <th class="px-4 py-2">{{ __('Start Date') }}</th>
-                            <th class="px-4 py-2">{{ __('Project Leader') }}</th>
-                            <th class="px-4 py-2">{{ __('Created By') }}</th>
-                            <th class="px-4 py-2">{{ __('Actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($trainings as $training)
-                            <tr class="border-b">
-                                <td class="px-4 py-2">{{ $training->title }}</td>
-                                <td class="px-4 py-2">{{ $training->status }}</td>
-                                <td class="px-4 py-2">{{ $training->start_date?->format('Y-m-d') }}</td>
-                                <td class="px-4 py-2">{{ $training->projectLeader?->name ?? '—' }}</td>
-                                <td class="px-4 py-2">{{ $training->creator?->name ?? '—' }}</td>
-                                <td class="px-4 py-2 space-x-2">
-                                    <a href="{{ route('extension-coordinator.trainings.show', $training) }}" class="text-indigo-600 hover:underline">{{ __('View') }}</a>
-                                    <a href="{{ route('extension-coordinator.trainings.edit', $training) }}" class="text-indigo-600 hover:underline">{{ __('Edit') }}</a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td class="px-4 py-2" colspan="6">{{ __('No trainings yet.') }}</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+    <div class="page-header">
+        <div class="page-header-left">
+            <div class="breadcrumb">PAThrive &rsaquo; <span>Trainings</span></div>
+            <h1>Extension Trainings</h1>
+            <p>Browse and manage all extension training programs</p>
         </div>
+        <a href="{{ route('extension-coordinator.trainings.create') }}" class="btn btn-primary">&#43; Create Training</a>
     </div>
+
+    <form method="GET" class="filter-row">
+        <div class="search-box">
+            &#128269;
+            <input type="text" name="q" value="{{ $search }}" placeholder="Search trainings...">
+        </div>
+        <select name="status" class="filter-select" onchange="this.form.submit()">
+            <option value="">All Status</option>
+            @foreach (['draft', 'scheduled', 'ongoing', 'completed', 'cancelled'] as $option)
+                <option value="{{ $option }}" @selected($statusFilter === $option)>{{ ucfirst($option) }}</option>
+            @endforeach
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">&#128269; Search</button>
+        @if ($search || $statusFilter)
+            <a href="{{ route('extension-coordinator.trainings.index') }}" class="btn btn-ghost btn-sm">Clear</a>
+        @endif
+    </form>
+
+    @if ($trainings->isEmpty())
+        <div class="empty-state">&#128218;<p>No trainings found. <a href="{{ route('extension-coordinator.trainings.create') }}">Create one.</a></p></div>
+    @else
+        <div class="home-grid">
+            @foreach ($trainings as $training)
+                <div class="training-card">
+                    <div class="training-card-img" style="background:linear-gradient(135deg,#1A56DB,#2E6BF0)">
+                        <span style="z-index:1;position:relative;font-size:48px">&#128218;</span>
+                    </div>
+                    <div class="training-card-body">
+                        <div class="training-card-title">{{ $training->title }}</div>
+                        <div class="training-card-desc">{{ Str::limit($training->description ?? 'No description provided.', 100) }}</div>
+                        <div class="training-card-meta">
+                            <span>&#128197; {{ $training->start_date?->format('M d, Y') ?? '—' }}</span>
+                            <span>&#128100; {{ $training->projectLeader?->name ?? 'TBA' }}</span>
+                            <span>&#128101; {{ $training->participants_count }} enrolled</span>
+                        </div>
+                        <div class="training-card-footer">
+                            <span class="badge" style="background:{{ $statusColors[$training->status] ?? '#94A3B8' }}22;color:{{ $statusColors[$training->status] ?? '#94A3B8' }}">
+                                {{ ucfirst($training->status) }}
+                            </span>
+                            <a href="{{ route('extension-coordinator.trainings.show', $training) }}" class="btn btn-sm btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
 </x-app-layout>

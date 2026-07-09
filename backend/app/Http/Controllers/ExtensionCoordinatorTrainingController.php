@@ -16,14 +16,25 @@ class ExtensionCoordinatorTrainingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
+        $search = $request->query('q');
+        $status = $request->query('status');
+
         $trainings = Training::with(['creator', 'projectLeader'])
+            ->withCount('participants')
+            ->when($search, fn ($query) => $query->where(function ($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            }))
+            ->when($status, fn ($query) => $query->where('status', $status))
             ->latest()
             ->get();
 
         return view('ec.trainings.index', [
             'trainings' => $trainings,
+            'search' => $search ?? '',
+            'statusFilter' => $status ?? '',
         ]);
     }
 

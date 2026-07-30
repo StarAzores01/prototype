@@ -95,7 +95,7 @@
                         </div>
                     </div>
                 @empty
-                    <div class="empty-state" style="padding:20px">&#128193;<p>No documents yet.</p></div>
+                    <div class="empty-state" style="padding:20px"><i class="fa-solid fa-folder"></i><p>No documents yet.</p></div>
                 @endforelse
             </div>
         </div>

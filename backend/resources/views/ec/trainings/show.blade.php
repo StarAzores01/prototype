@@ -26,26 +26,26 @@
             <p>{{ $training->location ?? 'No location set' }}</p>
         </div>
         <div style="display:flex;gap:10px">
-            <a href="{{ route('extension-coordinator.trainings.index') }}" class="btn btn-outline">&larr; Back</a>
-            <a href="{{ route('extension-coordinator.trainings.edit', $training) }}" class="btn btn-primary">&#9998; Edit Training</a>
+            <a href="{{ route('extension-coordinator.trainings.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            <a href="{{ route('extension-coordinator.trainings.edit', $training) }}" class="btn btn-primary"><i class="fa-solid fa-pen"></i> Edit Training</a>
         </div>
     </div>
 
     <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:24px">
         <div class="stat-card">
-            <div class="stat-icon blue">&#128197;</div>
+            <div class="stat-icon blue"><i class="fa-solid fa-calendar"></i></div>
             <div class="stat-body"><div class="stat-value" style="font-size:16px">{{ $training->start_date?->format('M d, Y') ?? '—' }}</div><div class="stat-label">Start Date</div></div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon" style="background:{{ $statusColors[$training->status] ?? '#94A3B8' }}22;color:{{ $statusColors[$training->status] ?? '#94A3B8' }}">&#8505;</div>
+            <div class="stat-icon" style="background:{{ $statusColors[$training->status] ?? '#94A3B8' }}22;color:{{ $statusColors[$training->status] ?? '#94A3B8' }}"><i class="fa-solid fa-circle-info"></i></div>
             <div class="stat-body"><div class="stat-value" style="font-size:16px">{{ ucfirst($training->status) }}</div><div class="stat-label">Status</div></div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon navy">&#128101;</div>
+            <div class="stat-icon navy"><i class="fa-solid fa-users"></i></div>
             <div class="stat-body"><div class="stat-value">{{ $training->participants->count() }}</div><div class="stat-label">Participants</div></div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon green">&#128100;</div>
+            <div class="stat-icon green"><i class="fa-solid fa-user"></i></div>
             <div class="stat-body"><div class="stat-value" style="font-size:15px">{{ $training->projectLeader?->name ?? 'TBA' }}</div><div class="stat-label">Project Leader</div></div>
         </div>
     </div>

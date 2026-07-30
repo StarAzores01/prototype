@@ -75,7 +75,7 @@
                         </div>
                     </div>
                 @empty
-                    <div class="empty-state" style="padding:20px">&#9989;<p>Nothing awaiting your response.</p></div>
+                    <div class="empty-state" style="padding:20px"><i class="fa-solid fa-circle-check"></i><p>Nothing awaiting your response.</p></div>
                 @endforelse
             </div>
         </div>

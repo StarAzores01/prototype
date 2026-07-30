@@ -29,7 +29,7 @@
     </div>
 
     @if ($training->participants->isEmpty())
-        <div class="empty-state">&#128101;<p>No participants enrolled in this training yet.</p></div>
+        <div class="empty-state"><i class="fa-solid fa-users"></i><p>No participants enrolled in this training yet.</p></div>
     @else
         <div class="card" style="margin-bottom:20px">
             <div class="card-header"><div class="card-title">Mark Attendance &mdash; {{ $sessionDate }}</div></div>
@@ -63,7 +63,7 @@
                 </div>
 
                 <div style="padding:14px 20px;border-top:1px solid var(--gray-100);display:flex;justify-content:flex-end">
-                    <button type="submit" class="btn btn-primary">&#10003; Save Attendance</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Save Attendance</button>
                 </div>
             </form>
         </div>

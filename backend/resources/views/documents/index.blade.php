@@ -47,7 +47,7 @@
                 </div>
 
                 <div style="display:flex;justify-content:flex-end">
-                    <button type="submit" class="btn btn-primary">&#128228; {{ __('Upload') }}</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-upload"></i> {{ __('Upload') }}</button>
                 </div>
             </form>
         </div>

@@ -30,7 +30,7 @@
                     @endunless
                 </div>
             @empty
-                <div class="empty-state">&#128276;<p>No notifications yet.</p></div>
+                <div class="empty-state"><i class="fa-solid fa-bell"></i><p>No notifications yet.</p></div>
             @endforelse
         </div>
     </div>

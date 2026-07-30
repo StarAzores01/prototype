@@ -25,7 +25,7 @@
 
                 <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:16px">
                     <a href="{{ route('extension-coordinator.trainings.index') }}" class="btn btn-outline">{{ __('Cancel') }}</a>
-                    <button type="submit" class="btn btn-primary">&#10003; {{ __('Save Training') }}</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> {{ __('Save Training') }}</button>
                 </div>
             </form>
         </div>

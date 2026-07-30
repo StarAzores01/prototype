@@ -1,47 +1,55 @@
 <x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    @if (session('status'))
+        <div class="alert alert-success">
+            <i class="fa-solid fa-circle-check"></i> {{ session('status') }}
+        </div>
+    @endif
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="form-group">
+            <label for="email" class="form-label">{{ __('Email') }}</label>
+            <input id="email" class="form-control" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username">
+            @error('email')
+                <div class="form-error">{{ $message }}</div>
+            @enderror
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div class="form-group">
+            <label for="password" class="form-label">{{ __('Password') }}</label>
+            <div class="password-wrap">
+                <input id="password" class="form-control" type="password" name="password" required autocomplete="current-password">
+                <span class="password-toggle" onclick="const i=document.getElementById('password'); i.type = i.type === 'password' ? 'text' : 'password';">
+                    <i class="fa-solid fa-eye"></i>
+                </span>
+            </div>
+            @error('password')
+                <div class="form-error">{{ $message }}</div>
+            @enderror
         </div>
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+        <div class="form-group" style="display:flex;align-items:center;justify-content:space-between">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gray-600);font-weight:500;cursor:pointer">
+                <input type="checkbox" name="remember">
+                {{ __('Remember me') }}
             </label>
-        </div>
 
-        <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
+                <a href="{{ route('password.request') }}" style="font-size:12.5px;color:var(--blue-primary);font-weight:600">
                     {{ __('Forgot your password?') }}
                 </a>
             @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
         </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+            {{ __('Log in') }}
+        </button>
     </form>
+
+    <div class="auth-divider"><span style="background:var(--surface);padding:0 10px;position:relative;z-index:1">{{ __('or') }}</span></div>
+
+    <p style="text-align:center;font-size:12.5px;color:var(--gray-600)">
+        {{ __("Don't have an account?") }} <a href="{{ route('register') }}" style="color:var(--blue-primary);font-weight:600">{{ __('Sign up') }}</a>
+    </p>
 </x-guest-layout>

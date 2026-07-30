@@ -57,7 +57,7 @@
                 @endforeach
 
                 <div style="display:flex;justify-content:flex-end">
-                    <button type="submit" class="btn btn-primary">&#10003; {{ __('Submit Responses') }}</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> {{ __('Submit Responses') }}</button>
                 </div>
             </form>
         </div>

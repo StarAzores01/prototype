@@ -62,7 +62,7 @@
         <div class="card-body">
             @forelse ($form->questions as $question)
                 <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--gray-100)">
-                    <div style="font-weight:600;color:var(--navy)">{{ $question->question_text }}</div>
+                    <div style="font-weight:600;color:var(--text-primary)">{{ $question->question_text }}</div>
                     <div style="font-size:12px;color:var(--gray-400);margin-bottom:8px">Type: {{ ucfirst(str_replace('_', ' ', $question->question_type)) }}</div>
 
                     @if ($question->responses->isEmpty())

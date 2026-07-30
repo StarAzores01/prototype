@@ -16,15 +16,15 @@
 
     <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
         <div class="stat-card">
-            <div class="stat-icon yellow">&#128203;</div>
+            <div class="stat-icon yellow"><i class="fa-solid fa-clipboard-list"></i></div>
             <div class="stat-body"><div class="stat-value">{{ $assessmentCounts['pending'] ?? 0 }}</div><div class="stat-label">Pending (not yet submitted)</div></div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon blue">&#128204;</div>
+            <div class="stat-icon blue"><i class="fa-solid fa-thumbtack"></i></div>
             <div class="stat-body"><div class="stat-value">{{ $assessmentCounts['submitted'] ?? 0 }}</div><div class="stat-label">Awaiting Review</div></div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon green">&#9989;</div>
+            <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
             <div class="stat-body"><div class="stat-value">{{ $assessmentCounts['reviewed'] ?? 0 }}</div><div class="stat-label">Reviewed</div></div>
         </div>
     </div>

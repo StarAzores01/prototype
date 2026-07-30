@@ -21,12 +21,12 @@
             <h1>Extension Trainings</h1>
             <p>Browse and manage all extension training programs</p>
         </div>
-        <a href="{{ route('extension-coordinator.trainings.create') }}" class="btn btn-primary">&#43; Create Training</a>
+        <a href="{{ route('extension-coordinator.trainings.create') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Training</a>
     </div>
 
     <form method="GET" class="filter-row">
         <div class="search-box">
-            &#128269;
+            <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" name="q" value="{{ $search }}" placeholder="Search trainings...">
         </div>
         <select name="status" class="filter-select" onchange="this.form.submit()">
@@ -35,28 +35,28 @@
                 <option value="{{ $option }}" @selected($statusFilter === $option)>{{ ucfirst($option) }}</option>
             @endforeach
         </select>
-        <button type="submit" class="btn btn-primary btn-sm">&#128269; Search</button>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
         @if ($search || $statusFilter)
             <a href="{{ route('extension-coordinator.trainings.index') }}" class="btn btn-ghost btn-sm">Clear</a>
         @endif
     </form>
 
     @if ($trainings->isEmpty())
-        <div class="empty-state">&#128218;<p>No trainings found. <a href="{{ route('extension-coordinator.trainings.create') }}">Create one.</a></p></div>
+        <div class="empty-state"><i class="fa-solid fa-book"></i><p>No trainings found. <a href="{{ route('extension-coordinator.trainings.create') }}">Create one.</a></p></div>
     @else
         <div class="home-grid">
             @foreach ($trainings as $training)
                 <div class="training-card">
                     <div class="training-card-img" style="background:linear-gradient(135deg,#1A56DB,#2E6BF0)">
-                        <span style="z-index:1;position:relative;font-size:48px">&#128218;</span>
+                        <i class="fa-solid fa-book" style="position:relative;z-index:1"></i>
                     </div>
                     <div class="training-card-body">
                         <div class="training-card-title">{{ $training->title }}</div>
                         <div class="training-card-desc">{{ Str::limit($training->description ?? 'No description provided.', 100) }}</div>
                         <div class="training-card-meta">
-                            <span>&#128197; {{ $training->start_date?->format('M d, Y') ?? '—' }}</span>
-                            <span>&#128100; {{ $training->projectLeader?->name ?? 'TBA' }}</span>
-                            <span>&#128101; {{ $training->participants_count }} enrolled</span>
+                            <span><i class="fa-solid fa-calendar"></i> {{ $training->start_date?->format('M d, Y') ?? '—' }}</span>
+                            <span><i class="fa-solid fa-user"></i> {{ $training->projectLeader?->name ?? 'TBA' }}</span>
+                            <span><i class="fa-solid fa-users"></i> {{ $training->participants_count }} enrolled</span>
                         </div>
                         <div class="training-card-footer">
                             <span class="badge" style="background:{{ $statusColors[$training->status] ?? '#94A3B8' }}22;color:{{ $statusColors[$training->status] ?? '#94A3B8' }}">

@@ -37,7 +37,7 @@
             @if ($assessment->status === 'submitted')
                 <form method="POST" action="{{ route('evaluator.impact-assessments.review', $assessment) }}" style="padding-top:8px">
                     @csrf
-                    <button type="submit" class="btn btn-primary">&#10003; {{ __('Mark as Reviewed') }}</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> {{ __('Mark as Reviewed') }}</button>
                 </form>
             @endif
         </div>

@@ -3,21 +3,21 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Evaluators</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Evaluators</span></div>
     <h1>Evaluators</h1>
     <p>Manage approved evaluators and their accounts</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('addEvaluator')">&#43; Add Evaluator</button>
+  <button class="btn btn-primary" onclick="openModal('addEvaluator')"><i class="fas fa-plus"></i> Add Evaluator</button>
 </div>
 
 <!-- Registered Evaluators -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
-    <div class="card-title">&#128100; Registered Evaluators</div>
+    <div class="card-title"><i class="fas fa-user"></i> Registered Evaluators</div>
     <form method="GET" action="{{ route('ec.evaluators') }}" style="display:flex;gap:8px">
       <input type="text" name="q" class="form-control" placeholder="Search..." value="{{ $q }}" style="width:220px"/>
-      <button type="submit" class="btn btn-outline btn-sm">&#128269;</button>
-      @if($q)<a href="{{ route('ec.evaluators') }}" class="btn btn-outline btn-sm">&#10005;</a>@endif
+      <button type="submit" class="btn btn-outline btn-sm"><i class="fas fa-magnifying-glass"></i></button>
+      @if($q)<a href="{{ route('ec.evaluators') }}" class="btn btn-outline btn-sm"><i class="fas fa-xmark"></i></a>@endif
     </form>
   </div>
   <div class="card-body" style="padding:0">
@@ -31,7 +31,7 @@
         <tr>
           <td style="font-weight:600">{{ $ev->first_name }} {{ $ev->last_name }}</td>
           <td><code>{{ $ev->id_number }}</code></td>
-          <td>{{ $ev->position }}</td>
+          <td>{{ $ev->department }}</td>
           <td>{{ $ev->email }}</td>
           <td>
             <span class="badge {{ $ev->is_active ? 'badge-success' : 'badge-danger' }}">
@@ -39,13 +39,13 @@
             </span>
           </td>
           <td style="display:flex;gap:6px">
-            <button class="btn btn-outline btn-sm" onclick="openEditModal({{ $ev->toJson() }})">&#9998; Edit</button>
+            <button class="btn btn-outline btn-sm" onclick="openEditModal({{ $ev->toJson() }})"><i class="fas fa-pen"></i> Edit</button>
             <form method="POST" action="{{ route('ec.evaluators.store') }}" style="display:inline">
               @csrf
               <input type="hidden" name="action" value="toggle"/>
               <input type="hidden" name="user_id" value="{{ $ev->id }}"/>
               <button type="submit" class="btn btn-sm {{ $ev->is_active ? '' : 'btn-outline' }}" style="{{ $ev->is_active ? 'background:#FEE2E2;color:#991B1B;border:none' : '' }}">
-                {{ $ev->is_active ? '🚫 Disable' : '✅ Enable' }}
+                {!! $ev->is_active ? '<i class="fas fa-ban"></i> Disable' : '<i class="fas fa-square-check"></i> Enable' !!}
               </button>
             </form>
           </td>
@@ -60,7 +60,7 @@
 <!-- Whitelist -->
 <div class="card">
   <div class="card-header">
-    <div class="card-title">&#128203; Approved Evaluators List (Pre-registration)</div>
+    <div class="card-title"><i class="fas fa-clipboard-list"></i> Approved Evaluators List (Pre-registration)</div>
   </div>
   <div class="card-body" style="padding:0">
     @if($whitelist->isEmpty())
@@ -81,7 +81,7 @@
               @csrf
               <input type="hidden" name="action" value="remove_whitelist"/>
               <input type="hidden" name="whitelist_id" value="{{ $w->id }}"/>
-              <button type="submit" class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none;cursor:pointer">&#128465; Remove</button>
+              <button type="submit" class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none;cursor:pointer"><i class="fas fa-trash"></i> Remove</button>
             </form>
             @else
             <span style="font-size:12px;color:var(--gray-400)">Registered</span>
@@ -99,8 +99,8 @@
 <div class="modal-overlay" id="modal-addEvaluator">
   <div class="modal" style="max-width:460px">
     <div class="modal-header">
-      <div class="modal-title">&#43; Add Evaluator to Approved List</div>
-      <button class="modal-close" onclick="closeModal('addEvaluator')">&#10005;</button>
+      <div class="modal-title"><i class="fas fa-plus"></i> Add Evaluator to Approved List</div>
+      <button class="modal-close" onclick="closeModal('addEvaluator')"><i class="fas fa-xmark"></i></button>
     </div>
     <form method="POST" action="{{ route('ec.evaluators.store') }}">
       @csrf
@@ -122,7 +122,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('addEvaluator')">Cancel</button>
-        <button type="submit" class="btn btn-primary">&#43; Add &amp; Assign ID</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Add &amp; Assign ID</button>
       </div>
     </form>
   </div>
@@ -132,8 +132,8 @@
 <div class="modal-overlay" id="modal-editEvaluator">
   <div class="modal" style="max-width:460px">
     <div class="modal-header">
-      <div class="modal-title">&#9998; Edit Evaluator</div>
-      <button class="modal-close" onclick="closeModal('editEvaluator')">&#10005;</button>
+      <div class="modal-title"><i class="fas fa-pen"></i> Edit Evaluator</div>
+      <button class="modal-close" onclick="closeModal('editEvaluator')"><i class="fas fa-xmark"></i></button>
     </div>
     <form method="POST" action="{{ route('ec.evaluators.store') }}">
       @csrf
@@ -157,7 +157,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('editEvaluator')">Cancel</button>
-        <button type="submit" class="btn btn-primary">&#10003; Save Changes</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Changes</button>
       </div>
     </form>
   </div>
@@ -172,7 +172,7 @@ function openEditModal(ev) {
   document.getElementById('edit_id').value      = ev.id_number;
   const deptSel = document.getElementById('edit_dept');
   for (let i = 0; i < deptSel.options.length; i++) {
-    deptSel.options[i].selected = deptSel.options[i].value === ev.position;
+    deptSel.options[i].selected = deptSel.options[i].value === ev.department;
   }
   openModal('editEvaluator');
 }

@@ -3,12 +3,22 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Participants</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Participants</span></div>
     <h1>Participants</h1>
     <p>Manage training beneficiaries and enrollments</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('addParticipant')">&#43; Add Participant</button>
+  <button class="btn btn-primary" onclick="openModal('addParticipant')"><i class="fas fa-plus"></i> Add Participant</button>
 </div>
+
+@if(session('success'))
+<div class="alert alert-success" style="margin-bottom:20px">
+  <i class="fas fa-square-check"></i> {{ session('success') }}
+</div>
+@elseif(session('error'))
+<div class="alert alert-danger" style="margin-bottom:20px">
+  <i class="fas fa-triangle-exclamation"></i> {{ session('error') }}
+</div>
+@endif
 
 <div class="card">
   <div class="card-header">
@@ -17,7 +27,7 @@
   <div class="card-body" style="padding-bottom:0">
     <form method="GET" action="{{ route('ec.participants') }}" class="filter-row">
       <div class="search-box">
-        &#128269;
+        <i class="fas fa-magnifying-glass"></i>
         <input type="text" name="q" value="{{ $q }}" placeholder="Search by name or ID…"/>
       </div>
       <select name="training" class="filter-select" onchange="this.form.submit()">
@@ -26,7 +36,7 @@
         <option value="{{ $t->id }}" {{ $filterTraining === $t->id ? 'selected' : '' }}>{{ $t->title }}</option>
         @endforeach
       </select>
-      <button type="submit" class="btn btn-primary btn-sm">&#128269; Search</button>
+      <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Search</button>
       @if($q || $filterTraining)<a href="{{ route('ec.participants') }}" class="btn btn-ghost btn-sm">Clear</a>@endif
     </form>
   </div>
@@ -44,7 +54,7 @@
           <td>
             <strong>{{ $p->full_name }}</strong>
             @if($p->address)
-            <div style="font-size:11px;color:var(--gray-400)">&#128205; {{ $p->address }}</div>
+            <div style="font-size:11px;color:var(--gray-400)"><i class="fas fa-location-dot"></i> {{ $p->address }}</div>
             @endif
           </td>
           <td style="font-size:12px;color:var(--gray-500)">{{ $p->id_number ?? '—' }}</td>
@@ -62,21 +72,21 @@
           <td><span class="badge {{ $evalBadge }}">{{ $evalStatus }}</span></td>
           <td>
             <div class="action-btns">
-              <button class="btn btn-sm btn-outline" onclick="openEditModal({{ $p->toJson() }})">&#9998; Edit</button>
+              <button class="btn btn-sm btn-outline" onclick="openEditModal({{ $p->toJson() }})"><i class="fas fa-pen"></i> Edit</button>
               <form method="POST" action="{{ route('ec.participants.store') }}" style="display:inline">
                 @csrf
                 <input type="hidden" name="action" value="toggle"/>
                 <input type="hidden" name="participant_id" value="{{ $p->id }}"/>
                 <button type="submit" class="btn btn-sm {{ $p->is_active ? 'btn-danger' : 'btn-outline' }}"
-                        onclick="return confirm('{{ $p->is_active ? 'Disable' : 'Enable' }} access for {{ $p->full_name }}?')">
-                  {!! $p->is_active ? '&#128683; Disable' : '&#9989; Enable' !!}
+                        onclick="return confirm('{{ $p->is_active ? 'Disable' : 'Enable' }} access for {{ addslashes($p->full_name) }}?')">
+                  {!! $p->is_active ? '<i class="fas fa-ban"></i> Disable' : '<i class="fas fa-square-check"></i> Enable' !!}
                 </button>
               </form>
               <form method="POST" action="{{ route('ec.participants.store') }}" style="display:inline" onsubmit="return confirm('Remove this participant?')">
                 @csrf
                 <input type="hidden" name="action" value="delete"/>
                 <input type="hidden" name="participant_id" value="{{ $p->id }}"/>
-                <button type="submit" class="btn btn-sm btn-danger">&#128465;</button>
+                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
               </form>
             </div>
           </td>
@@ -93,8 +103,8 @@
 <div class="modal-overlay" id="modal-addParticipant">
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
-      <h2>&#43; Add Participant</h2>
-      <button class="modal-close" onclick="closeModal('addParticipant')">&#10005;</button>
+      <h2><i class="fas fa-plus"></i> Add Participant</h2>
+      <button class="modal-close" onclick="closeModal('addParticipant')"><i class="fas fa-xmark"></i></button>
     </div>
     <form method="POST" action="{{ route('ec.participants.store') }}">
       @csrf
@@ -141,7 +151,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('addParticipant')">Cancel</button>
-        <button type="submit" class="btn btn-primary">&#10003; Register</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Register</button>
       </div>
     </form>
   </div>
@@ -151,8 +161,8 @@
 <div class="modal-overlay" id="modal-editParticipant">
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
-      <h2>&#9998; Edit Participant</h2>
-      <button class="modal-close" onclick="closeModal('editParticipant')">&#10005;</button>
+      <h2><i class="fas fa-pen"></i> Edit Participant</h2>
+      <button class="modal-close" onclick="closeModal('editParticipant')"><i class="fas fa-xmark"></i></button>
     </div>
     <form method="POST" action="{{ route('ec.participants.store') }}">
       @csrf
@@ -204,7 +214,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('editParticipant')">Cancel</button>
-        <button type="submit" class="btn btn-primary">&#10003; Save Changes</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Changes</button>
       </div>
     </form>
   </div>

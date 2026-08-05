@@ -168,8 +168,8 @@ class TrainingController extends Controller
             'description'         => 'nullable|string',
             'date_start'          => 'nullable|date',
             'date_end'            => 'nullable|date',
-            'budget_allocated'    => 'nullable|numeric|min:0',
-            'budget_used'         => 'nullable|numeric|min:0',
+            'budget_allocated'    => 'nullable|numeric|min:0|max:9999999999.99',
+            'budget_used'         => 'nullable|numeric|min:0|max:9999999999.99',
             'status'              => ['nullable', Rule::in(['Proposed', 'Approved', 'Ongoing', 'Completed'])],
             'target_participants' => 'nullable|integer|min:1',
             'trainer_id'          => 'nullable|exists:users,id',
@@ -194,7 +194,7 @@ class TrainingController extends Controller
             'created_by'           => Auth::guard('web')->id(),
         ]);
 
-        return redirect()->route('ec.dashboard')->with('success', 'Training created.');
+        return redirect()->route('ec.trainings')->with('success', 'Training created.');
     }
 
     private function update(Request $request)
@@ -242,8 +242,8 @@ class TrainingController extends Controller
     {
         $data = Validator::make($request->all(), [
             'training_id'      => 'required|integer|exists:trainings,id',
-            'budget_allocated' => 'nullable|numeric|min:0',
-            'budget_used'      => 'nullable|numeric|min:0',
+            'budget_allocated' => 'nullable|numeric|min:0|max:9999999999.99',
+            'budget_used'      => 'nullable|numeric|min:0|max:9999999999.99',
         ])->validate();
 
         Training::where('id', $data['training_id'])->update([

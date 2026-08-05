@@ -38,6 +38,9 @@ class ProfileController extends Controller
             if (User::where('username', $data['username'])->where('id', '!=', $user->id)->exists()) {
                 return back()->with('error', 'Username already taken.');
             }
+            if (User::where('email', $data['email'])->where('id', '!=', $user->id)->exists()) {
+                return back()->with('error', 'Email already taken.');
+            }
 
             $user->update($data);
 

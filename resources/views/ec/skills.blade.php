@@ -3,12 +3,12 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Skills Utilization</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Skills Utilization</span></div>
     <h1>Skills Utilization</h1>
     <p>View beneficiary responses to skills surveys across all trainings</p>
   </div>
   @if($viewForm)
-  <a href="{{ route('ec.skills') }}" class="btn btn-outline">&#8592; Back to All Forms</a>
+  <a href="{{ route('ec.skills') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to All Forms</a>
   @endif
 </div>
 
@@ -30,7 +30,7 @@
     <div style="font-size:12px;color:var(--gray-400);margin-top:4px">Responded</div>
   </div>
   <div class="card" style="padding:20px;text-align:center">
-    <div style="font-size:28px;font-weight:800;color:var(--navy)">{{ $rate }}%</div>
+    <div style="font-size:28px;font-weight:800;color:var(--text-heading)">{{ $rate }}%</div>
     <div style="font-size:12px;color:var(--gray-400);margin-top:4px">Response Rate</div>
   </div>
   <div class="card" style="padding:20px;text-align:center">
@@ -45,10 +45,10 @@
     <div>
       <div class="card-title">{{ $viewForm->title }}</div>
       <div class="card-subtitle">
-        &#128218; {{ $viewForm->training->title ?? '—' }}
-        &nbsp;·&nbsp; &#128100; {{ $viewForm->training->trainer->full_name ?? 'N/A' }}
+        <i class="fas fa-book"></i> {{ $viewForm->training->title ?? '—' }}
+        &nbsp;·&nbsp; <i class="fas fa-user"></i> {{ $viewForm->training->trainer->full_name ?? 'N/A' }}
         @if($viewForm->sent_at)
-        &nbsp;·&nbsp; &#128276; Sent {{ $viewForm->sent_at->format('M d, Y') }}
+        &nbsp;·&nbsp; <i class="fas fa-bell"></i> Sent {{ $viewForm->sent_at->format('M d, Y') }}
         @endif
       </div>
     </div>
@@ -58,8 +58,8 @@
 @if($responses->isEmpty())
 <div class="card">
   <div class="card-body" style="text-align:center;padding:60px 24px">
-    &#128200;
-    <div style="font-size:15px;font-weight:700;color:var(--navy);margin:12px 0 6px">No responses yet</div>
+    <i class="fas fa-chart-line"></i>
+    <div style="font-size:15px;font-weight:700;color:var(--text-heading);margin:12px 0 6px">No responses yet</div>
     <p style="font-size:13px;color:var(--gray-400)">Beneficiaries haven't submitted this survey yet.</p>
   </div>
 </div>
@@ -67,7 +67,7 @@
 
 <!-- Per-question summary -->
 <div class="card" style="margin-bottom:24px">
-  <div class="card-header"><div class="card-title">&#128202; Response Summary by Question</div></div>
+  <div class="card-header"><div class="card-title"><i class="fas fa-chart-column"></i> Response Summary by Question</div></div>
   <div class="card-body">
     @foreach($fields as $fi => $field)
       @php
@@ -79,7 +79,7 @@
         arsort($tally);
       @endphp
       <div style="margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--gray-100)">
-        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700;color:var(--text-heading);margin-bottom:10px">
           {{ $fi + 1 }}. {{ $field['label'] }}
           <span style="font-size:11px;font-weight:400;color:var(--gray-400);margin-left:6px">({{ ucfirst($field['type']) }})</span>
         </div>
@@ -113,7 +113,7 @@
 
 <!-- Individual responses table -->
 <div class="card">
-  <div class="card-header"><div class="card-title">&#128101; Individual Responses</div></div>
+  <div class="card-header"><div class="card-title"><i class="fas fa-users"></i> Individual Responses</div></div>
   <div class="table-wrap">
     <table>
       <thead>
@@ -122,7 +122,7 @@
           <th>Beneficiary</th>
           <th>Submitted</th>
           @foreach($fields as $field)
-          <th style="min-width:160px">{{ \Illuminate\Support\Str::limit($field['label'], 40) }}</th>
+          <th style="min-width:160px">{{ \Illuminate\Support\Str::limit($field['label'], 40, '…') }}</th>
           @endforeach
         </tr>
       </thead>
@@ -149,8 +149,8 @@
 @if($forms->isEmpty())
 <div class="card">
   <div class="card-body" style="text-align:center;padding:60px 24px">
-    &#128200;
-    <div style="font-size:15px;font-weight:700;color:var(--navy);margin:12px 0 6px">No skills surveys found</div>
+    <i class="fas fa-chart-line"></i>
+    <div style="font-size:15px;font-weight:700;color:var(--text-heading);margin:12px 0 6px">No skills surveys found</div>
     <p style="font-size:13px;color:var(--gray-400)">Trainers create and send skills surveys to beneficiaries. They will appear here once created.</p>
   </div>
 </div>
@@ -194,7 +194,7 @@
               <span style="font-size:13px;font-weight:700;color:var(--gray-700)">{{ $rate }}%</span>
             </td>
             <td>
-              <a href="{{ route('ec.skills') }}?form={{ $f->id }}" class="btn btn-sm btn-outline">&#128065; View Responses</a>
+              <a href="{{ route('ec.skills') }}?form={{ $f->id }}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> View Responses</a>
             </td>
           </tr>
         @endforeach

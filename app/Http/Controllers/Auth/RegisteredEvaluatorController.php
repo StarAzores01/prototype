@@ -13,9 +13,20 @@ use Illuminate\Validation\ValidationException;
 
 class RegisteredEvaluatorController extends Controller
 {
+    /** Same college list the EC's Evaluator management page uses. */
+    private array $departments = [
+        'College of Administration, Business, Hospitality, and Accountancy',
+        'College of Agriculture',
+        'College of Allied Medicine',
+        'College of Arts and Sciences',
+        'College of Engineering',
+        'College of Industrial Technology',
+        'College of Teacher Education',
+    ];
+
     public function create()
     {
-        return view('auth.evaluator-signup');
+        return view('auth.evaluator-signup', ['departments' => $this->departments]);
     }
 
     public function store(Request $request)
@@ -25,7 +36,7 @@ class RegisteredEvaluatorController extends Controller
             'last_name'  => 'required|string|max:80',
             'username'   => 'required|string|max:60',
             'email'      => 'required|email|max:120',
-            'position'   => ['required', Rule::in(['Professor', 'Assistant Professor', 'Instructor'])],
+            'department' => ['required', Rule::in($this->departments)],
             'id_number'  => 'required|string|max:40',
             'password'   => ['required', 'string', 'min:8', 'regex:/[A-Z]/', 'regex:/[0-9]/', 'regex:/[\W_]/'],
             'password2'  => 'required|same:password',
@@ -57,7 +68,7 @@ class RegisteredEvaluatorController extends Controller
             'last_name'     => $data['last_name'],
             'email'         => $data['email'],
             'id_number'     => $whitelisted->id_number,
-            'position'      => $data['position'],
+            'department'    => $data['department'],
             'role'          => 'evaluator',
             'password_hash' => Hash::make($data['password']),
             'is_active'     => true,

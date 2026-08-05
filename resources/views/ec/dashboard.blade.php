@@ -7,11 +7,11 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Dashboard</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Dashboard</span></div>
     <h1>Dashboard Overview</h1>
     <p>Welcome back, {{ $userFirstName }}! Here's what's happening in CIT extension programs.</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('addTraining')">&#43; Create Training</button>
+  <button class="btn btn-primary" onclick="openModal('addTraining')"><i class="fas fa-plus"></i> Create Training</button>
 </div>
 
 <!-- Training Activities Table -->
@@ -44,7 +44,7 @@
           <td>
             <strong>{{ $t->title }}</strong>
             @if($t->description)
-            <div style="font-size:11px;color:var(--gray-400);margin-top:2px">{{ \Illuminate\Support\Str::limit($t->description, 70) }}</div>
+            <div style="font-size:11px;color:var(--gray-400);margin-top:2px">{{ \Illuminate\Support\Str::limit($t->description, 70, '…') }}</div>
             @endif
           </td>
           <td style="font-size:12px;color:var(--gray-600)">{{ $t->area }}</td>
@@ -95,7 +95,7 @@
         </div>
       </div>
       @empty
-      <div class="empty-state" style="padding:20px">&#128193;<p>No documents yet.</p></div>
+      <div class="empty-state" style="padding:20px"><i class="fas fa-folder-open"></i><p>No documents yet.</p></div>
       @endforelse
     </div>
   </div>
@@ -137,8 +137,8 @@
 <div class="modal-overlay" id="modal-addTraining">
   <div class="modal">
     <div class="modal-header">
-      <h2>&#43; Create New Training</h2>
-      <button class="modal-close" onclick="closeModal('addTraining')">&#10005;</button>
+      <h2><i class="fas fa-plus"></i> Create New Training</h2>
+      <button class="modal-close" onclick="closeModal('addTraining')"><i class="fas fa-xmark"></i></button>
     </div>
     <form method="POST" action="{{ route('ec.trainings.store') }}">
       @csrf
@@ -211,7 +211,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('addTraining')">Cancel</button>
-        <button type="submit" class="btn btn-primary">&#10003; Save Training</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Training</button>
       </div>
     </form>
   </div>

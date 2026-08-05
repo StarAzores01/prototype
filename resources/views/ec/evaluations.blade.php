@@ -5,11 +5,11 @@
 {{-- ═══════════════════ RESPONSES VIEW ═══════════════════ --}}
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <a href="{{ route('ec.evaluations') }}" style="color:var(--blue-primary)">Evaluations</a> &#8250; <span>Responses</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <a href="{{ route('ec.evaluations') }}" style="color:var(--blue-primary)">Evaluations</a> <i class="fas fa-chevron-right"></i> <span>Responses</span></div>
     <h1>{{ $viewForm->title }}</h1>
     <p>{{ $viewTraining->title ?? '' }}</p>
   </div>
-  <a href="{{ route('ec.evaluations') }}" class="btn btn-outline">&#8592; Back</a>
+  <a href="{{ route('ec.evaluations') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
 </div>
 
 @if($responses->isEmpty())
@@ -21,7 +21,7 @@
   <div class="card">
     <div class="card-header">
       <div>
-        <div class="card-title">&#128100; {{ $resp->beneficiary->first_name }} {{ $resp->beneficiary->last_name }}</div>
+        <div class="card-title"><i class="fas fa-user"></i> {{ $resp->beneficiary->first_name }} {{ $resp->beneficiary->last_name }}</div>
         <div class="card-subtitle">Submitted {{ $resp->submitted_at->format('M d, Y g:i A') }}</div>
       </div>
     </div>
@@ -42,7 +42,7 @@
 {{-- ═══════════════════ FORM BUILDER ═══════════════════ --}}
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Evaluations</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Evaluations</span></div>
     <h1>Evaluations &amp; Feedback</h1>
     <p>Create and send evaluation forms to Project Leaders and beneficiaries</p>
   </div>
@@ -62,10 +62,10 @@
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
     <div>
-      <div class="card-title">&#128221; {{ $editForm ? 'Edit' : 'Create' }} Evaluation Form</div>
+      <div class="card-title"><i class="fas fa-file-lines"></i> {{ $editForm ? 'Edit' : 'Create' }} Evaluation Form</div>
       <div class="card-subtitle">For: <strong>{{ $editTraining->title }}</strong></div>
     </div>
-    <a href="{{ route('ec.evaluations') }}" class="btn btn-outline btn-sm">&#8592; Back</a>
+    <a href="{{ route('ec.evaluations') }}" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Back</a>
   </div>
   <div class="card-body">
     <form method="POST" action="{{ route('ec.evaluations.store') }}" id="formBuilder">
@@ -103,7 +103,7 @@
                 </label>
               </div>
               <div style="padding-top:22px">
-                <button type="button" class="btn btn-sm btn-danger" onclick="removeField(this)">&#128465;</button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeField(this)"><i class="fas fa-trash"></i></button>
               </div>
             </div>
             <div class="options-wrap" style="margin-top:10px;{{ in_array($ftype, ['radio','select']) ? '' : 'display:none' }}">
@@ -118,8 +118,8 @@
       </div>
 
       <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
-        <button type="button" class="btn btn-outline" onclick="addField()">&#43; Add Question</button>
-        <button type="submit" class="btn btn-primary">&#10003; Save Form</button>
+        <button type="button" class="btn btn-outline" onclick="addField()"><i class="fas fa-plus"></i> Add Question</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Form</button>
       </div>
     </form>
   </div>
@@ -153,7 +153,7 @@ function addField() {
         </label>
       </div>
       <div style="padding-top:22px">
-        <button type="button" class="btn btn-sm btn-danger" onclick="removeField(this)">&#128465;</button>
+        <button type="button" class="btn btn-sm btn-danger" onclick="removeField(this)"><i class="fas fa-trash"></i></button>
       </div>
     </div>
     <div class="options-wrap" style="margin-top:10px;display:none">
@@ -185,7 +185,7 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
 {{-- ═══════════════════ TRAININGS TABLE ═══════════════════ --}}
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Evaluations</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Evaluations</span></div>
     <h1>Evaluations &amp; Feedback</h1>
     <p>Create and send evaluation forms to Project Leaders and beneficiaries</p>
   </div>
@@ -226,12 +226,12 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
           <td>
             <span style="font-weight:700;color:{{ $rc > 0 ? 'var(--green)' : 'var(--gray-400)' }}">{{ $rc }}</span>
             @if($rc > 0 && $form)
-            <a href="{{ route('ec.evaluations') }}?responses={{ $t->id }}" class="btn btn-sm btn-ghost" style="margin-left:4px">&#128065; View</a>
+            <a href="{{ route('ec.evaluations') }}?responses={{ $t->id }}" class="btn btn-sm btn-ghost" style="margin-left:4px"><i class="fas fa-eye"></i> View</a>
             @endif
           </td>
           <td>
             @if($form)
-              <span class="badge badge-active" title="Form created">&#128221; Created</span>
+              <span class="badge badge-active" title="Form created"><i class="fas fa-file-lines"></i> Created</span>
               @if($form->sent_at)
                 <div style="font-size:11px;color:var(--gray-400);margin-top:2px">Sent {{ $form->sent_at->format('M d') }}</div>
               @endif
@@ -243,14 +243,14 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
           <td>
             <div class="action-btns">
               <a href="{{ route('ec.evaluations') }}?edit_form={{ $t->id }}" class="btn btn-sm btn-outline">
-                {!! $form ? '&#9998; Edit Form' : '&#43; Create Form' !!}
+                {!! $form ? '<i class="fas fa-pen"></i> Edit Form' : '<i class="fas fa-plus"></i> Create Form' !!}
               </a>
               @if($form)
               <form method="POST" action="{{ route('ec.evaluations.store') }}" style="display:inline" onsubmit="return confirm('Send evaluation form to Project Leader and beneficiaries for this training?')">
                 @csrf
                 <input type="hidden" name="action" value="send_form"/>
                 <input type="hidden" name="training_id" value="{{ $t->id }}"/>
-                <button type="submit" class="btn btn-sm btn-primary">&#128276; Send</button>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-bell"></i> Send</button>
               </form>
               @endif
             </div>

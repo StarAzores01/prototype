@@ -10,7 +10,9 @@
       "Bash(curl -s -b /tmp/cookies.txt -o /dev/null -w \"HTTP %{http_code} -> %{redirect_url}\\\\n\" \"http://127.0.0.1:8000/ec/messages.php?read=1\")",
       "Bash(curl -s -b /tmp/cookies.txt \"http://127.0.0.1:8000/ec/messages.php\" -o /tmp/msg_after.html)",
       "Read(//tmp/**)",
-      "Bash(PGPASSWORD=postgres \"/c/Program Files/PostgreSQL/18/bin/psql.exe\" -U postgres -h 127.0.0.1 -d pathrive_db -c \"SELECT id, first_name, last_name, is_active FROM users WHERE role='trainer';\")"
+      "Bash(PGPASSWORD=postgres \"/c/Program Files/PostgreSQL/18/bin/psql.exe\" -U postgres -h 127.0.0.1 -d pathrive_db -c \"SELECT id, first_name, last_name, is_active FROM users WHERE role='trainer';\")",
+      "Bash(curl -s -b /tmp/ckA3.jar http://127.0.0.1:8000/trainer/profile.php -o /tmp/prof1.html -w \"profile status: %{http_code}\\\\n\")",
+      "Bash(curl -s -b /tmp/ckA3.jar -D - -o /dev/null \"http://127.0.0.1:8000/trainer/notifications.php?mark_all_read=1\")"
     ]
   }
 }

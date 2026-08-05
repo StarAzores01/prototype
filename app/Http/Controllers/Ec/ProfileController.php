@@ -37,6 +37,9 @@ class ProfileController extends Controller
             if (\App\Models\User::where('username', $data['username'])->where('id', '!=', $user->id)->exists()) {
                 return back()->with('error', 'That username is already taken.');
             }
+            if (\App\Models\User::where('email', $data['email'])->where('id', '!=', $user->id)->exists()) {
+                return back()->with('error', 'That email is already taken.');
+            }
 
             $user->update($data);
 

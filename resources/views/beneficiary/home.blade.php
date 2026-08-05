@@ -1,13 +1,6 @@
 @extends('layouts.beneficiary')
 
 @section('content')
-@php
-  $catEmoji = [
-    'Mechanical Technology' => '⚙️', 'Automotive Technology' => '🚗', 'Computer Technology' => '💻',
-    'Electronics Technology' => '🔌', 'Culinary Technology' => '🍳', 'Apparel and Fashion Technology' => '🧵',
-    'Print Media Technology' => '🖨️', 'Information Technology' => '🖥️',
-  ];
-@endphp
 
 <style>
 /* ── Hero banner ── */
@@ -68,8 +61,8 @@
 /* ── Stat cards ── */
 .b-stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 16px; margin-bottom: 24px; }
 .b-stat {
-  background: #fff; border-radius: 16px; padding: 20px;
-  border: 1px solid #E8EEF8; text-align: center;
+  background: var(--surface); border-radius: 16px; padding: 20px;
+  border: 1px solid var(--gray-200); text-align: center;
   transition: all .22s;
 }
 .b-stat:hover { box-shadow: 0 8px 28px rgba(9,24,47,.09); transform: translateY(-2px); }
@@ -77,20 +70,20 @@
 .b-stat-lbl { font-size: 12px; color: var(--gray-400); }
 
 /* ── Section title ── */
-.b-sec-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.b-sec-title { font-size: 15px; font-weight: 700; color: var(--text-heading); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
 .b-sec-title a { font-size: 12px; font-weight: 600; color: var(--blue-primary); text-decoration: none; margin-left: auto; }
 
 /* ── Training mini cards ── */
 .b-training-list { display: flex; flex-direction: column; gap: 12px; }
 .b-tc {
   display: flex; align-items: center; gap: 14px;
-  background: #fff; border-radius: 14px; padding: 14px 16px;
-  border: 1px solid #E8EEF8; transition: all .22s;
+  background: var(--surface); border-radius: 14px; padding: 14px 16px;
+  border: 1px solid var(--gray-200); transition: all .22s;
   text-decoration: none;
 }
-.b-tc:hover { box-shadow: 0 6px 20px rgba(9,24,47,.09); border-color: #C7D9F5; transform: translateX(3px); }
+.b-tc:hover { box-shadow: 0 6px 20px rgba(9,24,47,.09); border-color: var(--blue-light); transform: translateX(3px); }
 .b-tc-ico { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; background: #EFF6FF; }
-.b-tc-title { font-size: 13.5px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+.b-tc-title { font-size: 13.5px; font-weight: 700; color: var(--text-heading); margin-bottom: 3px; }
 .b-tc-meta { font-size: 11.5px; color: var(--gray-400); }
 .b-tc-badge { margin-left: auto; flex-shrink: 0; }
 
@@ -109,13 +102,13 @@
 .b-quick { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 12px; }
 .b-ql {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  background: #fff; border-radius: 14px; padding: 18px 12px;
-  border: 1px solid #E8EEF8; text-decoration: none;
+  background: var(--surface); border-radius: 14px; padding: 18px 12px;
+  border: 1px solid var(--gray-200); text-decoration: none;
   transition: all .22s; text-align: center;
 }
-.b-ql:hover { box-shadow: 0 6px 20px rgba(9,24,47,.09); border-color: #C7D9F5; transform: translateY(-2px); }
-.b-ql-ico { font-size: 26px; }
-.b-ql-lbl { font-size: 12px; font-weight: 600; color: var(--navy); }
+.b-ql:hover { box-shadow: 0 6px 20px rgba(9,24,47,.09); border-color: var(--blue-light); transform: translateY(-2px); }
+.b-ql-ico { font-size: 26px; color: var(--blue-primary); }
+.b-ql-lbl { font-size: 12px; font-weight: 600; color: var(--text-heading); }
 
 @media (max-width: 640px) {
   .b-hero { padding: 28px 20px; }
@@ -135,10 +128,10 @@
         Track your training programs, submit evaluations, and respond to skills surveys — all in one place.
       </div>
       <div class="b-hero-actions">
-        <a href="{{ route('beneficiary.trainings') }}" class="b-hero-btn-primary">&#128218; My Trainings</a>
+        <a href="{{ route('beneficiary.trainings') }}" class="b-hero-btn-primary"><i class="fas fa-book"></i> My Trainings</a>
         @if($pendingEvals + $pendingSkills > 0)
         <a href="{{ route('beneficiary.evaluations') }}" class="b-hero-btn-ghost">
-          &#9888; {{ $pendingEvals + $pendingSkills }} Pending
+          <i class="fas fa-triangle-exclamation"></i> {{ $pendingEvals + $pendingSkills }} Pending
         </a>
         @endif
       </div>
@@ -176,8 +169,8 @@
     <div class="card">
       <div class="card-body" style="padding-bottom:0">
         <div class="b-sec-title">
-          &#128218; Recent Trainings
-          <a href="{{ route('beneficiary.trainings') }}">View all &#8594;</a>
+          <i class="fas fa-book"></i> Recent Trainings
+          <a href="{{ route('beneficiary.trainings') }}">View all <i class="fas fa-arrow-right"></i></a>
         </div>
       </div>
       @if($recentTrainings->isEmpty())
@@ -189,14 +182,14 @@
         <div class="b-training-list">
           @php $sc = ['Proposed' => 'badge-proposed', 'Approved' => 'badge-approved', 'Ongoing' => 'badge-ongoing', 'Completed' => 'badge-completed']; @endphp
           @foreach($recentTrainings as $t)
-            @php $em = $catEmoji[$t->area] ?? '📚'; @endphp
+            @php $icon = \App\Support\TrainingCategoryIcon::icon($t->area); @endphp
             <a href="{{ route('beneficiary.trainings') }}?view={{ $t->id }}" class="b-tc">
-              <div class="b-tc-ico">{{ $em }}</div>
+              <div class="b-tc-ico"><i class="fas {{ $icon }}" style="color:var(--blue-primary)"></i></div>
               <div style="flex:1;min-width:0">
                 <div class="b-tc-title">{{ $t->title }}</div>
                 <div class="b-tc-meta">
-                  &#128197; {{ $t->date_start?->format('Y-m-d') ?? '—' }}
-                  &nbsp;&middot;&nbsp; &#128100; {{ $t->trainer->full_name ?? 'TBA' }}
+                  <i class="fas fa-calendar"></i> {{ $t->date_start?->format('Y-m-d') ?? '—' }}
+                  &nbsp;&middot;&nbsp; <i class="fas fa-user"></i> {{ $t->trainer->full_name ?? 'TBA' }}
                 </div>
               </div>
               <div class="b-tc-badge">
@@ -212,28 +205,28 @@
     <!-- Quick Links -->
     <div class="card">
       <div class="card-body">
-        <div class="b-sec-title">&#9889; Quick Access</div>
+        <div class="b-sec-title"><i class="fas fa-bolt"></i> Quick Access</div>
         <div class="b-quick">
           <a href="{{ route('beneficiary.trainings') }}" class="b-ql">
-            <span class="b-ql-ico">&#128218;</span>
+            <span class="b-ql-ico"><i class="fas fa-book"></i></span>
             <span class="b-ql-lbl">Trainings</span>
           </a>
           <a href="{{ route('beneficiary.evaluations') }}" class="b-ql">
-            <span class="b-ql-ico">&#11088;</span>
+            <span class="b-ql-ico"><i class="fas fa-star"></i></span>
             <span class="b-ql-lbl">Evaluations</span>
             @if($pendingEvals > 0)
             <span style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700">{{ $pendingEvals }}</span>
             @endif
           </a>
           <a href="{{ route('beneficiary.skills') }}" class="b-ql">
-            <span class="b-ql-ico">&#128200;</span>
+            <span class="b-ql-ico"><i class="fas fa-chart-line"></i></span>
             <span class="b-ql-lbl">Skills Survey</span>
             @if($pendingSkills > 0)
             <span style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700">{{ $pendingSkills }}</span>
             @endif
           </a>
           <a href="{{ route('beneficiary.profile') }}" class="b-ql">
-            <span class="b-ql-ico">&#128100;</span>
+            <span class="b-ql-ico"><i class="fas fa-user"></i></span>
             <span class="b-ql-lbl">My Profile</span>
           </a>
         </div>
@@ -246,14 +239,14 @@
   <div class="card">
     <div class="card-body">
       <div class="b-sec-title">
-        &#128276; Notifications
+        <i class="fas fa-bell"></i> Notifications
         @if($notifications->isNotEmpty())
         <a href="{{ route('beneficiary.notifications', ['mark_all_read' => 1]) }}">Mark all read</a>
         @endif
       </div>
       @if($notifications->isEmpty())
       <div style="text-align:center;padding:32px 16px;color:var(--gray-400)">
-        <div style="font-size:28px;margin-bottom:8px">&#128276;</div>
+        <div style="font-size:28px;margin-bottom:8px"><i class="fas fa-bell"></i></div>
         <div style="font-size:13px">You're all caught up!</div>
       </div>
       @else
@@ -261,7 +254,7 @@
         @foreach($notifications as $n)
         <a href="{{ $n->link ?? '#' }}" style="text-decoration:none">
           <div class="b-notif">
-            <div class="b-notif-ico">&#128276;</div>
+            <div class="b-notif-ico"><i class="fas fa-bell"></i></div>
             <div>
               <div class="b-notif-msg">{{ $n->message }}</div>
               <div class="b-notif-time">{{ $n->created_at->format('M d, g:i A') }}</div>
@@ -272,7 +265,7 @@
       </div>
       <a href="{{ route('beneficiary.notifications') }}"
          style="display:block;text-align:center;margin-top:14px;font-size:12.5px;color:var(--blue-primary);text-decoration:none;font-weight:600">
-        View all notifications &#8594;
+        View all notifications <i class="fas fa-arrow-right"></i>
       </a>
       @endif
     </div>

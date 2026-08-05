@@ -80,16 +80,16 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('login')->with('info', 'You have been logged out.');
     }
 
     private function redirectPathFor(string $role): string
     {
         return match ($role) {
-            'extension_coordinator' => '/ec/dashboard',
-            'trainer'                => '/trainer/dashboard',
-            'evaluator'               => '/evaluator/dashboard',
-            'beneficiary'             => '/beneficiary/home',
+            'extension_coordinator' => route('ec.dashboard'),
+            'trainer'                => route('trainer.dashboard'),
+            'evaluator'               => route('evaluator.dashboard'),
+            'beneficiary'             => route('beneficiary.home'),
             default                   => '/',
         };
     }

@@ -10,6 +10,7 @@ use App\Support\IdGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 /**
  * "Trainers" in the schema/role system == "Project Leader" in the UI.
@@ -102,7 +103,7 @@ class TrainerController extends Controller
             'first_name' => 'required|string|max:80',
             'last_name'  => 'required|string|max:80',
             'email'      => 'required|email|max:120',
-            'position'   => 'required|string',
+            'position'   => ['required', Rule::in(['Professor', 'Assistant Professor', 'Instructor'])],
             'id_number'  => 'nullable|string|max:40',
         ])->validate();
 

@@ -52,7 +52,9 @@ class ImpactAssessmentController extends Controller
             'title'           => 'required|string|max:200',
             'description'     => 'nullable|string',
             'training_id'     => 'nullable|integer|exists:trainings,id',
-            'assessment_file' => 'nullable|file',
+            // mimes: content-sniffs the actual bytes (via fileinfo), not just the
+            // claimed filename extension — a renamed .php/.html can't pass this.
+            'assessment_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png',
         ])->validate();
 
         $fileName = null;
@@ -75,7 +77,7 @@ class ImpactAssessmentController extends Controller
             $originalName = $file->getClientOriginalName();
             $fileType = $ext;
             $fileSize = $file->getSize();
-            $file->storeAs('uploads', $fileName, 'public');
+            $file->storeAs('uploads', $fileName, 'local');
         }
 
         ImpactAssessment::create([
@@ -102,7 +104,7 @@ class ImpactAssessmentController extends Controller
 
         if ($assessment) {
             if ($assessment->file_name) {
-                Storage::disk('public')->delete('uploads/'.$assessment->file_name);
+                Storage::disk('local')->delete('uploads/'.$assessment->file_name);
             }
             $assessment->delete();
 

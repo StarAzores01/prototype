@@ -3,7 +3,7 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Documents</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Documents</span></div>
     <h1>Document Repository</h1>
     <p>Store and manage training materials, reports, and media files</p>
   </div>
@@ -11,13 +11,13 @@
 
 <!-- Upload Zone -->
 <div class="card" style="margin-bottom:24px">
-  <div class="card-header"><div class="card-title">&#8679;Upload File</div></div>
+  <div class="card-header"><div class="card-title"><i class="fas fa-arrow-up"></i>Upload File</div></div>
   <div class="card-body">
     <form method="POST" action="{{ route('ec.documents.store') }}" enctype="multipart/form-data" id="uploadForm">
       @csrf
       <input type="hidden" name="action" value="upload"/>
       <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-        &#8679;
+        <i class="fas fa-arrow-up"></i>
         <p style="font-size:14px;color:var(--gray-600);font-weight:600">Drag &amp; drop files here</p>
         <p style="font-size:12px;color:var(--gray-400);margin-top:4px">PDF, DOCX, XLSX, JPG, MP4 — max 20 MB</p>
         <input type="file" id="fileInput" name="file" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4"/>
@@ -36,13 +36,13 @@
         <div class="form-group" style="min-width:180px;margin:0">
           <label class="form-label">Visibility</label>
           <select name="visibility" class="form-control">
-            <option value="public">&#127760; Public (All users)</option>
-            <option value="ec_trainer">&#128101; EC &amp; Project Leaders only</option>
-            <option value="private">&#128274; Private (EC only)</option>
+            <option value="public"><i class="fas fa-globe"></i> Public (All users)</option>
+            <option value="ec_trainer"><i class="fas fa-users"></i> EC &amp; Project Leaders only</option>
+            <option value="private"><i class="fas fa-lock"></i> Private (EC only)</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary" style="height:40px">&#8679; Upload File</button>
-        <button type="button" class="btn btn-outline" style="height:40px" onclick="document.getElementById('fileInput').click()">&#128193; Browse Files</button>
+        <button type="submit" class="btn btn-primary" style="height:40px"><i class="fas fa-arrow-up"></i> Upload File</button>
+        <button type="button" class="btn btn-outline" style="height:40px" onclick="document.getElementById('fileInput').click()"><i class="fas fa-folder-open"></i> Browse Files</button>
       </div>
     </form>
   </div>
@@ -56,10 +56,10 @@
   <div class="card-body" style="padding-bottom:0">
     <form method="GET" action="{{ route('ec.documents') }}" class="filter-row">
       <div class="search-box">
-        &#128269;
+        <i class="fas fa-magnifying-glass"></i>
         <input type="text" name="q" value="{{ $q }}" placeholder="Search documents…"/>
       </div>
-      <button type="submit" class="btn btn-primary btn-sm">&#128269; Search</button>
+      <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Search</button>
       @if($q)<a href="{{ route('ec.documents') }}" class="btn btn-ghost btn-sm">Clear</a>@endif
     </form>
   </div>
@@ -92,9 +92,9 @@
           <td style="font-size:12px;color:var(--gray-400)">{{ $d->created_at?->format('M d, Y') ?? '—' }}</td>
           <td>
             <div class="action-btns">
-              <a href="{{ asset('storage/uploads/' . $d->file_name) }}" download="{{ $d->original_name }}" class="btn btn-sm btn-outline">&#8681;</a>
-              <a href="{{ asset('storage/uploads/' . $d->file_name) }}" target="_blank" class="btn btn-sm btn-outline">&#128065;</a>
-              <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $d->id }}, '{{ addslashes($d->original_name) }}')">&#128465;</button>
+              <a href="{{ route('files.document', $d) }}?download=1" class="btn btn-sm btn-outline"><i class="fas fa-arrow-down"></i></a>
+              <a href="{{ route('files.document', $d) }}" target="_blank" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i></a>
+              <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $d->id }}, '{{ addslashes($d->original_name) }}')"><i class="fas fa-trash"></i></button>
             </div>
           </td>
         </tr>

@@ -12,7 +12,7 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>My Profile</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>My Profile</span></div>
     <h1>My Profile</h1>
     <p>Manage your personal information and account settings</p>
   </div>
@@ -23,8 +23,8 @@
 
     <div class="card">
       <div class="card-header">
-        <div class="card-title">&#128100;Personal Information</div>
-        <button type="button" class="btn btn-outline btn-sm" id="editBtn" onclick="enableEdit()">&#9998; Edit</button>
+        <div class="card-title"><i class="fas fa-user"></i>Personal Information</div>
+        <button type="button" class="btn btn-outline btn-sm" id="editBtn" onclick="enableEdit()"><i class="fas fa-pen"></i> Edit</button>
       </div>
       <div class="card-body">
         <form method="POST" action="{{ route('ec.profile.update') }}" id="profileForm">
@@ -62,14 +62,14 @@
           </div>
           <div id="updateBtnWrap" style="display:none;justify-content:flex-end;gap:10px;margin-top:8px">
             <button type="button" class="btn btn-outline" onclick="cancelEdit()">Cancel</button>
-            <button type="submit" class="btn btn-primary">&#10003; Update</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Update</button>
           </div>
         </form>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-header"><div class="card-title">&#128273;Change Password</div></div>
+      <div class="card-header"><div class="card-title"><i class="fas fa-key"></i>Change Password</div></div>
       <div class="card-body">
         <form method="POST" action="{{ route('ec.profile.update') }}">
           @csrf
@@ -99,7 +99,7 @@
             </div>
           </div>
           <div style="display:flex;justify-content:flex-end;margin-top:8px">
-            <button type="submit" class="btn btn-primary">&#128274; Update Password</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-lock"></i> Update Password</button>
           </div>
         </form>
       </div>
@@ -112,7 +112,7 @@
         <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--blue-primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin:0 auto 16px">
           {{ $initials }}
         </div>
-        <div style="font-size:18px;font-weight:800;color:var(--navy)">{{ $ecUser->first_name }} {{ $ecUser->last_name }}</div>
+        <div style="font-size:18px;font-weight:800;color:var(--text-heading)">{{ $ecUser->first_name }} {{ $ecUser->last_name }}</div>
         <div style="font-size:12px;color:var(--gray-400);margin-top:4px">Extension Coordinator</div>
         <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;text-align:left">
           @foreach([

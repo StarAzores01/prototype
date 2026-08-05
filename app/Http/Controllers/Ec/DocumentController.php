@@ -56,6 +56,13 @@ class DocumentController extends Controller
             return back()->with('error', 'Please choose a file to upload.');
         }
 
+        Validator::make($request->all(), [
+            'training_id' => 'nullable|integer|exists:trainings,id',
+            // mimes: content-sniffs the actual bytes (via fileinfo), not just the
+            // claimed filename extension — a renamed .php/.html can't pass this.
+            'file'        => 'file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,mp4',
+        ])->validate();
+
         $file = $request->file('file');
         $ext = strtolower($file->getClientOriginalExtension());
 
@@ -66,8 +73,11 @@ class DocumentController extends Controller
             return back()->with('error', 'File exceeds 20 MB limit.');
         }
 
-        $storedName = uniqid('doc_') . '.' . $ext;
-        $file->storeAs('uploads', $storedName, 'public');
+        // random_bytes instead of uniqid() — uniqid() is time-based and
+        // guessable, which mattered once file URLs were made access-checked
+        // rather than fully public (see FileDownloadController).
+        $storedName = 'doc_'.bin2hex(random_bytes(8)).'.'.$ext;
+        $file->storeAs('uploads', $storedName, 'local');
 
         $visibility = in_array($request->input('visibility'), ['private', 'ec_trainer', 'public'], true)
             ? $request->input('visibility')
@@ -102,7 +112,7 @@ class DocumentController extends Controller
     {
         $doc = Document::find($request->input('doc_id'));
         if ($doc) {
-            Storage::disk('public')->delete('uploads/' . $doc->file_name);
+            Storage::disk('local')->delete('uploads/' . $doc->file_name);
             $doc->delete();
 
             return redirect()->route('ec.documents')->with('success', 'Document deleted.');

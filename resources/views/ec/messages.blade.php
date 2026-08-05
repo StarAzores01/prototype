@@ -3,20 +3,20 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Contact Messages</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Contact Messages</span></div>
     <h1>Contact Messages</h1>
     <p>Messages sent by the public via the Contact page</p>
   </div>
   @if($unread->count() > 0)
   <a href="{{ route('ec.messages') }}?mark_all=1" class="btn btn-outline" onclick="return confirm('Mark all messages as read?')">
-    &#10003; Mark All Read
+    <i class="fas fa-check"></i> Mark All Read
   </a>
   @endif
 </div>
 
 @if($messages->isEmpty())
 <div class="empty-state">
-  <div class="empty-icon">&#9993;</div>
+  <div class="empty-icon"><i class="fas fa-envelope"></i></div>
   <div class="empty-title">No messages yet</div>
   <div class="empty-sub">When someone sends a message through the contact form, it will appear here.</div>
 </div>
@@ -35,7 +35,7 @@
     </thead>
     <tbody>
       @foreach($messages as $msg)
-      <tr style="{{ !$msg->is_read ? 'background:#EFF6FF;font-weight:600' : '' }}">
+      <tr style="{{ !$msg->is_read ? 'background:rgba(59,130,246,.12);font-weight:600' : '' }}">
         <td style="text-align:center">
           @if(!$msg->is_read)
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1A56DB"></span>
@@ -44,10 +44,10 @@
         <td>{{ $msg->name }}</td>
         <td><a href="mailto:{{ $msg->email }}" style="color:var(--blue-primary)">{{ $msg->email }}</a></td>
         <td>
-          <span style="cursor:pointer;color:var(--navy)" onclick="toggleMsg({{ $msg->id }})">
+          <span style="cursor:pointer;color:var(--text-heading)" onclick="toggleMsg({{ $msg->id }})">
             {{ $msg->subject }}
           </span>
-          <div id="msg-{{ $msg->id }}" style="display:none;margin-top:8px;padding:12px;background:#F8FAFF;border-radius:8px;font-size:13px;color:#334155;font-weight:400;white-space:pre-wrap;border:1px solid #E2E8F0">
+          <div id="msg-{{ $msg->id }}" style="display:none;margin-top:8px;padding:12px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-700);font-weight:400;white-space:pre-wrap;border:1px solid var(--gray-200)">
             {{ $msg->message }}
           </div>
         </td>
@@ -55,10 +55,10 @@
         <td>
           <div style="display:flex;gap:6px">
             @if(!$msg->is_read)
-            <a href="{{ route('ec.messages') }}?read={{ $msg->id }}" class="btn btn-sm btn-outline" title="Mark as read">&#10003;</a>
+            <a href="{{ route('ec.messages') }}?read={{ $msg->id }}" class="btn btn-sm btn-outline" title="Mark as read"><i class="fas fa-check"></i></a>
             @endif
             <a href="{{ route('ec.messages') }}?delete={{ $msg->id }}" class="btn btn-sm btn-danger"
-               onclick="return confirm('Delete this message?')" title="Delete">&#128465;</a>
+               onclick="return confirm('Delete this message?')" title="Delete"><i class="fas fa-trash"></i></a>
           </div>
         </td>
       </tr>

@@ -1,165 +1,180 @@
-# CONTINUE.md — Brief for Claude Code
+# CONTINUE.md — Status: migration complete
 
-You're continuing a PHP → Laravel + PostgreSQL migration of "PAThrive," a
-CIT-SLSU extension training management system. About half of it has been
-converted by hand already (outside this environment, without the ability to
-run `composer`/`artisan`, so **nothing has been tested against a real DB
-yet** — verify as you go). Read this whole file before writing code.
+PAThrive's PHP → Laravel + PostgreSQL migration is **done**. All 4 roles
+(Extension Coordinator, Trainer/"Project Leader", Evaluator, Beneficiary)
+plus the public marketing/auth pages are built, routed, and have been
+verified against a real Postgres database — including a full
+`migrate:fresh --seed` regression pass where every page, button, form, and
+modal across all 4 roles was clicked through, plus a full cross-role
+walkthrough (EC creates a training and assigns a Project Leader → Project
+Leader takes attendance and logs a module → Beneficiary enrolls and submits
+an evaluation + skills survey → Evaluator submits an impact assessment → EC
+reviews it). Zero application errors surfaced in that pass.
+
+This file is now a **reference for future work** on the app, not a task
+list. If you're extending PAThrive, read section 2 (conventions) before
+touching anything — they're load-bearing across the whole codebase.
 
 ## 0. Where things are
 
 - **This Laravel project**: wherever you're reading this from.
-- **Original PHP source** (the thing you're converting *from*): ask the user
-  for the path to `PAThrive_reorganized/PAThrive/public/` — it wasn't copied
-  into this repo to keep it lean. Every remaining page listed below has a
-  same-named file in there (e.g. `ec/participants.php`,
-  `trainer/trainings.php`). **Always read the original file before
-  converting it** — don't guess at fields/behavior.
-- `SETUP.md` — one-time environment setup (already done if you're reading
-  this in a working project; skim it once for context).
+- **Original PHP source**: `PAThrive_reorganized/PAThrive/public/` (ask the
+  user for the current path — it's outside this repo). Every converted page
+  has a same-named file in there. If you're changing existing behavior,
+  read the original first — several pages have original bugs that were
+  *intentionally* reproduced for parity (see §5) rather than silently fixed.
+- `SETUP.md` — one-time environment setup.
 
-## 1. First, verify the foundation actually boots
-
-Nothing here has run against real Postgres yet. Before converting anything
-new:
+## 1. Booting it
 
 ```bash
 composer install
-php artisan migrate:status   # confirm all 20 tables migrated cleanly
+php artisan migrate:fresh --seed   # or `migrate` if you want to keep existing data
 php artisan serve
 ```
 
-Log in as the seeded EC account (seed it yourself from the sample data in
-the original `database/pathrive_db.sql` if no seeder exists yet) and click
-through the built EC pages (dashboard, trainings' create/status-update,
-messages, profile, project leaders, evaluators, documents). **Fix anything
-broken before adding new pages** — this hasn't been checked page-by-page in
-a real environment.
+Seeded accounts (password `password123` for all three staff accounts):
+- EC: `ec@pathrive.test`
+- Trainer ("Project Leader"): `trainer@pathrive.test` (also pre-approved
+  whitelist entry `PL-2026-0001`; a second unregistered whitelist entry
+  `PL-2026-0002` — Pedro Ramos — exists so you can test the real trainer
+  self-signup flow without touching the seeded account)
+- Evaluator: `evaluator@pathrive.test` (whitelist `EV-2026-0001`; a second
+  unregistered entry `EV-2026-0002` — Ana Reyes — for testing signup)
+- Beneficiary: none seeded — self-register via `/beneficiary-signup` against
+  a Participant record an EC has created first (see §2, Auth)
 
-## 2. Conventions already established — follow them exactly
+## 2. Conventions — these are followed throughout; keep following them
 
-**Routing**: exact original filenames as URIs, e.g. `Route::get('/ec/participants.php', ...)`.
-Named routes drop the `.php`: `->name('participants')`. POST actions that
-reuse the same URL as GET (the original's `$_POST['action']` dispatch
-pattern) get a `.store` suffix name, e.g. `ec.participants.store`. Look at
-`routes/web.php` for the exact pattern — every EC route follows it.
+**Routing**: exact original filenames as URIs (`Route::get('/ec/participants.php', ...)`).
+Named routes drop the `.php`. POST actions reusing the same URL as GET (the
+original's `$_POST['action']` dispatch) get a `.store` suffix name, e.g.
+`ec.participants.store`. The handful of pages ported before this convention
+was nailed down (`/login`, `/trainer-signup`, `/evaluator-signup`,
+`/beneficiary-signup`) don't have the `.php` suffix — that's intentional,
+not an inconsistency to "fix".
 
 **Controllers**: one per original page, in `app/Http/Controllers/{Role}/`.
-A `store()` method that `match()`es on `$request->input('action')` and
-delegates to private methods — mirrors the original's single-file
-if/elseif action dispatch. See `TrainerController`/`EvaluatorController` for
-the fullest examples (whitelist CRUD + ID generation).
+A `store()` method `match()`es on `$request->input('action')` and delegates
+to private methods, mirroring the original's if/elseif dispatch.
 
 **Views**: `resources/views/{role}/{page}.blade.php`, `@extends('layouts.{role}')`,
-content in `@section('content')`. Keep the original's inline styles and CSS
-classes as-is (this app has no separate CSS framework beyond
-`assets/css/style.css` — don't introduce Tailwind/Bootstrap). Convert
-`<?php foreach ?>` to `@foreach`, `<?= e($x) ?>` to `{{ $x }}`, etc. Forms
-need `@csrf`.
+content in `@section('content')`.
 
-**Layouts**: only `layouts/ec.blade.php` + `EcLayoutComposer` exist so far.
-Trainer/Evaluator/Beneficiary layouts still need to be built (see §4) —
-convert `trainer/layout.php`+`layout_end.php`,
-`evaluator/layout.php`+`layout_end.php`, `beneficiary/layout.php`+`layout_end.php`
-the same way `EcLayoutComposer`/`layouts/ec.blade.php` were built from
-`ec/layout.php`.
+**Frontend parity is a hard requirement.** Every page reuses the *exact*
+CSS classes, inline `style="..."` patterns, and icon conventions (raw HTML
+entities vs. Font Awesome `fa-*`, whichever the original used) from its
+source PHP file. No Tailwind/Bootstrap, no restructured layouts, no
+"improving" the original's spacing. The app's only stylesheet is
+`public/assets/css/style.css`, linked directly via `asset()` — see §6 for
+why there's a Tailwind/Vite toolchain in this repo that has nothing to do
+with any of that.
 
-**Models**: all 20 already exist in `app/Models/` with relationships wired.
-Don't recreate them — check there first.
+**Layouts**: all 4 exist — `layouts/{ec,trainer,evaluator,beneficiary}.blade.php`,
+each paired with a `{Role}LayoutComposer` in `app/View/Composers/` that
+supplies the topbar notification count/list and profile initials/name.
+Registered in `AppServiceProvider::boot()`. Each composer scopes
+notifications to `role='{role}' AND user_id=<this user>` — the EC composer
+is the only one with an additional `role='all'` broadcast branch, matching
+the original per-layout notification queries exactly.
 
-**IDs**: sequential IDs (`PL-YYYY-####`, `EV-YYYY-####`, `BF-...` for
-participants) use `DB::transaction()` + `lockForUpdate()` instead of the
-original's MySQL `LOCK TABLES` (see `TrainerController::addWhitelist()` for
-the pattern, or reuse `App\Support\IdGenerator`).
+**Models**: all 20 in `app/Models/`, relationships wired. Check there before
+creating a new one.
 
-**File uploads**: use `Storage::disk('public')` / `storeAs()`, not the
-original's raw `move_uploaded_file()`. See `DocumentController` for the
-pattern. Remember `php artisan storage:link`.
+**IDs**: sequential IDs (`PL-YYYY-####`, `EV-YYYY-####`, `BF-YYYY-####`) go
+through `App\Support\IdGenerator` (`DB::transaction()` + `lockForUpdate()`
+instead of the original's MySQL `LOCK TABLES`).
+
+**File uploads**: `Storage::disk('public')` / `storeAs()`. `php artisan
+storage:link` must have been run (it has, in this environment).
 
 **Auth**: two guards — `web` (staff: EC/Trainer/Evaluator, table `users`)
-and `beneficiary` (table `beneficiaries`). Role-restrict staff routes with
-`role:extension_coordinator` / `role:trainer` / `role:evaluator` middleware.
-Beneficiary routes use the `beneficiary` middleware instead.
+and `beneficiary` (table `beneficiaries`). Staff routes are gated with
+`role:extension_coordinator` / `role:trainer` / `role:evaluator` on top of
+`auth:web`; beneficiary routes use the `beneficiary` middleware instead —
+verified this is actually applied on every route via `route:list -v`, not
+just assumed. Trainer and Evaluator self-registration require a matching,
+not-yet-registered whitelist entry (`TrainerWhitelist`/`EvaluatorWhitelist`,
+seeded by the EC via `ec/trainers.php` / `ec/evaluators.php`). Beneficiary
+self-registration requires a matching, not-yet-linked `Participant` record
+(seeded by the EC via `ec/participants.php`) — this is a deliberate fix
+over the original's beneficiary signup (see §5). EC self-registration
+(`ecsignuppage.php`) has **no whitelist gate** — open self-service, matching
+the original's design intent (the original had a bug that silently blocked
+every submission; that bug was fixed, the open-registration behavior was
+kept, per explicit user decision).
 
-**Labels**: the `trainer` role/table/column values stay as-is in code — only
-**user-facing text** says "Project Leader" instead of "Trainer" (already
-done for the EC module's Trainers page; keep it consistent everywhere else
-you touch "trainer" UI text, including the Trainer role's own dashboard/nav).
+**Labels**: the `trainer` role/table/column names stay as-is in code — only
+user-facing text says "Project Leader". This is applied consistently
+everywhere, including the Trainer role's own dashboard/nav and the
+per-document visibility dropdown label ("EC & Project Leaders", not the
+original's "EC & Trainers").
 
-## 3. Remaining EC pages (6 left)
+## 3–6. All 4 roles + EC — done
 
-Convert in this order — earlier ones are dependencies/data sources for later
-ones:
+Every page listed in the old version of this file is built, routed, and
+tested. Route inventory (`php artisan route:list`, 81 routes total) has
+zero dangling `coming-soon` placeholders — every route resolves to a real
+controller action or a genuinely static `Route::view()` (privacy/terms/
+about/choose-role/trainings-public, which have no dynamic content in the
+original either). The leftover `coming-soon.blade.php` placeholder views
+(one each for ec/trainer/beneficiary, plus a generic one) were unreferenced
+by any route and have been deleted.
 
-1. **`ec/participants.php`** (13.6KB) — CRUD + toggle active, generates
-   `BF-YYYY-####` IDs. Wire the "Register Participant" quick link from the
-   dashboard here.
-2. **`ec/skills.php`** (10.6KB) — skills utilization survey forms + responses.
-3. **`ec/evaluations.php`** (20KB) — training evaluation forms + responses,
-   the sidebar badge (`badge-red`) shows a pending count — wire that into
-   `EcLayoutComposer` once built.
-4. **`ec/impact_assessment.php`** (24.7KB) — EC's view of evaluator-submitted
-   impact assessments + review workflow.
-5. **`ec/reports.php`** (26KB) — the biggest single page; likely CHED
-   compliance reports/exports. Read it fully before starting — check if it
-   generates PDF/Excel exports (there's a `pdf` and `xlsx` capability
-   available if so).
-6. **`ec/trainings.php`** (33KB) — the largest page. `TrainingController`
-   already has `store()` with `create`/`update_status` from the dashboard —
-   extend it with `index()` (the full table/filter/search), `edit`,
-   `delete`, budget update, and the detail view (`?view={id}`). Currently
-   routed to a placeholder — replace `Route::view('/trainings.php', 'ec.coming-soon', ...)`
-   with a real `index()` action once built.
+**`ec/reports.php`**: on-screen Chart.js dashboard only — the original never
+had PDF/Excel export, so neither does the port. If CHED-style export is
+wanted, it's a new feature, not a parity gap.
 
-After each page: update the `ec.` route from `ec.coming-soon` to the real
-controller, same pattern as the last 8 pages.
+## 7. Known gaps / decisions surfaced during security + regression review
 
-## 4. Trainer role (14 pages, not started)
+Not bugs in the Laravel port specifically — inherited from the original or
+flagged as pre-production checklist items. Listed here so they don't get
+"rediscovered" as new findings:
 
-Build the layout first (`layouts/trainer.blade.php` + `TrainerLayoutComposer`,
-converted from `trainer/layout.php`+`layout_end.php`), then:
-`dashboard.php`, `trainings.php`, `participants.php`, `attendance.php`,
-`activity.php`, `modules.php`, `skills.php`, `evaluations.php`,
-`documents.php`, `notifications.php`, `profile.php`, `logout.php`.
-Route group already scaffolded in `routes/web.php` under `role:trainer`
-(currently just a placeholder dashboard route — replace it).
+- **Document visibility (`private`/`ec_trainer`/`public`) is UI-only.** All
+  uploaded files are served as public, unauthenticated static assets via
+  `asset('storage/uploads/...')`. This matches the original's `UPLOAD_URL`
+  direct-static-serving design exactly (no download-gate script exists in
+  the original either) — not a Laravel regression. Fixing it properly would
+  mean replacing every "view document" link across all 4 roles with an
+  authenticated, permission-checked download route. Not done; needs a
+  decision before starting since it changes routes used throughout the app.
+- **Filename predictability**: most upload controllers use `uniqid('prefix_')`
+  (guessable), matching the original. `Evaluator\ImpactAssessmentController`
+  already uses `bin2hex(random_bytes(8))` instead — the safer pattern, if
+  the others get revisited.
+- **`APP_DEBUG`**: make sure it's `false` before any production deploy.
+- **`SESSION_SECURE_COOKIE`**: unset locally (fine over HTTP); set to `true`
+  once deployed behind HTTPS.
+- Throttling (`throttle:5,1`) is on the login POST route; CSRF is enforced
+  app-wide with no exclusions; SQL injection review of all `whereRaw`/
+  `selectRaw` usages came back clean (parameterized throughout).
 
-## 5. Evaluator role (6 pages, not started)
+## 8. Frontend build tooling — installed, unused, harmless
 
-Layout from `evaluator/layout.php`+`layout_end.php`, then: `dashboard.php`,
-`impact_assessment.php`, `profile.php`, `logout.php`. Small module — the
-evaluator's `impact_assessment.php` is where records get *created*; EC's
-`ec/impact_assessment.php` (§3.4) is where they get *reviewed*. Build
-evaluator's version first since EC's depends on data existing.
+`package.json`, `vite.config.js`, `resources/css/app.css`, `resources/js/app.js`,
+and `resources/views/welcome.blade.php` are all untouched leftovers from the
+default `laravel/laravel` skeleton (Tailwind v4 + Vite + Bunny fonts).
+Nothing in the app references them: every real page links
+`public/assets/css/style.css` directly via `asset()`, no Blade file calls
+`@vite()` except `welcome.blade.php` itself, and `welcome.blade.php` isn't
+routed to anything (`/` goes to `PublicSite\LandingController`). `npm
+install` has never been run in this environment and `public/build/` doesn't
+exist. Safe to leave alone (matches how a fresh Laravel project always
+looks) or safe to delete entirely if you want a cleaner tree — neither
+choice affects the running app.
 
-## 6. Beneficiary role (10 pages, not started — separate guard)
+## 9. Testing notes for whoever picks this up next
 
-Layout from `beneficiary/layout.php`+`layout_end.php`. Uses the
-`beneficiary` guard/middleware, not `role:...`. Pages: `home.php`,
-`trainings.php`, `evaluations.php`, `impact_assessment.php`, `skills.php`,
-`notifications.php`, `profile.php`, `logout.php`.
-
-## 7. `logout.php` pages (all roles)
-
-Don't convert these individually — they all just destroy the session and
-redirect to login, which the shared `AuthenticatedSessionController::destroy()`
-already handles for both guards. Just point each layout's logout link/form
-at `route('logout')` (already done in `layouts/ec.blade.php` — copy the
-pattern).
-
-## 8. General QA checklist per page you convert
-
-- [ ] Route uses exact original filename, named route drops `.php`
-- [ ] Controller validates input (the original's raw `$_POST` had none —
-      add proper `Validator`/`FormRequest` rules based on the column types)
-- [ ] Any inline `ALTER TABLE`/schema-patch code in the original (several
-      EC pages had these) — confirm the target migration already has that
-      column; if not, add a new migration rather than editing an already-run one
-- [ ] Flash messages use `->with('success'|'error', ...)`, matching the toast
-      JS already in each layout
-- [ ] `@csrf` on every form
-- [ ] Run `php artisan route:list` and click through in the browser — don't
-      just eyeball the Blade
-
-Work through §3 → §4 → §5 → §6 in order, testing each page against Postgres
-as you go, rather than writing everything then debugging at the end.
+- Dev server + Postgres, then log in via the seeded accounts above.
+- The CSRF pattern that works reliably in this Windows/Git-Bash environment:
+  fetch a fresh token with a GET in one tool call, POST with that token in a
+  **separate** tool call. Combining fetch+post in one shell invocation has
+  produced spurious 419s here before.
+- For multipart file uploads via curl on this machine, convert the path
+  with `cygpath -w` first — this curl build doesn't resolve MSYS-style
+  paths in `-F file=@path`.
+- `php artisan tinker --execute="..."` is the fastest way to seed/inspect/
+  clean up test data between runs; remember to clean up throwaway records
+  (test forms, notifications, documents) after a testing session so seeded
+  data stays representative.

@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class EvaluatorController extends Controller
 {
@@ -73,11 +74,11 @@ class EvaluatorController extends Controller
     private function editEvaluator(Request $request)
     {
         $data = Validator::make($request->all(), [
-            'user_id'    => 'required|integer',
+            'user_id'    => 'required|integer|exists:users,id',
             'first_name' => 'required|string|max:80',
             'last_name'  => 'required|string|max:80',
-            'email'      => 'required|email|max:120',
-            'department' => 'nullable|string',
+            'email'      => 'required|email|max:120|unique:users,email,'.$request->input('user_id'),
+            'department' => ['nullable', Rule::in($this->departments)],
             'id_number'  => 'nullable|string|max:40',
         ])->validate();
 
@@ -85,9 +86,10 @@ class EvaluatorController extends Controller
             'first_name' => $data['first_name'],
             'last_name'  => $data['last_name'],
             'email'      => $data['email'],
-            // Department is stored in the same `position` column trainers use
-            // for job title — the original schema reuses this field for both.
-            'position'   => $data['department'] ?? '',
+            // Own column now — was previously (incorrectly) written into
+            // `position`, which is a CHECK constraint restricted to academic
+            // ranks for trainers and would reject any department name.
+            'department' => $data['department'] ?? null,
             'id_number'  => $data['id_number'] ?? '',
         ]);
 

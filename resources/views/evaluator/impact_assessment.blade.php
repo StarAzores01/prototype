@@ -3,20 +3,30 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Impact Assessment</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Impact Assessment</span></div>
     <h1>Impact Assessment</h1>
     <p>Submit assessment forms to the Extension Coordinator</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('submitAssessment')">&#43; Submit Assessment</button>
+  <button class="btn btn-primary" onclick="openModal('submitAssessment')"><i class="fas fa-plus"></i> Submit Assessment</button>
 </div>
+
+@if(session('success'))
+<div class="alert alert-success" style="margin-bottom:20px">
+  <i class="fas fa-square-check"></i> {{ session('success') }}
+</div>
+@elseif(session('error'))
+<div class="alert alert-danger" style="margin-bottom:20px">
+  <i class="fas fa-triangle-exclamation"></i> {{ session('error') }}
+</div>
+@endif
 
 <!-- Search -->
 <div class="card" style="margin-bottom:20px">
   <div class="card-body" style="padding:14px 20px">
     <form method="GET" action="{{ route('evaluator.impact_assessment') }}" style="display:flex;gap:10px;align-items:center">
       <input type="text" name="q" class="form-control" placeholder="Search assessments..." value="{{ $q }}" style="max-width:320px"/>
-      <button type="submit" class="btn btn-outline btn-sm">&#128269; Search</button>
-      @if($q)<a href="{{ route('evaluator.impact_assessment') }}" class="btn btn-outline btn-sm">&#10005; Clear</a>@endif
+      <button type="submit" class="btn btn-outline btn-sm"><i class="fas fa-magnifying-glass"></i> Search</button>
+      @if($q)<a href="{{ route('evaluator.impact_assessment') }}" class="btn btn-outline btn-sm"><i class="fas fa-xmark"></i> Clear</a>@endif
     </form>
   </div>
 </div>
@@ -47,7 +57,7 @@
           <td>{{ $a->training->title ?? '—' }}</td>
           <td>
             @if($a->file_name)
-            <a href="{{ asset('storage/uploads/'.$a->file_name) }}" target="_blank" class="btn btn-outline btn-sm">&#128196; {{ $a->original_name ?? 'View' }}</a>
+            <a href="{{ route('files.impact-assessment', $a) }}" target="_blank" class="btn btn-outline btn-sm"><i class="fas fa-file"></i> {{ $a->original_name ?? 'View' }}</a>
             @else
             <span style="color:var(--gray-400)">No file</span>
             @endif
@@ -61,7 +71,7 @@
               @csrf
               <input type="hidden" name="action" value="delete"/>
               <input type="hidden" name="assessment_id" value="{{ $a->id }}"/>
-              <button type="submit" class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none;cursor:pointer">&#128465; Delete</button>
+              <button type="submit" class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none;cursor:pointer"><i class="fas fa-trash"></i> Delete</button>
             </form>
             @else
             <span style="font-size:12px;color:var(--gray-400)">Reviewed</span>
@@ -79,8 +89,8 @@
 <div class="modal-overlay" id="modal-submitAssessment">
   <div class="modal" style="max-width:540px">
     <div class="modal-header">
-      <div class="modal-title">&#128203; Submit Impact Assessment</div>
-      <button class="modal-close" onclick="closeModal('submitAssessment')">&#10005;</button>
+      <div class="modal-title"><i class="fas fa-clipboard-list"></i> Submit Impact Assessment</div>
+      <button class="modal-close" onclick="closeModal('submitAssessment')"><i class="fas fa-xmark"></i></button>
     </div>
     <form method="POST" action="{{ route('evaluator.impact_assessment.store') }}" enctype="multipart/form-data">
       @csrf
@@ -110,7 +120,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('submitAssessment')">Cancel</button>
-        <button type="submit" class="btn btn-primary">&#128203; Submit Assessment</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-clipboard-list"></i> Submit Assessment</button>
       </div>
     </form>
   </div>

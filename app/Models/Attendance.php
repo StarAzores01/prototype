@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Attendance extends Model
 {
+    protected $table = 'attendance';
+
     protected $fillable = [
         'training_id', 'participant_id', 'session_date', 'status',
         'time_in', 'time_out', 'recorded_by',

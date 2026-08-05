@@ -3,18 +3,18 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive &#8250; <span>Project Leaders</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Project Leaders</span></div>
     <h1>Project Leaders</h1>
     <p>Manage approved Project Leaders and their system access</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('addWhitelist')">&#43; Add Project Leader</button>
+  <button class="btn btn-primary" onclick="openModal('addWhitelist')"><i class="fas fa-plus"></i> Add Project Leader</button>
 </div>
 
 <!-- APPROVED LIST (Whitelist) -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
     <div>
-      <div class="card-title">&#9679;Approved Project Leaders List</div>
+      <div class="card-title"><i class="fas fa-circle" style="font-size:6px"></i> Approved Project Leaders List</div>
       <div class="card-subtitle">Only these Project Leaders can register an account in the system</div>
     </div>
   </div>
@@ -43,11 +43,11 @@
         </td>
         <td>
           @if(!$w->is_registered)
-          <form method="POST" action="{{ route('ec.trainers.store') }}" style="display:inline" onsubmit="return confirm('Remove {{ $w->first_name }} {{ $w->last_name }} from the approved list?')">
+          <form method="POST" action="{{ route('ec.trainers.store') }}" style="display:inline" onsubmit="return confirm('Remove {{ addslashes($w->first_name) }} {{ addslashes($w->last_name) }} from the approved list?')">
             @csrf
             <input type="hidden" name="action" value="remove_whitelist"/>
             <input type="hidden" name="whitelist_id" value="{{ $w->id }}"/>
-            <button type="submit" class="btn btn-sm btn-danger">&#128465; Remove</button>
+            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Remove</button>
           </form>
           @else
             <span style="font-size:12px;color:var(--gray-400)">Account exists</span>
@@ -71,10 +71,10 @@
   <div class="card-body" style="padding-bottom:0">
     <form method="GET" action="{{ route('ec.trainers') }}" class="filter-row">
       <div class="search-box">
-        &#128269;
+        <i class="fas fa-magnifying-glass"></i>
         <input type="text" name="q" value="{{ $q }}" placeholder="Search by name or email…"/>
       </div>
-      <button type="submit" class="btn btn-primary btn-sm">&#128269; Search</button>
+      <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Search</button>
       @if($q)<a href="{{ route('ec.trainers') }}" class="btn btn-ghost btn-sm">Clear</a>@endif
     </form>
   </div>
@@ -109,13 +109,13 @@
           <td><span class="badge {{ $tr->is_active ? 'badge-active' : 'badge-inactive' }}">{{ $tr->is_active ? 'Active' : 'Inactive' }}</span></td>
           <td>
             <div class="action-btns">
-              <button class="btn btn-sm btn-outline" onclick="openEditModal({{ $tr->toJson() }})">&#9998; Edit</button>
+              <button class="btn btn-sm btn-outline" onclick="openEditModal({{ $tr->toJson() }})"><i class="fas fa-pen"></i> Edit</button>
               <form method="POST" action="{{ route('ec.trainers.store') }}" style="display:inline">
                 @csrf
                 <input type="hidden" name="action" value="toggle"/>
                 <input type="hidden" name="user_id" value="{{ $tr->id }}"/>
                 <button type="submit" class="btn btn-sm {{ $tr->is_active ? 'btn-danger' : 'btn-outline' }}"
-                        onclick="return confirm('{{ $tr->is_active ? 'Disable' : 'Enable' }} access for {{ $tr->first_name }}?')">
+                        onclick="return confirm('{{ $tr->is_active ? 'Disable' : 'Enable' }} access for {{ addslashes($tr->first_name) }}?')">
                   <i class="fas {{ $tr->is_active ? 'fa-ban' : 'fa-check-circle' }}"></i>
                   {{ $tr->is_active ? 'Disable' : 'Enable' }}
                 </button>
@@ -135,15 +135,15 @@
 <div class="modal-overlay" id="modal-addWhitelist">
   <div class="modal">
     <div class="modal-header">
-      <h2>&#43;Add Approved Project Leader</h2>
-      <button class="modal-close" onclick="closeModal('addWhitelist')">&#10005;</button>
+      <h2><i class="fas fa-plus"></i>Add Approved Project Leader</h2>
+      <button class="modal-close" onclick="closeModal('addWhitelist')"><i class="fas fa-xmark"></i></button>
     </div>
     <form method="POST" action="{{ route('ec.trainers.store') }}">
       @csrf
       <input type="hidden" name="action" value="add_whitelist"/>
       <div class="modal-body">
         <div class="alert alert-info" style="margin-bottom:16px">
-          &#8505; Adding a Project Leader here allows them to create an account. They will register themselves using their name.
+          <i class="fas fa-circle-info"></i> Adding a Project Leader here allows them to create an account. They will register themselves using their name.
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -167,7 +167,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('addWhitelist')">Cancel</button>
-        <button type="submit" class="btn btn-primary">&#10003; Add to Approved Project Leaders List</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Add to Approved Project Leaders List</button>
       </div>
     </form>
   </div>
@@ -177,8 +177,8 @@
 <div class="modal-overlay" id="modal-editTrainer">
   <div class="modal">
     <div class="modal-header">
-      <h2>&#9998; Edit Project Leader</h2>
-      <button class="modal-close" onclick="closeModal('editTrainer')">&#10005;</button>
+      <h2><i class="fas fa-pen"></i> Edit Project Leader</h2>
+      <button class="modal-close" onclick="closeModal('editTrainer')"><i class="fas fa-xmark"></i></button>
     </div>
     <form method="POST" action="{{ route('ec.trainers.store') }}">
       @csrf
@@ -216,7 +216,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('editTrainer')">Cancel</button>
-        <button type="submit" class="btn btn-primary">&#10003; Save Changes</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Changes</button>
       </div>
     </form>
   </div>

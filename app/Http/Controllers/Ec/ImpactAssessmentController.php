@@ -147,7 +147,7 @@ class ImpactAssessmentController extends Controller
 
         if ($assessment) {
             if ($assessment->file_name) {
-                Storage::disk('public')->delete('uploads/'.$assessment->file_name);
+                Storage::disk('local')->delete('uploads/'.$assessment->file_name);
             }
             $assessment->delete();
         }

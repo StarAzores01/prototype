@@ -1,10 +1,18 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisteredBeneficiaryController;
+use App\Http\Controllers\Auth\RegisteredEcController;
 use App\Http\Controllers\Auth\RegisteredEvaluatorController;
 use App\Http\Controllers\Auth\RegisteredTrainerController;
+use App\Http\Controllers\Beneficiary\EvaluationController as BeneficiaryEvaluationController;
 use App\Http\Controllers\Beneficiary\HomeController as BeneficiaryHomeController;
+use App\Http\Controllers\Beneficiary\ImpactAssessmentController as BeneficiaryImpactAssessmentController;
+use App\Http\Controllers\Beneficiary\ProfileController as BeneficiaryProfileController;
+use App\Http\Controllers\Beneficiary\NotificationController as BeneficiaryNotificationController;
+use App\Http\Controllers\Beneficiary\SkillsController as BeneficiarySkillsController;
+use App\Http\Controllers\Beneficiary\TrainingController as BeneficiaryTrainingController;
 use App\Http\Controllers\Ec\DashboardController as EcDashboardController;
 use App\Http\Controllers\Ec\DocumentController as EcDocumentController;
 use App\Http\Controllers\Ec\EvaluationController as EcEvaluationController;
@@ -14,23 +22,43 @@ use App\Http\Controllers\Ec\MessageController as EcMessageController;
 use App\Http\Controllers\Ec\NotificationController as EcNotificationController;
 use App\Http\Controllers\Ec\ParticipantController as EcParticipantController;
 use App\Http\Controllers\Ec\ProfileController as EcProfileController;
+use App\Http\Controllers\Ec\ReportController as EcReportController;
 use App\Http\Controllers\Ec\SkillsController as EcSkillsController;
 use App\Http\Controllers\Ec\TrainerController as EcTrainerController;
 use App\Http\Controllers\Ec\TrainingController as EcTrainingController;
 use App\Http\Controllers\Evaluator\DashboardController as EvaluatorDashboardController;
 use App\Http\Controllers\Evaluator\ImpactAssessmentController as EvaluatorImpactAssessmentController;
 use App\Http\Controllers\Evaluator\ProfileController as EvaluatorProfileController;
+use App\Http\Controllers\FileDownloadController;
+use App\Http\Controllers\PublicSite\ContactController;
+use App\Http\Controllers\PublicSite\LandingController;
+use App\Http\Controllers\Trainer\ActivityController as TrainerActivityController;
+use App\Http\Controllers\Trainer\AttendanceController as TrainerAttendanceController;
 use App\Http\Controllers\Trainer\DashboardController as TrainerDashboardController;
+use App\Http\Controllers\Trainer\DocumentController as TrainerDocumentController;
+use App\Http\Controllers\Trainer\EvaluationController as TrainerEvaluationController;
+use App\Http\Controllers\Trainer\ModuleController as TrainerModuleController;
+use App\Http\Controllers\Trainer\NotificationController as TrainerNotificationController;
+use App\Http\Controllers\Trainer\ParticipantController as TrainerParticipantController;
+use App\Http\Controllers\Trainer\ProfileController as TrainerProfileController;
+use App\Http\Controllers\Trainer\SkillsController as TrainerSkillsController;
+use App\Http\Controllers\Trainer\TrainingController as TrainerTrainingController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | Public pages
 |--------------------------------------------------------------------------
-| Add controllers for about/contact/trainings-public/etc. here as they're
-| converted from the original public/*.php pages.
+| Converted from the original public/*.php marketing pages.
 */
-Route::view('/', 'public.landing')->name('home');
+Route::get('/', [LandingController::class, 'index'])->name('home');
+Route::view('/choose-role.php', 'public.choose-role')->name('choose-role');
+Route::view('/about.php', 'public.about')->name('about');
+Route::view('/trainings-public.php', 'public.trainings-public')->name('trainings-public');
+Route::view('/privacy.php', 'public.privacy')->name('privacy');
+Route::view('/terms.php', 'public.terms')->name('terms');
+Route::get('/contact.php', [ContactController::class, 'index'])->name('contact');
+Route::post('/contact.php', [ContactController::class, 'store'])->name('contact.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -39,7 +67,8 @@ Route::view('/', 'public.landing')->name('home');
 */
 Route::middleware('guest:web,beneficiary')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('/login', [AuthenticatedSessionController::class, 'store'])
+        ->middleware('throttle:5,1');
 
     Route::get('/trainer-signup', [RegisteredTrainerController::class, 'create'])->name('trainer.signup');
     Route::post('/trainer-signup', [RegisteredTrainerController::class, 'store']);
@@ -49,6 +78,14 @@ Route::middleware('guest:web,beneficiary')->group(function () {
 
     Route::get('/beneficiary-signup', [RegisteredBeneficiaryController::class, 'create'])->name('beneficiary.signup');
     Route::post('/beneficiary-signup', [RegisteredBeneficiaryController::class, 'store']);
+
+    // EC self-registration — no whitelist gate, matches ecsignuppage.php.
+    Route::get('/ecsignuppage.php', [RegisteredEcController::class, 'create'])->name('ec.signup');
+    Route::post('/ecsignuppage.php', [RegisteredEcController::class, 'store']);
+
+    // EC-only forgot-password flow, matches ecrecovery.php.
+    Route::get('/ecrecovery.php', [PasswordResetController::class, 'create'])->name('ec.recovery');
+    Route::post('/ecrecovery.php', [PasswordResetController::class, 'store']);
 });
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
@@ -56,14 +93,28 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
 
 /*
 |--------------------------------------------------------------------------
+| Authenticated file downloads (any of the 4 roles)
+|--------------------------------------------------------------------------
+| Replaces the old direct asset('storage/uploads/...') links, which served
+| every uploaded file as a public, unauthenticated static URL regardless of
+| its declared visibility. See FileDownloadController for the per-type
+| access rules.
+*/
+Route::middleware(['auth:web,beneficiary', 'no-back-cache'])->group(function () {
+    Route::get('/files/documents/{document}', [FileDownloadController::class, 'document'])->name('files.document');
+    Route::get('/files/training-docs/{trainingDoc}', [FileDownloadController::class, 'trainingDoc'])->name('files.training-doc');
+    Route::get('/files/impact-assessments/{impactAssessment}', [FileDownloadController::class, 'impactAssessment'])->name('files.impact-assessment');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Extension Coordinator (role: extension_coordinator)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth:web', 'role:extension_coordinator'])
+Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
     ->prefix('ec')
     ->name('ec.')
     ->group(function () {
-        // Built:
         Route::get('/dashboard.php', [EcDashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/trainings.php', [EcTrainingController::class, 'index'])->name('trainings');
@@ -78,8 +129,6 @@ Route::middleware(['auth:web', 'role:extension_coordinator'])
         Route::view('/privacy.php', 'ec.privacy', ['activePage' => 'privacy'])->name('privacy');
         Route::view('/terms.php', 'ec.terms', ['activePage' => 'terms'])->name('terms');
 
-        // Scaffolded (route name exists so layout links resolve; each renders
-        // a "coming soon" placeholder until its module is converted):
         Route::get('/participants.php', [EcParticipantController::class, 'index'])->name('participants');
         Route::post('/participants.php', [EcParticipantController::class, 'store'])->name('participants.store');
         Route::get('/documents.php', [EcDocumentController::class, 'index'])->name('documents');
@@ -89,7 +138,7 @@ Route::middleware(['auth:web', 'role:extension_coordinator'])
         Route::get('/impact_assessment.php', [EcImpactAssessmentController::class, 'index'])->name('impact_assessment');
         Route::post('/impact_assessment.php', [EcImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
         Route::get('/skills.php', [EcSkillsController::class, 'index'])->name('skills');
-        Route::view('/reports.php', 'ec.coming-soon', ['activePage' => 'reports'])->name('reports');
+        Route::get('/reports.php', [EcReportController::class, 'index'])->name('reports');
         Route::get('/trainers.php', [EcTrainerController::class, 'index'])->name('trainers');
         Route::post('/trainers.php', [EcTrainerController::class, 'store'])->name('trainers.store');
         Route::get('/evaluators.php', [EcEvaluatorController::class, 'index'])->name('evaluators');
@@ -101,25 +150,29 @@ Route::middleware(['auth:web', 'role:extension_coordinator'])
 | Trainer (role: trainer)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth:web', 'role:trainer'])
+Route::middleware(['auth:web', 'role:trainer', 'no-back-cache'])
     ->prefix('trainer')
     ->name('trainer.')
     ->group(function () {
-        // Built:
         Route::get('/dashboard.php', [TrainerDashboardController::class, 'index'])->name('dashboard');
 
-        // Scaffolded (route name exists so layout links resolve; each renders
-        // a "coming soon" placeholder until its module is converted):
-        Route::view('/trainings.php', 'trainer.coming-soon', ['activePage' => 'trainings'])->name('trainings');
-        Route::view('/participants.php', 'trainer.coming-soon', ['activePage' => 'participants'])->name('participants');
-        Route::view('/attendance.php', 'trainer.coming-soon', ['activePage' => 'attendance'])->name('attendance');
-        Route::view('/activity.php', 'trainer.coming-soon', ['activePage' => 'activity'])->name('activity');
-        Route::view('/modules.php', 'trainer.coming-soon', ['activePage' => 'modules'])->name('modules');
-        Route::view('/skills.php', 'trainer.coming-soon', ['activePage' => 'skills'])->name('skills');
-        Route::view('/evaluations.php', 'trainer.coming-soon', ['activePage' => 'evaluations'])->name('evaluations');
-        Route::view('/documents.php', 'trainer.coming-soon', ['activePage' => 'documents'])->name('documents');
-        Route::view('/notifications.php', 'trainer.coming-soon', ['activePage' => 'notifications'])->name('notifications');
-        Route::view('/profile.php', 'trainer.coming-soon', ['activePage' => 'profile'])->name('profile');
+        Route::get('/trainings.php', [TrainerTrainingController::class, 'index'])->name('trainings');
+        Route::post('/trainings.php', [TrainerTrainingController::class, 'store'])->name('trainings.store');
+        Route::get('/participants.php', [TrainerParticipantController::class, 'index'])->name('participants');
+        Route::get('/attendance.php', [TrainerAttendanceController::class, 'index'])->name('attendance');
+        Route::post('/attendance.php', [TrainerAttendanceController::class, 'store'])->name('attendance.store');
+        Route::get('/activity.php', [TrainerActivityController::class, 'index'])->name('activity');
+        Route::post('/activity.php', [TrainerActivityController::class, 'store'])->name('activity.store');
+        Route::get('/modules.php', [TrainerModuleController::class, 'index'])->name('modules');
+        Route::post('/modules.php', [TrainerModuleController::class, 'store'])->name('modules.store');
+        Route::get('/skills.php', [TrainerSkillsController::class, 'index'])->name('skills');
+        Route::post('/skills.php', [TrainerSkillsController::class, 'store'])->name('skills.store');
+        Route::get('/evaluations.php', [TrainerEvaluationController::class, 'index'])->name('evaluations');
+        Route::get('/documents.php', [TrainerDocumentController::class, 'index'])->name('documents');
+        Route::post('/documents.php', [TrainerDocumentController::class, 'store'])->name('documents.store');
+        Route::get('/notifications.php', [TrainerNotificationController::class, 'index'])->name('notifications');
+        Route::get('/profile.php', [TrainerProfileController::class, 'show'])->name('profile');
+        Route::post('/profile.php', [TrainerProfileController::class, 'update'])->name('profile.update');
     });
 
 /*
@@ -127,7 +180,7 @@ Route::middleware(['auth:web', 'role:trainer'])
 | Evaluator (role: evaluator)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth:web', 'role:evaluator'])
+Route::middleware(['auth:web', 'role:evaluator', 'no-back-cache'])
     ->prefix('evaluator')
     ->name('evaluator.')
     ->group(function () {
@@ -145,19 +198,20 @@ Route::middleware(['auth:web', 'role:evaluator'])
 | Beneficiary (separate guard/table, not the "role" middleware)
 |--------------------------------------------------------------------------
 */
-Route::middleware('beneficiary')
+Route::middleware(['beneficiary', 'no-back-cache'])
     ->prefix('beneficiary')
     ->name('beneficiary.')
     ->group(function () {
-        // Built:
         Route::get('/home.php', [BeneficiaryHomeController::class, 'index'])->name('home');
 
-        // Scaffolded (route name exists so layout links resolve; each renders
-        // a "coming soon" placeholder until its module is converted):
-        Route::view('/trainings.php', 'beneficiary.coming-soon', ['activePage' => 'trainings'])->name('trainings');
-        Route::view('/evaluations.php', 'beneficiary.coming-soon', ['activePage' => 'evaluations'])->name('evaluations');
-        Route::view('/impact_assessment.php', 'beneficiary.coming-soon', ['activePage' => 'impact_assessment'])->name('impact_assessment');
-        Route::view('/skills.php', 'beneficiary.coming-soon', ['activePage' => 'skills'])->name('skills');
-        Route::view('/notifications.php', 'beneficiary.coming-soon', ['activePage' => 'notifications'])->name('notifications');
-        Route::view('/profile.php', 'beneficiary.coming-soon', ['activePage' => 'profile'])->name('profile');
+        Route::get('/trainings.php', [BeneficiaryTrainingController::class, 'index'])->name('trainings');
+        Route::get('/evaluations.php', [BeneficiaryEvaluationController::class, 'index'])->name('evaluations');
+        Route::post('/evaluations.php', [BeneficiaryEvaluationController::class, 'store'])->name('evaluations.store');
+        Route::get('/impact_assessment.php', [BeneficiaryImpactAssessmentController::class, 'index'])->name('impact_assessment');
+        Route::post('/impact_assessment.php', [BeneficiaryImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
+        Route::get('/skills.php', [BeneficiarySkillsController::class, 'index'])->name('skills');
+        Route::post('/skills.php', [BeneficiarySkillsController::class, 'store'])->name('skills.store');
+        Route::get('/notifications.php', [BeneficiaryNotificationController::class, 'index'])->name('notifications');
+        Route::get('/profile.php', [BeneficiaryProfileController::class, 'show'])->name('profile');
+        Route::post('/profile.php', [BeneficiaryProfileController::class, 'update'])->name('profile.update');
     });

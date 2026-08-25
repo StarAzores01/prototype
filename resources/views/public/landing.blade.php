@@ -552,6 +552,131 @@
     .lp-footer-badges { display: flex; gap: 8px; flex-wrap: wrap; }
     .lp-footer-badge { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.12); padding: 3px 9px; border-radius: 20px; }
 
+    /* ── VIDEO SHOWCASE ── */
+    .lp-vid-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      align-items: start;
+    }
+    .lp-vid-main { display: flex; flex-direction: column; }
+    .lp-vid-frame {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #000;
+      aspect-ratio: 16/9;
+      box-shadow: 0 12px 48px rgba(0,0,0,.5);
+    }
+    .lp-vid-player {
+      width: 100%; height: 100%;
+      display: block; object-fit: cover;
+    }
+    .lp-vid-placeholder {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(145deg, var(--lp-navy-mid), var(--lp-navy-soft));
+      border-radius: 18px;
+    }
+    .lp-vid-placeholder.hidden { display: none; }
+    .lp-vid-ph-inner { text-align: center; padding: 32px; }
+    .lp-vid-play-ring {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.25);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px; transition: var(--lp-t);
+    }
+    .lp-vid-placeholder:hover .lp-vid-play-ring {
+      background: rgba(56,189,248,.25); border-color: var(--lp-accent); transform: scale(1.08);
+    }
+    .lp-vid-ph-label {
+      font-size: 17px; font-weight: 700; color: #fff; margin: 0 0 6px;
+    }
+    .lp-vid-ph-sub { font-size: 12px; color: rgba(255,255,255,.45); margin: 0; }
+    .lp-vid-ph-sub code {
+      background: rgba(255,255,255,.1); padding: 2px 7px; border-radius: 4px;
+      font-family: monospace; color: var(--lp-accent);
+    }
+    .lp-vid-caption {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1); border-top: none;
+      border-radius: 0 0 18px 18px;
+    }
+    .lp-vid-cap-tag {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; color: var(--lp-accent);
+      background: rgba(56,189,248,.12); padding: 3px 9px; border-radius: 20px;
+      flex-shrink: 0;
+    }
+    .lp-vid-cap-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); }
+    .lp-vid-playlist {
+      display: flex; flex-direction: column; gap: 10px;
+      max-height: 400px; overflow-y: auto; padding-right: 4px;
+    }
+    .lp-vid-playlist::-webkit-scrollbar { width: 4px; }
+    .lp-vid-playlist::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+    .lp-vid-thumb {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.04);
+      cursor: pointer; transition: var(--lp-t); outline: none;
+    }
+    .lp-vid-thumb:hover, .lp-vid-thumb:focus-visible {
+      background: rgba(255,255,255,.09); border-color: rgba(56,189,248,.3);
+    }
+    .lp-vid-thumb.active { background: rgba(56,189,248,.1); border-color: var(--lp-accent); }
+    .lp-vt-img {
+      width: 72px; height: 48px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .lp-vt-play-ico {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: rgba(255,255,255,.8); background: rgba(0,0,0,.25);
+    }
+    .lp-vt-emoji { font-size: 26px; position: relative; z-index: 1; }
+    .lp-vt-info { flex: 1; min-width: 0; }
+    .lp-vt-title {
+      font-size: 12.5px; font-weight: 700; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lp-vt-meta { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 2px; }
+
+    /* ── COURSE CARDS ── */
+    .lp-course-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .lp-course-card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 18px; overflow: hidden;
+      transition: var(--lp-t); display: flex; flex-direction: column;
+    }
+    .lp-course-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(56,189,248,.3);
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    }
+    .lp-cc-thumb {
+      height: 110px;
+      display: flex; align-items: center; justify-content: center; font-size: 48px;
+    }
+    .lp-cc-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .lp-cc-area { font-size: 14px; font-weight: 700; color: #fff; }
+    .lp-cc-desc { font-size: 12.5px; color: rgba(255,255,255,.55); line-height: 1.65; flex: 1; }
+    .lp-cc-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .lp-cc-tags span {
+      font-size: 10.5px; font-weight: 600;
+      background: rgba(56,189,248,.1); color: var(--lp-accent);
+      border: 1px solid rgba(56,189,248,.2); padding: 3px 9px; border-radius: 20px;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 960px) {
       .lp-hero-inner  { grid-template-columns: 1fr; }
@@ -561,12 +686,21 @@
       .lp-footer-grid { grid-template-columns: 1fr 1fr; }
       .lp-sdg-grid    { grid-template-columns: 1fr; max-width: 360px; }
       .lp-links       { display: none; }
+      .lp-vid-layout  { grid-template-columns: 1fr; }
+      .lp-vid-playlist {
+        max-height: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        flex-direction: unset;
+      }
     }
     @media (max-width: 600px) {
       .lp-train-grid  { grid-template-columns: 1fr; }
       .lp-feat-grid   { grid-template-columns: 1fr; }
       .lp-footer-grid { grid-template-columns: 1fr; }
       .lp-contact-grid{ grid-template-columns: 1fr; }
+      .lp-course-grid { grid-template-columns: 1fr; }
+      .lp-vid-playlist { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -592,6 +726,7 @@
     <div class="lp-links">
       <a href="{{ route('home') }}"             class="lp-link active">Home</a>
       <a href="{{ route('about') }}"             class="lp-link">About</a>
+      <a href="#courses"                         class="lp-link">Courses</a>
       <a href="{{ route('trainings-public') }}"  class="lp-link">Trainings</a>
       <a href="{{ route('contact') }}"           class="lp-link">Contact</a>
     </div>
@@ -639,6 +774,263 @@
           <i class="fas fa-plus"></i> Create Account
         </a>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     TICKER STRIP
+════════════════════════════════════════ -->
+<div class="lp-ticker">
+  <div class="lp-ticker-inner">
+    <span class="lp-ticker-lbl">Latest</span>
+    <div style="overflow:hidden;flex:1">
+      <div class="lp-ticker-track" id="lpTicker"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     VIDEO SHOWCASE — Course Highlights
+════════════════════════════════════════ -->
+<section class="lp-section" id="courses" style="background:rgba(255,255,255,.04)">
+  <div class="lp-container">
+
+    <div class="lp-sec-header">
+      <div class="lp-sec-badge" style="background:rgba(56,189,248,.1);color:var(--lp-accent);border-color:rgba(56,189,248,.2)">
+        <i class="fas fa-film"></i> Course Highlights
+      </div>
+      <h2 class="lp-sec-title" style="color:#fff">See Our Training Programs in Action</h2>
+      <p class="lp-sec-desc" style="color:rgba(255,255,255,.6)">
+        Watch real participants and trainers from CIT extension programs — from culinary arts to automotive technology.
+      </p>
+    </div>
+
+    <div class="lp-vid-layout">
+
+      <!-- Main player -->
+      <div class="lp-vid-main">
+        <div class="lp-vid-frame">
+          <video id="lpFeaturedVideo" class="lp-vid-player"
+            controls poster="{{ asset('imgs/landingpage.jpg') }}"
+            preload="none" style="display:none"
+            aria-label="Featured training highlight video">
+            {{-- Add your video: <source src="{{ asset('assets/videos/highlight.mp4') }}" type="video/mp4"/> --}}
+          </video>
+          <div class="lp-vid-placeholder" id="lpVidPlaceholder">
+            <div class="lp-vid-ph-inner">
+              <div class="lp-vid-play-ring">
+                <svg viewBox="0 0 60 60" fill="none" width="60" height="60" aria-hidden="true">
+                  <circle cx="30" cy="30" r="29" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+                  <polygon points="23,18 47,30 23,42" fill="#fff"/>
+                </svg>
+              </div>
+              <p class="lp-vid-ph-label" id="lpPhLabel">CIT Extension Training — 2025 Highlights</p>
+              <p class="lp-vid-ph-sub">Upload a video to <code>public/assets/videos/</code> and set the src</p>
+            </div>
+          </div>
+        </div>
+        <div class="lp-vid-caption">
+          <span class="lp-vid-cap-tag">Featured</span>
+          <span class="lp-vid-cap-title" id="lpCapTitle">CIT Extension Training — 2025 Highlights</span>
+        </div>
+      </div>
+
+      <!-- Playlist -->
+      <div class="lp-vid-playlist">
+
+        <div class="lp-vid-thumb active"
+          data-title="CIT Extension Training — 2025 Highlights"
+          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
+          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
+          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
+          <div class="lp-vt-img" style="background:linear-gradient(135deg,#1A56DB,#38BDF8)">
+            <span class="lp-vt-play-ico">&#9654;</span>
+            <span class="lp-vt-emoji">🏆</span>
+          </div>
+          <div class="lp-vt-info">
+            <div class="lp-vt-title">2025 Training Highlights</div>
+            <div class="lp-vt-meta">All programs · Full reel</div>
+          </div>
+        </div>
+
+        <div class="lp-vid-thumb"
+          data-title="Culinary Technology — Pastry Making Batch 2"
+          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
+          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
+          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
+          <div class="lp-vt-img" style="background:linear-gradient(135deg,#F59E0B,#FDE68A)">
+            <span class="lp-vt-play-ico">&#9654;</span>
+            <span class="lp-vt-emoji">🍳</span>
+          </div>
+          <div class="lp-vt-info">
+            <div class="lp-vt-title">Culinary Technology</div>
+            <div class="lp-vt-meta">Pastry Making · Batch 2</div>
+          </div>
+        </div>
+
+        <div class="lp-vid-thumb"
+          data-title="Computer Technology — Digital Literacy Program"
+          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
+          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
+          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
+          <div class="lp-vt-img" style="background:linear-gradient(135deg,#6366F1,#A5B4FC)">
+            <span class="lp-vt-play-ico">&#9654;</span>
+            <span class="lp-vt-emoji">💻</span>
+          </div>
+          <div class="lp-vt-info">
+            <div class="lp-vt-title">Computer Technology</div>
+            <div class="lp-vt-meta">Digital Literacy Program</div>
+          </div>
+        </div>
+
+        <div class="lp-vid-thumb"
+          data-title="Automotive Technology — Basic Engine Overhaul"
+          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
+          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
+          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
+          <div class="lp-vt-img" style="background:linear-gradient(135deg,#64748B,#CBD5E1)">
+            <span class="lp-vt-play-ico">&#9654;</span>
+            <span class="lp-vt-emoji">🔧</span>
+          </div>
+          <div class="lp-vt-info">
+            <div class="lp-vt-title">Automotive Technology</div>
+            <div class="lp-vt-meta">Basic Engine Overhaul</div>
+          </div>
+        </div>
+
+        <div class="lp-vid-thumb"
+          data-title="Apparel & Fashion — Dressmaking Basics"
+          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
+          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
+          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
+          <div class="lp-vt-img" style="background:linear-gradient(135deg,#EC4899,#FBD5E8)">
+            <span class="lp-vt-play-ico">&#9654;</span>
+            <span class="lp-vt-emoji">🪡</span>
+          </div>
+          <div class="lp-vt-info">
+            <div class="lp-vt-title">Apparel &amp; Fashion</div>
+            <div class="lp-vt-meta">Dressmaking Basics</div>
+          </div>
+        </div>
+
+        <div class="lp-vid-thumb"
+          data-title="Electronics Technology — Solar Panel Installation"
+          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
+          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
+          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
+          <div class="lp-vt-img" style="background:linear-gradient(135deg,#10B981,#A7F3D0)">
+            <span class="lp-vt-play-ico">&#9654;</span>
+            <span class="lp-vt-emoji">⚡</span>
+          </div>
+          <div class="lp-vt-info">
+            <div class="lp-vt-title">Electronics Technology</div>
+            <div class="lp-vt-meta">Solar Panel Installation</div>
+          </div>
+        </div>
+
+      </div><!-- /playlist -->
+    </div><!-- /lp-vid-layout -->
+
+    <div style="text-align:center;margin-top:40px">
+      <a href="{{ route('trainings-public') }}" class="lp-btn-hero-ghost" style="display:inline-flex">
+        View All Training Programs <i class="fas fa-arrow-right" style="margin-left:8px"></i>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     COURSE CARDS
+════════════════════════════════════════ -->
+<section class="lp-section" id="programs" style="background:rgba(255,255,255,.02)">
+  <div class="lp-container">
+
+    <div class="lp-sec-header">
+      <div class="lp-sec-badge" style="background:rgba(56,189,248,.1);color:var(--lp-accent);border-color:rgba(56,189,248,.2)">
+        <i class="fas fa-book-open"></i> Training Areas
+      </div>
+      <h2 class="lp-sec-title" style="color:#fff">Courses Offered</h2>
+      <p class="lp-sec-desc" style="color:rgba(255,255,255,.6)">
+        CIT offers community-based technical-vocational training across 8 technology areas — free for qualified beneficiaries.
+      </p>
+    </div>
+
+    <div class="lp-course-grid">
+
+      <div class="lp-course-card">
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#F59E0B,#FBBF24)">🍳</div>
+        <div class="lp-cc-body">
+          <div class="lp-cc-area">Culinary Technology</div>
+          <p class="lp-cc-desc">Professional food preparation, bakery, pastry arts, and kitchen management for employment or entrepreneurship.</p>
+          <div class="lp-cc-tags"><span>Baking</span><span>Pastry Arts</span><span>Food Safety</span></div>
+        </div>
+      </div>
+
+      <div class="lp-course-card">
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#6366F1,#818CF8)">💻</div>
+        <div class="lp-cc-body">
+          <div class="lp-cc-area">Computer Technology</div>
+          <p class="lp-cc-desc">Digital literacy, basic programming, office productivity tools, and computer hardware servicing.</p>
+          <div class="lp-cc-tags"><span>Digital Literacy</span><span>Hardware</span><span>MS Office</span></div>
+        </div>
+      </div>
+
+      <div class="lp-course-card">
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#64748B,#94A3B8)">🔧</div>
+        <div class="lp-cc-body">
+          <div class="lp-cc-area">Automotive Technology</div>
+          <p class="lp-cc-desc">Engine diagnostics, brake systems, preventive maintenance, and electrical repair for vehicles.</p>
+          <div class="lp-cc-tags"><span>Engine Repair</span><span>Brakes</span><span>Diagnostics</span></div>
+        </div>
+      </div>
+
+      <div class="lp-course-card">
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#10B981,#34D399)">⚡</div>
+        <div class="lp-cc-body">
+          <div class="lp-cc-area">Electronics Technology</div>
+          <p class="lp-cc-desc">Solar panel installation, consumer electronics repair, and electrical wiring for homes and small businesses.</p>
+          <div class="lp-cc-tags"><span>Solar Energy</span><span>Wiring</span><span>Repair</span></div>
+        </div>
+      </div>
+
+      <div class="lp-course-card">
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#EC4899,#F472B6)">🪡</div>
+        <div class="lp-cc-body">
+          <div class="lp-cc-area">Apparel &amp; Fashion Technology</div>
+          <p class="lp-cc-desc">Dressmaking, pattern-making, garment construction, and fashion design for local industry.</p>
+          <div class="lp-cc-tags"><span>Dressmaking</span><span>Pattern-Making</span><span>Design</span></div>
+        </div>
+      </div>
+
+      <div class="lp-course-card">
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#1A56DB,#3B82F6)">⚙️</div>
+        <div class="lp-cc-body">
+          <div class="lp-cc-area">Mechanical Technology</div>
+          <p class="lp-cc-desc">Machining, welding, metal fabrication, and mechanical systems maintenance for industrial applications.</p>
+          <div class="lp-cc-tags"><span>Welding</span><span>Machining</span><span>Fabrication</span></div>
+        </div>
+      </div>
+
+      <div class="lp-course-card">
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)">🖨️</div>
+        <div class="lp-cc-body">
+          <div class="lp-cc-area">Print Media Technology</div>
+          <p class="lp-cc-desc">Graphic design, desktop publishing, digital printing, and print production for media and business.</p>
+          <div class="lp-cc-tags"><span>Graphic Design</span><span>Publishing</span><span>Printing</span></div>
+        </div>
+      </div>
+
+      <div class="lp-course-card">
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#0EA5E9,#38BDF8)">🌐</div>
+        <div class="lp-cc-body">
+          <div class="lp-cc-area">Information Technology</div>
+          <p class="lp-cc-desc">Web development, systems analysis, network fundamentals, and IT support for the digital economy.</p>
+          <div class="lp-cc-tags"><span>Web Dev</span><span>Networking</span><span>IT Support</span></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -723,6 +1115,37 @@
      JAVASCRIPT
 ════════════════════════════════════════ -->
 <script>
+/* ── Video playlist switcher ── */
+function lpSwitchVideo(thumb) {
+  document.querySelectorAll('.lp-vid-thumb').forEach(t => t.classList.remove('active'));
+  thumb.classList.add('active');
+
+  const title  = thumb.dataset.title  || '';
+  const src    = thumb.dataset.src    || '';
+  const poster = thumb.dataset.poster || '';
+  const video  = document.getElementById('lpFeaturedVideo');
+  const ph     = document.getElementById('lpVidPlaceholder');
+  const lbl    = document.getElementById('lpPhLabel');
+
+  document.getElementById('lpCapTitle').textContent = title;
+
+  if (src) {
+    if (lbl) lbl.textContent = title;
+    ph?.classList.add('hidden');
+    video.poster = poster;
+    let source = video.querySelector('source');
+    if (!source) { source = document.createElement('source'); source.type = 'video/mp4'; video.appendChild(source); }
+    source.src = src;
+    video.load();
+    video.style.display = 'block';
+  } else {
+    video.style.display = 'none';
+    video.poster = poster;
+    if (ph) ph.classList.remove('hidden');
+    if (lbl) lbl.textContent = title;
+  }
+}
+
 /* ── Navbar scroll effect ── */
 window.addEventListener('scroll', () => {
   document.getElementById('lpNav').classList.toggle('scrolled', window.scrollY > 60);

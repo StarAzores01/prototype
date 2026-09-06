@@ -3,6 +3,7 @@
      (beneficiary was missing the click-outside-to-close wiring for
      modals). Included once per layout instead. --}}
 <script>
+/* ── Dropdowns ── */
 function toggleDropdown() {
   const d = document.getElementById('profileDropdown');
   d?.classList.toggle('open');
@@ -27,6 +28,7 @@ document.addEventListener('click', e => {
   }
 });
 
+/* ── Modals ── */
 function openModal(id) {
   document.getElementById('modal-' + id)?.classList.add('open');
 }
@@ -37,6 +39,7 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
 });
 
+/* ── Toast ── */
 function showToast(msg, type = 'info') {
   const c = document.getElementById('toastContainer');
   if (!c) return;
@@ -56,4 +59,160 @@ showToast(@json(session('success')), 'success');
 @elseif(session('error'))
 showToast(@json(session('error')), 'error');
 @endif
+
+/* ── Unsaved-changes guard ──────────────────────────────────────────────
+   Tracks whether any guarded form has been modified since the last page
+   load / successful save. Only shows the browser's "Leave site?" dialog
+   when there really ARE unsaved changes — not on every navigation.
+
+   Guarding is opt-OUT, not opt-in: with 50+ forms across every role's
+   views, an opt-in attribute is guaranteed to be forgotten on most of
+   them (that's exactly what happened before this comment was written —
+   the guard existed but zero forms carried the opt-in attribute, so it
+   never actually fired for real unsaved data). Every form is guarded
+   automatically unless it plainly has nothing worth warning about:
+     • method="GET"                     → search/filter forms, no data
+     • action ends in /logout           → the logout button
+     • [data-no-unsaved-guard]          → manual escape hatch
+     • no visible input/textarea/select → delete / approve / status-toggle
+       forms that carry only a hidden id + a submit button (these already
+       get their own onsubmit confirm() where it matters)
+
+   Other helpers:
+     pathriveMarkDirty()   ← call manually if you modify the DOM outside
+                              a form input event
+     pathriveMarkClean()   ← call after a successful AJAX save
+
+   The guard fires on:
+     • Closing the tab / window
+     • Navigating to an EXTERNAL page (e.g. the public home button → /)
+     • Any unload that isn't a clean internal form submit
+
+   The guard is suppressed on:
+     • Form submit (the user is intentionally saving) — this covers both
+       a real 'submit' event AND a plain form.submit() call (used by the
+       avatar uploader and the auto-submit-on-change status dropdowns);
+       form.submit() deliberately does NOT fire a 'submit' event per the
+       DOM spec, so it's patched below instead of relying on that event
+     • Internal navigation links (sidebar, topbar, profile dropdown)
+       — navigating between authenticated pages never causes data loss
+   ──────────────────────────────────────────────────────────────────── */
+(function () {
+  var _dirty = false;
+
+  window.pathriveMarkDirty = function () { _dirty = true; };
+  window.pathriveMarkClean = function () { _dirty = false; };
+
+  function isGuardable(form) {
+    if (form.hasAttribute('data-no-unsaved-guard')) return false;
+    if ((form.getAttribute('method') || 'GET').toUpperCase() === 'GET') return false;
+    if (/\/logout\/?$/.test(form.getAttribute('action') || '')) return false;
+    return Array.prototype.some.call(form.elements, function (el) {
+      var type = (el.type || '').toLowerCase();
+      return ['hidden', 'submit', 'button', 'reset'].indexOf(type) === -1 && !el.disabled;
+    });
+  }
+
+  function attachGuard(form) {
+    form.addEventListener('input',  function () { _dirty = true; }, { passive: true });
+    form.addEventListener('change', function () { _dirty = true; }, { passive: true });
+  }
+
+  function guardIfEligible(form) {
+    if (isGuardable(form)) attachGuard(form);
+  }
+
+  document.querySelectorAll('form').forEach(guardIfEligible);
+
+  /* form.submit() bypasses the 'submit' event by design (so onsubmit
+     handlers can't recurse) — patch it so programmatic submits still
+     clear the dirty flag right before the navigation they cause. */
+  var nativeFormSubmit = HTMLFormElement.prototype.submit;
+  HTMLFormElement.prototype.submit = function () {
+    _dirty = false;
+    return nativeFormSubmit.apply(this, arguments);
+  };
+
+  /* Also watch forms added dynamically (modals injected after load, etc.) */
+  var mo = new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      m.addedNodes.forEach(function (node) {
+        if (node.nodeType !== 1) return;
+        if (node.matches && node.matches('form')) guardIfEligible(node);
+        node.querySelectorAll && node.querySelectorAll('form').forEach(guardIfEligible);
+      });
+    });
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
+
+  /* Suppress on form submit — user is intentionally saving */
+  document.addEventListener('submit', function () {
+    _dirty = false;
+  }, { capture: true });
+
+  /* Suppress on internal app links (sidebar, topbar, profile dropdown) */
+  document.addEventListener('click', function (e) {
+    var anchor = e.target.closest('a[href]');
+    if (!anchor) return;
+    /* The public Home button lives inside .topbar alongside the (truly
+       internal) notification links, but it deliberately leaves the
+       authenticated section for the public marketing site — the one
+       case this guard's own doc comment calls out as something that
+       SHOULD warn. Handle it before the .closest('.topbar') check below
+       would otherwise swallow it. */
+    if (anchor.classList.contains('topbar-home-btn')) return;
+    var href = anchor.getAttribute('href') || '';
+    if (!href || href.startsWith('#') || href.startsWith('mailto:')) return;
+    var internalPrefixes = ['/ec/', '/trainer/', '/evaluator/', '/beneficiary/', '/files/'];
+    /* route() emits absolute URLs (scheme + host) everywhere in this app,
+       so matching the raw href string against a path prefix never hits —
+       anchor.pathname is browser-normalized to just the path regardless
+       of whether the href attribute was relative or absolute. */
+    var isInternal = internalPrefixes.some(function (p) { return anchor.pathname.startsWith(p); })
+                  || anchor.closest('.sidebar')
+                  || anchor.closest('.topbar')
+                  || anchor.closest('.profile-dropdown');
+    if (isInternal) {
+      _dirty = false;
+    }
+  }, { capture: true });
+
+  /* beforeunload — fires when leaving the page normally (tab close,
+     external link, typing a new URL, the public Home button).
+     Modern browsers ignore the custom message string and show their own
+     generic "Leave site?" dialog — setting returnValue is enough. */
+  window.addEventListener('beforeunload', function (e) {
+    if (!_dirty) return;
+    e.preventDefault();
+    e.returnValue = '';   /* required by Chrome/Edge to trigger the dialog */
+  });
+
+  /* ── Back/Forward button bfcache guard ──────────────────────────────
+     Browsers cache authenticated pages in memory (bfcache) so that
+     pressing Back restores the page instantly without an HTTP request —
+     bypassing both the no-cache headers set by PreventBackHistoryCache
+     middleware AND the beforeunload handler above.
+
+     Fix: listen for `pageshow` with `event.persisted === true`, which
+     means the page was just restored from bfcache. Force a full reload
+     so the server's no-cache headers take effect and an unauthenticated
+     user cannot see stale authenticated content just by pressing Back.
+
+     Additionally: if the page was dirty (unsaved changes) and we detect
+     a bfcache restore, reload anyway — the data was already not saved,
+     and showing a stale cached version of the form would be confusing.
+  ──────────────────────────────────────────────────────────────────── */
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) {
+      /* Page was restored from bfcache after Back/Forward navigation.
+         Reload to enforce authentication and avoid stale content. */
+      window.location.reload();
+    }
+  });
+
+  /* pagehide with persisted=false means the page is actually being
+     unloaded (not cached). Nothing extra needed — beforeunload already
+     handles the warning in that path. */
+
+})();
 </script>

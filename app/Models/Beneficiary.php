@@ -11,7 +11,7 @@ class Beneficiary extends Authenticatable
 
     protected $fillable = [
         'username', 'first_name', 'last_name', 'email', 'phone', 'address',
-        'age', 'sex', 'barangay', 'municipality', 'password_hash', 'is_active',
+        'age', 'sex', 'barangay', 'municipality', 'password_hash', 'is_active', 'avatar',
     ];
 
     protected $hidden = ['password_hash', 'remember_token'];

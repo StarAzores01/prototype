@@ -552,14 +552,14 @@
     .lp-footer-badges { display: flex; gap: 8px; flex-wrap: wrap; }
     .lp-footer-badge { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.12); padding: 3px 9px; border-radius: 20px; }
 
-    /* ── VIDEO SHOWCASE ── */
+    /* ── VIDEO SHOWCASE ──
+       Single centered player — there's only one homepage video montage
+       (EC-managed), not a playlist, so no side rail here. */
     .lp-vid-layout {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 24px;
-      align-items: start;
+      display: flex;
+      justify-content: center;
     }
-    .lp-vid-main { display: flex; flex-direction: column; }
+    .lp-vid-main { display: flex; flex-direction: column; width: 100%; max-width: 720px; }
     .lp-vid-frame {
       position: relative;
       border-radius: 18px;
@@ -611,40 +611,6 @@
       flex-shrink: 0;
     }
     .lp-vid-cap-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); }
-    .lp-vid-playlist {
-      display: flex; flex-direction: column; gap: 10px;
-      max-height: 400px; overflow-y: auto; padding-right: 4px;
-    }
-    .lp-vid-playlist::-webkit-scrollbar { width: 4px; }
-    .lp-vid-playlist::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
-    .lp-vid-thumb {
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 12px; border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.07);
-      background: rgba(255,255,255,.04);
-      cursor: pointer; transition: var(--lp-t); outline: none;
-    }
-    .lp-vid-thumb:hover, .lp-vid-thumb:focus-visible {
-      background: rgba(255,255,255,.09); border-color: rgba(56,189,248,.3);
-    }
-    .lp-vid-thumb.active { background: rgba(56,189,248,.1); border-color: var(--lp-accent); }
-    .lp-vt-img {
-      width: 72px; height: 48px; border-radius: 8px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      position: relative; overflow: hidden;
-    }
-    .lp-vt-play-ico {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; color: rgba(255,255,255,.8); background: rgba(0,0,0,.25);
-    }
-    .lp-vt-emoji { font-size: 26px; position: relative; z-index: 1; }
-    .lp-vt-info { flex: 1; min-width: 0; }
-    .lp-vt-title {
-      font-size: 12.5px; font-weight: 700; color: #fff;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .lp-vt-meta { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 2px; }
 
     /* ── COURSE CARDS ── */
     .lp-course-grid {
@@ -686,13 +652,6 @@
       .lp-footer-grid { grid-template-columns: 1fr 1fr; }
       .lp-sdg-grid    { grid-template-columns: 1fr; max-width: 360px; }
       .lp-links       { display: none; }
-      .lp-vid-layout  { grid-template-columns: 1fr; }
-      .lp-vid-playlist {
-        max-height: none;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        flex-direction: unset;
-      }
     }
     @media (max-width: 600px) {
       .lp-train-grid  { grid-template-columns: 1fr; }
@@ -700,7 +659,6 @@
       .lp-footer-grid { grid-template-columns: 1fr; }
       .lp-contact-grid{ grid-template-columns: 1fr; }
       .lp-course-grid { grid-template-columns: 1fr; }
-      .lp-vid-playlist { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -726,7 +684,6 @@
     <div class="lp-links">
       <a href="{{ route('home') }}"             class="lp-link active">Home</a>
       <a href="{{ route('about') }}"             class="lp-link">About</a>
-      <a href="#courses"                         class="lp-link">Courses</a>
       <a href="{{ route('trainings-public') }}"  class="lp-link">Trainings</a>
       <a href="{{ route('contact') }}"           class="lp-link">Contact</a>
     </div>
@@ -805,18 +762,20 @@
       </p>
     </div>
 
+    @php
+      $hasHomepageVideo = (bool) ($homepageVideo?->video_url);
+      $homepageVideoTitle = $homepageVideo?->video_title ?: 'CIT Extension Training Highlights';
+    @endphp
     <div class="lp-vid-layout">
 
-      <!-- Main player -->
+      <!-- Main player — external link only (YouTube/Drive/Vimeo etc.), set
+           by the Extension Coordinator from the bottom of their Dashboard.
+           Not an embedded <video>: it just opens the link in a new tab,
+           same convention as every other external video link in this app. -->
       <div class="lp-vid-main">
-        <div class="lp-vid-frame">
-          <video id="lpFeaturedVideo" class="lp-vid-player"
-            controls poster="{{ asset('imgs/landingpage.jpg') }}"
-            preload="none" style="display:none"
-            aria-label="Featured training highlight video">
-            {{-- Add your video: <source src="{{ asset('assets/videos/highlight.mp4') }}" type="video/mp4"/> --}}
-          </video>
-          <div class="lp-vid-placeholder" id="lpVidPlaceholder">
+        @if($hasHomepageVideo)
+        <a href="{{ $homepageVideo->video_url }}" target="_blank" rel="noopener" class="lp-vid-frame" style="display:block">
+          <div class="lp-vid-placeholder">
             <div class="lp-vid-ph-inner">
               <div class="lp-vid-play-ring">
                 <svg viewBox="0 0 60 60" fill="none" width="60" height="60" aria-hidden="true">
@@ -824,111 +783,33 @@
                   <polygon points="23,18 47,30 23,42" fill="#fff"/>
                 </svg>
               </div>
-              <p class="lp-vid-ph-label" id="lpPhLabel">CIT Extension Training — 2025 Highlights</p>
-              <p class="lp-vid-ph-sub">Upload a video to <code>public/assets/videos/</code> and set the src</p>
+              <p class="lp-vid-ph-label">{{ $homepageVideoTitle }}</p>
+              <p class="lp-vid-ph-sub">Opens in a new tab</p>
+            </div>
+          </div>
+        </a>
+        @else
+        <div class="lp-vid-frame">
+          <div class="lp-vid-placeholder">
+            <div class="lp-vid-ph-inner">
+              <div class="lp-vid-play-ring">
+                <svg viewBox="0 0 60 60" fill="none" width="60" height="60" aria-hidden="true">
+                  <circle cx="30" cy="30" r="29" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+                  <polygon points="23,18 47,30 23,42" fill="#fff"/>
+                </svg>
+              </div>
+              <p class="lp-vid-ph-label">Video montage coming soon</p>
+              <p class="lp-vid-ph-sub">The Extension Coordinator hasn't added one yet</p>
             </div>
           </div>
         </div>
+        @endif
         <div class="lp-vid-caption">
           <span class="lp-vid-cap-tag">Featured</span>
-          <span class="lp-vid-cap-title" id="lpCapTitle">CIT Extension Training — 2025 Highlights</span>
+          <span class="lp-vid-cap-title">{{ $homepageVideoTitle }}</span>
         </div>
       </div>
 
-      <!-- Playlist -->
-      <div class="lp-vid-playlist">
-
-        <div class="lp-vid-thumb active"
-          data-title="CIT Extension Training — 2025 Highlights"
-          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
-          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
-          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
-          <div class="lp-vt-img" style="background:linear-gradient(135deg,#1A56DB,#38BDF8)">
-            <span class="lp-vt-play-ico">&#9654;</span>
-            <span class="lp-vt-emoji">🏆</span>
-          </div>
-          <div class="lp-vt-info">
-            <div class="lp-vt-title">2025 Training Highlights</div>
-            <div class="lp-vt-meta">All programs · Full reel</div>
-          </div>
-        </div>
-
-        <div class="lp-vid-thumb"
-          data-title="Culinary Technology — Pastry Making Batch 2"
-          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
-          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
-          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
-          <div class="lp-vt-img" style="background:linear-gradient(135deg,#F59E0B,#FDE68A)">
-            <span class="lp-vt-play-ico">&#9654;</span>
-            <span class="lp-vt-emoji">🍳</span>
-          </div>
-          <div class="lp-vt-info">
-            <div class="lp-vt-title">Culinary Technology</div>
-            <div class="lp-vt-meta">Pastry Making · Batch 2</div>
-          </div>
-        </div>
-
-        <div class="lp-vid-thumb"
-          data-title="Computer Technology — Digital Literacy Program"
-          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
-          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
-          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
-          <div class="lp-vt-img" style="background:linear-gradient(135deg,#6366F1,#A5B4FC)">
-            <span class="lp-vt-play-ico">&#9654;</span>
-            <span class="lp-vt-emoji">💻</span>
-          </div>
-          <div class="lp-vt-info">
-            <div class="lp-vt-title">Computer Technology</div>
-            <div class="lp-vt-meta">Digital Literacy Program</div>
-          </div>
-        </div>
-
-        <div class="lp-vid-thumb"
-          data-title="Automotive Technology — Basic Engine Overhaul"
-          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
-          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
-          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
-          <div class="lp-vt-img" style="background:linear-gradient(135deg,#64748B,#CBD5E1)">
-            <span class="lp-vt-play-ico">&#9654;</span>
-            <span class="lp-vt-emoji">🔧</span>
-          </div>
-          <div class="lp-vt-info">
-            <div class="lp-vt-title">Automotive Technology</div>
-            <div class="lp-vt-meta">Basic Engine Overhaul</div>
-          </div>
-        </div>
-
-        <div class="lp-vid-thumb"
-          data-title="Apparel & Fashion — Dressmaking Basics"
-          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
-          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
-          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
-          <div class="lp-vt-img" style="background:linear-gradient(135deg,#EC4899,#FBD5E8)">
-            <span class="lp-vt-play-ico">&#9654;</span>
-            <span class="lp-vt-emoji">🪡</span>
-          </div>
-          <div class="lp-vt-info">
-            <div class="lp-vt-title">Apparel &amp; Fashion</div>
-            <div class="lp-vt-meta">Dressmaking Basics</div>
-          </div>
-        </div>
-
-        <div class="lp-vid-thumb"
-          data-title="Electronics Technology — Solar Panel Installation"
-          data-src="" data-poster="{{ asset('imgs/landingpage.jpg') }}"
-          onclick="lpSwitchVideo(this)" role="button" tabindex="0"
-          onkeydown="if(event.key==='Enter')lpSwitchVideo(this)">
-          <div class="lp-vt-img" style="background:linear-gradient(135deg,#10B981,#A7F3D0)">
-            <span class="lp-vt-play-ico">&#9654;</span>
-            <span class="lp-vt-emoji">⚡</span>
-          </div>
-          <div class="lp-vt-info">
-            <div class="lp-vt-title">Electronics Technology</div>
-            <div class="lp-vt-meta">Solar Panel Installation</div>
-          </div>
-        </div>
-
-      </div><!-- /playlist -->
     </div><!-- /lp-vid-layout -->
 
     <div style="text-align:center;margin-top:40px">
@@ -1118,37 +999,6 @@
      JAVASCRIPT
 ════════════════════════════════════════ -->
 <script>
-/* ── Video playlist switcher ── */
-function lpSwitchVideo(thumb) {
-  document.querySelectorAll('.lp-vid-thumb').forEach(t => t.classList.remove('active'));
-  thumb.classList.add('active');
-
-  const title  = thumb.dataset.title  || '';
-  const src    = thumb.dataset.src    || '';
-  const poster = thumb.dataset.poster || '';
-  const video  = document.getElementById('lpFeaturedVideo');
-  const ph     = document.getElementById('lpVidPlaceholder');
-  const lbl    = document.getElementById('lpPhLabel');
-
-  document.getElementById('lpCapTitle').textContent = title;
-
-  if (src) {
-    if (lbl) lbl.textContent = title;
-    ph?.classList.add('hidden');
-    video.poster = poster;
-    let source = video.querySelector('source');
-    if (!source) { source = document.createElement('source'); source.type = 'video/mp4'; video.appendChild(source); }
-    source.src = src;
-    video.load();
-    video.style.display = 'block';
-  } else {
-    video.style.display = 'none';
-    video.poster = poster;
-    if (ph) ph.classList.remove('hidden');
-    if (lbl) lbl.textContent = title;
-  }
-}
-
 /* ── Navbar scroll effect ── */
 window.addEventListener('scroll', () => {
   document.getElementById('lpNav').classList.toggle('scrolled', window.scrollY > 60);

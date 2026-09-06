@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Evaluator;
 
+use App\Http\Controllers\Concerns\HandlesAvatarUpload;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
+    use HandlesAvatarUpload;
+
     public function show()
     {
         $evaluator = Auth::guard('web')->user();
@@ -24,8 +27,15 @@ class ProfileController extends Controller
 
     public function update(Request $request)
     {
-        $user = Auth::guard('web')->user();
+        $user   = Auth::guard('web')->user();
         $action = $request->input('action');
+
+        if ($action === 'upload_avatar') {
+            [$ok, $err] = $this->storeAvatar($request, $user);
+            return $ok
+                ? back()->with('success', 'Profile picture updated.')
+                : back()->with('error', $err ?? 'Upload failed.');
+        }
 
         if ($action === 'update_profile') {
             $data = Validator::make($request->all(), [

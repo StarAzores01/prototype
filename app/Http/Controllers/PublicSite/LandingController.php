@@ -4,6 +4,7 @@ namespace App\Http\Controllers\PublicSite;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\PublicSite\Concerns\ResolvesPublicNavData;
+use App\Models\HomepageVideo;
 
 class LandingController extends Controller
 {
@@ -18,6 +19,8 @@ class LandingController extends Controller
      */
     public function index()
     {
-        return view('public.landing', $this->publicNavData());
+        return view('public.landing', $this->publicNavData() + [
+            'homepageVideo' => HomepageVideo::current(),
+        ]);
     }
 }

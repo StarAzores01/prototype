@@ -20,10 +20,26 @@
   </div>
 </div>
 
+<!-- Program Cover Image -->
+<div class="card" style="margin-bottom:24px;overflow:hidden;padding:0">
+  <div style="position:relative;height:220px">
+    @if($viewProgram->cover_image)
+      <img src="{{ route('files.program-cover', $viewProgram) }}" alt="{{ $viewProgram->title }}" style="width:100%;height:100%;object-fit:cover;display:block"/>
+    @else
+      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
+        <i class="fas {{ \App\Support\TrainingCategoryIcon::icon($viewProgram->area) }}" style="font-size:64px;color:rgba(255,255,255,.85)"></i>
+      </div>
+    @endif
+    <div style="position:absolute;bottom:12px;right:12px;display:flex;gap:8px">
+      <button class="btn btn-sm btn-outline" style="background:rgba(255,255,255,.94)" onclick="openModal('uploadProgramCover')">
+        <i class="fas fa-camera"></i> Change Cover
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Info Cards -->
 <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:24px">
-  <div class="stat-card">
-    <div class="stat-icon {{ $viewProgram->status === 'Completed' ? 'green' : ($viewProgram->status === 'Ongoing' ? 'blue' : 'yellow') }}"><i class="fas fa-circle-info"></i></div>
     <div class="stat-body">
       <form method="POST" action="{{ route('ec.programs.store') }}" style="margin:0 0 2px">
         @csrf
@@ -390,6 +406,32 @@
   </div>
 </div>
 
+<!-- MODAL: CHANGE PROGRAM COVER IMAGE -->
+<div class="modal-overlay" id="modal-uploadProgramCover">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h2><i class="fas fa-camera"></i> Change Program Cover</h2>
+      <button class="modal-close" onclick="closeModal('uploadProgramCover')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('ec.programs.store') }}" enctype="multipart/form-data">
+      @csrf
+      <input type="hidden" name="action" value="upload_cover"/>
+      <input type="hidden" name="program_id" value="{{ $viewProgram->id }}"/>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Cover Image <span style="color:var(--red)">*</span></label>
+          <input type="file" name="cover_image" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" required/>
+          <div class="form-hint">JPG, PNG, GIF, or WEBP — max 5 MB</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('uploadProgramCover')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Cover</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 @else
 {{-- ═══════════════════════════════════════════════════════ CARD GRID VIEW ════ --}}
 <div class="page-header">
@@ -412,8 +454,13 @@
     @endphp
     <div class="training-card">
       <div class="training-card-img" style="background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
-        <div class="training-card-cat">{{ $p->area }}</div>
-        <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+        @if($p->cover_image)
+          <img src="{{ route('files.program-cover', $p) }}" alt="{{ $p->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
+        @endif
+        <div class="training-card-cat" style="z-index:2;position:relative">{{ $p->area }}</div>
+        @if(!$p->cover_image)
+          <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+        @endif
       </div>
       <div class="training-card-body">
         <div class="training-card-title">{{ $p->title }}</div>

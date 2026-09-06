@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Concerns;
 
 use App\Models\Training;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -12,6 +13,17 @@ use Illuminate\Support\Facades\Validator;
  * Trainer\TrainingController (lead-only — checked by the caller before this
  * runs). Validates + stores an Activity's cover/display picture, replacing
  * whichever one was there before.
+ *
+ * Security model:
+ *   • The EC routes are protected by the 'role:extension_coordinator' middleware
+ *     before the request ever reaches this trait.
+ *   • The Trainer routes are protected by 'role:trainer' middleware AND by the
+ *     caller's isLeadUser() check before invoking this trait.
+ *   • This trait adds a backend role check as a final defence-in-depth layer:
+ *     only extension_coordinator and trainer roles may invoke it.
+ *     Any other authenticated role (evaluator, beneficiary) that somehow POSTs
+ *     an upload_cover action to a trainer-prefixed route — which is already
+ *     impossible due to the route middleware — gets a 403 here regardless.
  */
 trait HandlesCoverImageUpload
 {
@@ -22,6 +34,14 @@ trait HandlesCoverImageUpload
     /** @return array{0: bool, 1: ?string} [success, errorMessage] */
     private function storeCoverImage(Request $request, Training $training): array
     {
+        // Defence-in-depth role guard — the route middleware already blocks anyone
+        // who isn't an extension_coordinator or trainer, but we double-check here
+        // so this trait cannot be misused if ever mixed into another controller.
+        $role = Auth::guard('web')->check() ? Auth::guard('web')->user()->role : null;
+        if (! in_array($role, ['extension_coordinator', 'trainer'], true)) {
+            abort(403, 'Only Extension Coordinators and Project Leaders may change cover images.');
+        }
+
         $validator = Validator::make($request->all(), [
             // mimes: content-sniffs the actual bytes (via fileinfo), not just the
             // claimed filename extension — a renamed .txt/.php can't pass this.

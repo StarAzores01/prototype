@@ -10,6 +10,7 @@ class Program extends Model
     protected $fillable = [
         'title', 'description', 'area', 'timeline_start', 'timeline_end',
         'budget_allocated', 'status', 'is_locked', 'created_by',
+        'cover_image', 'video_url', 'video_title',
     ];
 
     protected function casts(): array

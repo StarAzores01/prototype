@@ -109,10 +109,13 @@
   <div class="dash-side">
     <div class="card">
       <div class="card-body" style="text-align:center;padding:32px 24px">
-        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--blue-primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin:0 auto 16px">
-          {{ $initials }}
-        </div>
-        <div style="font-size:18px;font-weight:800;color:var(--text-heading)">{{ $ecUser->first_name }} {{ $ecUser->last_name }}</div>
+        @include('partials.profile-avatar', [
+          'avatarUrl'   => $ecUser->avatar ? route('files.avatar') : null,
+          'initials'    => $initials,
+          'uploadRoute' => route('ec.profile.update'),
+          'colorClass'  => '',
+        ])
+        <div style="font-size:18px;font-weight:800;color:var(--text-heading);margin-top:8px">{{ $ecUser->first_name }} {{ $ecUser->last_name }}</div>
         <div style="font-size:12px;color:var(--gray-400);margin-top:4px">Extension Coordinator</div>
         <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;text-align:left">
           @foreach([

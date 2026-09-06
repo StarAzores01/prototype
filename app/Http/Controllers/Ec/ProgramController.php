@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator as ValidatorContract;
@@ -46,6 +47,7 @@ class ProgramController extends Controller
             'update_status'   => $this->updateStatus($request),
             'update_team'     => $this->updateTeam($request),
             'upload'          => $this->uploadDocument($request),
+            'upload_cover'    => $this->uploadCover($request),
             default            => back(),
         };
     }
@@ -289,5 +291,42 @@ class ProgramController extends Controller
         }
 
         return redirect()->route('ec.programs', ['view' => $programId])->with('success', 'Document added to program.');
+    }
+
+    /**
+     * Upload / replace a Program's cover image.
+     * EC only — enforced by the route middleware (role:extension_coordinator).
+     */
+    private function uploadCover(Request $request)
+    {
+        $programId = (int) $request->input('program_id');
+        $program = Program::findOrFail($programId);
+
+        $validator = Validator::make($request->all(), [
+            'cover_image' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:5120',
+        ]);
+        if ($validator->fails()) {
+            return back()->with('error', $validator->errors()->first());
+        }
+
+        $file = $request->file('cover_image');
+        $ext  = strtolower($file->getClientOriginalExtension());
+
+        if (! in_array($ext, ['jpg','jpeg','png','gif','webp'], true)) {
+            return back()->with('error', 'Only JPG, PNG, GIF, and WEBP images are allowed.');
+        }
+
+        $old = $program->cover_image;
+        $stored = 'prog_cover_' . bin2hex(random_bytes(8)) . '.' . $ext;
+        $file->storeAs('uploads', $stored, 'local');
+
+        $program->update(['cover_image' => $stored]);
+
+        if ($old) {
+            \Illuminate\Support\Facades\Storage::disk('local')->delete('uploads/' . $old);
+        }
+
+        return redirect()->route('ec.programs', ['view' => $programId])
+            ->with('success', 'Program cover image updated.');
     }
 }

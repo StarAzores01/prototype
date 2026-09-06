@@ -60,6 +60,39 @@ class FileDownloadController extends Controller
         return $this->stream($training->cover_image, $training->cover_image);
     }
 
+    /** A Program's cover/display picture — same "any authenticated role" floor. */
+    public function programCover(\App\Models\Program $program)
+    {
+        $this->authorizeAnyRole();
+
+        abort_if(! $program->cover_image, 404);
+
+        return $this->stream($program->cover_image, $program->cover_image);
+    }
+
+    /**
+     * Serve the currently-authenticated user's own avatar.
+     * Any authenticated user (any of the 4 roles) may fetch their own avatar.
+     * The filename comes from the authenticated user's record, not from the
+     * request — so a user cannot request another person's avatar by guessing
+     * a filename.
+     */
+    public function avatar()
+    {
+        $role = $this->currentRole();
+        abort_if($role === null, 403);
+
+        if ($role === 'beneficiary') {
+            $avatarFile = \Illuminate\Support\Facades\Auth::guard('beneficiary')->user()->avatar ?? null;
+        } else {
+            $avatarFile = \Illuminate\Support\Facades\Auth::guard('web')->user()->avatar ?? null;
+        }
+
+        abort_if(! $avatarFile, 404);
+
+        return $this->stream($avatarFile, $avatarFile);
+    }
+
     /**
      * private = EC only. ec_trainer = EC + Project Leader (trainer).
      * public = any authenticated user, any of the 4 roles.

@@ -133,6 +133,37 @@
 
 </div>
 
+<!-- Homepage Video Montage — site-wide, shown on the public landing page's
+     "Course Highlights" section. EC-only (this whole page sits behind
+     role:extension_coordinator), unlike the per-program video which was
+     removed from the Programs section in favor of this single spot. -->
+<div class="card" style="margin-top:20px">
+  <div class="card-header">
+    <div>
+      <div class="card-title"><i class="fas fa-film"></i> Homepage Video Montage</div>
+      <div class="card-subtitle">The video shown to visitors on the public homepage's Course Highlights section</div>
+    </div>
+    <button class="btn btn-sm btn-outline" onclick="openModal('uploadHomepageVideo')">
+      <i class="fas fa-film"></i> {{ $homepageVideo?->video_url ? 'Update Video' : 'Add Video Montage' }}
+    </button>
+  </div>
+  <div class="card-body">
+    @if($homepageVideo?->video_url)
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gray-50);border-radius:var(--radius-sm)">
+      <span style="background:rgba(56,189,248,.15);color:var(--blue-primary);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 9px;border-radius:20px;flex-shrink:0">Live</span>
+      <a href="{{ $homepageVideo->video_url }}" target="_blank" rel="noopener" style="font-size:13px;font-weight:600;color:var(--text-heading);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">
+        {{ $homepageVideo->video_title ?: $homepageVideo->video_url }}
+      </a>
+      <a href="{{ $homepageVideo->video_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline">
+        <i class="fas fa-play"></i> Watch
+      </a>
+    </div>
+    @else
+    <div class="empty-state" style="padding:20px"><i class="fas fa-film"></i><p>No video montage yet — visitors will see an empty placeholder until you add one.</p></div>
+    @endif
+  </div>
+</div>
+
 <!-- MODAL: CREATE ACTIVITY -->
 <div class="modal-overlay" id="modal-addTraining">
   <div class="modal">
@@ -149,6 +180,38 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('addTraining')">Cancel</button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Activity</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: ADD / UPDATE HOMEPAGE VIDEO MONTAGE -->
+<div class="modal-overlay" id="modal-uploadHomepageVideo">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h2><i class="fas fa-film"></i> {{ $homepageVideo?->video_url ? 'Update' : 'Add' }} Video Montage</h2>
+      <button class="modal-close" onclick="closeModal('uploadHomepageVideo')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('ec.dashboard.store') }}">
+      @csrf
+      <input type="hidden" name="action" value="upload_homepage_video"/>
+      <div class="modal-body">
+        <div class="alert alert-info" style="margin-bottom:16px;font-size:13px">
+          <i class="fas fa-circle-info"></i> Paste an external video link (YouTube, Google Drive, Vimeo, etc.). The system stores the link — no file is uploaded. This replaces the video every visitor sees on the public homepage.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Video Title (optional)</label>
+          <input type="text" name="video_title" class="form-control" placeholder="e.g. CIT Extension Training — 2026 Highlights" value="{{ $homepageVideo?->video_title }}"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Video URL <span style="color:var(--red)">*</span></label>
+          <input type="url" name="video_url" class="form-control" placeholder="https://www.youtube.com/watch?v=…" value="{{ $homepageVideo?->video_url }}" required/>
+          <div class="form-hint">YouTube, Google Drive, Vimeo, or any public video URL</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('uploadHomepageVideo')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Link</button>
       </div>
     </form>
   </div>

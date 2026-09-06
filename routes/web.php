@@ -114,6 +114,8 @@ Route::middleware(['auth:web,beneficiary', 'no-back-cache'])->group(function () 
     Route::get('/files/training-docs/{trainingDoc}', [FileDownloadController::class, 'trainingDoc'])->name('files.training-doc');
     Route::get('/files/impact-assessments/{impactAssessment}', [FileDownloadController::class, 'impactAssessment'])->name('files.impact-assessment');
     Route::get('/files/activity-cover/{training}', [FileDownloadController::class, 'activityCover'])->name('files.activity-cover');
+    Route::get('/files/program-cover/{program}', [FileDownloadController::class, 'programCover'])->name('files.program-cover');
+    Route::get('/files/avatar', [FileDownloadController::class, 'avatar'])->name('files.avatar');
 });
 
 /*
@@ -126,6 +128,7 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
     ->name('ec.')
     ->group(function () {
         Route::get('/dashboard.php', [EcDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/dashboard.php', [EcDashboardController::class, 'store'])->name('dashboard.store');
 
         Route::get('/programs.php', [EcProgramController::class, 'index'])->name('programs');
         Route::post('/programs.php', [EcProgramController::class, 'store'])->name('programs.store');

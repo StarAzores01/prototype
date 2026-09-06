@@ -289,8 +289,13 @@
     @endphp
     <div class="training-card">
       <div class="training-card-img" style="background:linear-gradient(135deg,{{ $c[0] }},{{ $c[1] }})">
-        <div class="training-card-cat">{{ $t->area }}</div>
-        <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+        @if($t->cover_image)
+          <img src="{{ route('files.activity-cover', $t) }}" alt="{{ $t->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
+        @endif
+        <div class="training-card-cat" style="z-index:2;position:relative">{{ $t->area }}</div>
+        @if(!$t->cover_image)
+          <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+        @endif
       </div>
       <div class="training-card-body">
         <div class="training-card-title">{{ $t->title }}</div>

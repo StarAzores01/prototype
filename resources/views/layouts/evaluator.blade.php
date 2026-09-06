@@ -25,6 +25,9 @@ $activePage = $activePage ?? 'dashboard';
 
 <header class="topbar">
   <div class="topbar-brand">
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()" title="Menu" aria-label="Open menu" style="margin-right:4px">
+      <i class="fas fa-bars"></i>
+    </button>
     <div class="brand-logo">
       <img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT Logo" onerror="this.style.display='none';this.parentElement.textContent='PA'"/>
     </div>
@@ -37,6 +40,9 @@ $activePage = $activePage ?? 'dashboard';
     <div class="topbar-title"><strong>Evaluator Portal</strong> &nbsp;&middot;&nbsp; Impact Assessment</div>
   </div>
   <div class="topbar-right">
+    <a href="{{ route('home') }}" class="topbar-home-btn" title="Home" aria-label="Home">
+      <i class="fas fa-house"></i>
+    </a>
     <div class="topbar-icon-btn notif-btn" title="Notifications" onclick="toggleNotifDropdown()" style="position:relative">
       <i class="fas fa-bell"></i>
       @if($notifCount > 0)
@@ -58,7 +64,14 @@ $activePage = $activePage ?? 'dashboard';
     </div>
     @include('partials.theme-toggle-button')
     <div class="profile-btn" onclick="toggleDropdown()" role="button" aria-haspopup="true" aria-expanded="false">
-      <div class="profile-avatar">{{ $initials }}</div>
+      <div class="profile-avatar" style="{{ auth('web')->user()?->avatar ? 'background:none;padding:0;overflow:hidden' : '' }}">
+        @if(auth('web')->user()?->avatar)
+          <img src="{{ route('files.avatar') }}" alt="{{ $initials }}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+          <span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-weight:700;font-size:13px">{{ $initials }}</span>
+        @else
+          {{ $initials }}
+        @endif
+      </div>
       <div class="profile-info">
         <div class="profile-name">{{ $fullName }}</div>
         <div class="profile-role">Evaluator</div>
@@ -76,7 +89,10 @@ $activePage = $activePage ?? 'dashboard';
   </div>
 </header>
 
-<aside class="sidebar">
+<!-- Mobile overlay -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+
+<aside class="sidebar" id="mainSidebar">
   <div class="sidebar-section">
     <div class="sidebar-label">Main</div>
     <a href="{{ route('evaluator.dashboard') }}" class="sidebar-item {{ $activePage === 'dashboard' ? 'active' : '' }}">
@@ -118,5 +134,20 @@ $activePage = $activePage ?? 'dashboard';
 </div>
 
 @include('partials.layout-scripts')
+<script>
+function toggleMobileMenu() {
+  const sb = document.getElementById('mainSidebar');
+  const ov = document.getElementById('mobileOverlay');
+  sb.classList.toggle('mobile-open');
+  ov.classList.toggle('open');
+}
+function closeMobileMenu() {
+  document.getElementById('mainSidebar')?.classList.remove('mobile-open');
+  document.getElementById('mobileOverlay')?.classList.remove('open');
+}
+document.querySelectorAll('#mainSidebar .sidebar-item').forEach(function(el) {
+  el.addEventListener('click', closeMobileMenu);
+});
+</script>
 </body>
 </html>

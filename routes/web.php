@@ -14,6 +14,7 @@ use App\Http\Controllers\Beneficiary\ProfileController as BeneficiaryProfileCont
 use App\Http\Controllers\Beneficiary\NotificationController as BeneficiaryNotificationController;
 use App\Http\Controllers\Beneficiary\SkillsController as BeneficiarySkillsController;
 use App\Http\Controllers\Beneficiary\TrainingController as BeneficiaryTrainingController;
+use App\Http\Controllers\Ec\AnalyticsController as EcAnalyticsController;
 use App\Http\Controllers\Ec\DashboardController as EcDashboardController;
 use App\Http\Controllers\Ec\DocumentController as EcDocumentController;
 use App\Http\Controllers\Ec\EvaluationController as EcEvaluationController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\Ec\EvaluatorController as EcEvaluatorController;
 use App\Http\Controllers\Ec\ImpactAssessmentController as EcImpactAssessmentController;
 use App\Http\Controllers\Ec\MessageController as EcMessageController;
 use App\Http\Controllers\Ec\NotificationController as EcNotificationController;
+use App\Http\Controllers\Ec\PageContentController as EcPageContentController;
 use App\Http\Controllers\Ec\ParticipantController as EcParticipantController;
 use App\Http\Controllers\Ec\ProfileController as EcProfileController;
 use App\Http\Controllers\Ec\ProgramController as EcProgramController;
@@ -157,10 +159,15 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
         Route::post('/impact_assessment.php', [EcImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
         Route::get('/skills.php', [EcSkillsController::class, 'index'])->name('skills');
         Route::get('/reports.php', [EcReportController::class, 'index'])->name('reports');
+        Route::get('/analytics.php', [EcAnalyticsController::class, 'index'])->name('analytics');
         Route::get('/trainers.php', [EcTrainerController::class, 'index'])->name('trainers');
         Route::post('/trainers.php', [EcTrainerController::class, 'store'])->name('trainers.store');
         Route::get('/evaluators.php', [EcEvaluatorController::class, 'index'])->name('evaluators');
         Route::post('/evaluators.php', [EcEvaluatorController::class, 'store'])->name('evaluators.store');
+
+        Route::get('/page-content.php', [EcPageContentController::class, 'index'])->name('page-content');
+        Route::get('/page-content.php/{pageKey}', [EcPageContentController::class, 'edit'])->name('page-content.edit');
+        Route::post('/page-content.php/{pageKey}', [EcPageContentController::class, 'update'])->name('page-content.update');
     });
 
 /*

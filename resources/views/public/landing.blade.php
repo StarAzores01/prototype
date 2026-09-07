@@ -153,7 +153,7 @@
     /* ── PHOTO LAYER — subtle, blended, behind everything ── */
     .lp-hero-photo {
       position: absolute; inset: 0;
-      background-image: url('{{ asset('imgs/landingpage.jpg') }}');
+      background-image: url('{{ \App\Models\PageContent::get('landing', 'hero_image', asset('imgs/landingpage.jpg')) }}');
       background-size: cover;
       background-position: center center;
       background-repeat: no-repeat;
@@ -672,7 +672,7 @@
     <!-- Brand -->
     <div class="lp-brand">
       <div class="lp-brand-logo">
-        <img src="{{ asset('imgs/logofinalpt.png') }}" alt="PAThrive Logo"/>
+        <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="PAThrive Logo"/>
       </div>
       <div>
         <div class="lp-brand-name">PAThrive</div>
@@ -708,13 +708,13 @@
   <div class="lp-hero-inner" style="grid-template-columns:1fr;text-align:center;justify-items:center">
     <div style="max-width:720px">
       <div class="lp-eyebrow">
-         Southern Luzon State University · CIT
+        {!! \App\Models\PageContent::get('landing', 'hero_badge', 'Southern Luzon State University &middot; CIT') !!}
       </div>
       <h1 class="lp-hero-h1">
-        Empowering Communities<br>Through <span class="lp-hl">Skilled Training</span>
+        {!! \App\Models\PageContent::get('landing', 'hero_heading', 'Empowering Communities<br>Through <span class="lp-hl">Skilled Training</span>') !!}
       </h1>
       <p class="lp-hero-p" style="margin-left:auto;margin-right:auto">
-        PAThrive is the official Extension Training Management &amp; Impact Assessment Tracking System of the College of Industrial Technology — connecting communities with quality technical-vocational programs.
+        {!! \App\Models\PageContent::get('landing', 'hero_subheading', 'PAThrive is the official Extension Training Management &amp; Impact Assessment Tracking System of the College of Industrial Technology — connecting communities with quality technical-vocational programs.') !!}
       </p>
       <div class="lp-hero-btns" style="justify-content:center">
         @if($loggedIn)
@@ -754,11 +754,11 @@
 
     <div class="lp-sec-header">
       <div class="lp-sec-badge" style="background:rgba(56,189,248,.1);color:var(--lp-accent);border-color:rgba(56,189,248,.2)">
-        <i class="fas fa-film"></i> Course Highlights
+        <i class="fas fa-film"></i> {{ \App\Models\PageContent::get('landing', 'courses_badge', 'Course Highlights') }}
       </div>
-      <h2 class="lp-sec-title" style="color:#fff">See Our Training Programs in Action</h2>
+      <h2 class="lp-sec-title" style="color:#fff">{{ \App\Models\PageContent::get('landing', 'courses_title', 'See Our Training Programs in Action') }}</h2>
       <p class="lp-sec-desc" style="color:rgba(255,255,255,.6)">
-        Watch real participants and trainers from CIT extension programs — from culinary arts to automotive technology.
+        {{ \App\Models\PageContent::get('landing', 'courses_desc', 'Watch real participants and trainers from CIT extension programs — from culinary arts to automotive technology.') }}
       </p>
     </div>
 
@@ -829,11 +829,11 @@
 
     <div class="lp-sec-header">
       <div class="lp-sec-badge" style="background:rgba(56,189,248,.1);color:var(--lp-accent);border-color:rgba(56,189,248,.2)">
-        <i class="fas fa-book-open"></i> Training Areas
+        <i class="fas fa-book-open"></i> {{ \App\Models\PageContent::get('landing', 'programs_badge', 'Training Areas') }}
       </div>
-      <h2 class="lp-sec-title" style="color:#fff">Courses Offered</h2>
+      <h2 class="lp-sec-title" style="color:#fff">{{ \App\Models\PageContent::get('landing', 'programs_title', 'Courses Offered') }}</h2>
       <p class="lp-sec-desc" style="color:rgba(255,255,255,.6)">
-        CIT offers community-based technical-vocational training across 8 technology areas — free for qualified beneficiaries.
+        {{ \App\Models\PageContent::get('landing', 'programs_desc', 'CIT offers community-based technical-vocational training across 8 technology areas — free for qualified beneficiaries.') }}
       </p>
     </div>
 
@@ -925,15 +925,15 @@
       <div>
         <div class="lp-footer-logo">
           <div class="lp-footer-logo-box">
-            <img src="{{ asset('imgs/logofinalpt.png') }}" alt="PAThrive Logo"/>
+            <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="PAThrive Logo"/>
           </div>
           <div class="lp-footer-logo-name">PAThrive</div>
         </div>
-        <p class="lp-footer-tagline">Extension Training Management &amp; Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University</p>
+        <p class="lp-footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University') }}</p>
         <div class="lp-footer-contact">
-          <div class="lp-footer-ci"><i class="fas fa-location-dot"></i> SLSU Main Campus, Lucban, Quezon, Philippines</div>
-          <div class="lp-footer-ci"><i class="fas fa-envelope"></i> cit.extension@slsu.edu.ph</div>
-          <div class="lp-footer-ci"><i class="fas fa-phone"></i> (042) 540-XXXX</div>
+          <div class="lp-footer-ci"><i class="fas fa-location-dot"></i> {{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
+          <div class="lp-footer-ci"><i class="fas fa-envelope"></i> {{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
+          <div class="lp-footer-ci"><i class="fas fa-phone"></i> {{ \App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX') }}</div>
         </div>
       </div>
 

@@ -335,7 +335,7 @@
   <div class="nav-inner">
     <div class="brand">
       <div class="brand-logo">
-        <img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT" onerror="this.style.display='none'"/>
+        <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/>
       </div>
       <div>
         <div class="brand-name">PAThrive</div>
@@ -358,15 +358,13 @@
     <div class="hero-left">
       <div class="eyebrow">
         <span class="eyebrow-dot"></span>
-        Contact Us
+        {{ \App\Models\PageContent::get('contact', 'hero_eyebrow', 'Contact Us') }}
       </div>
       <h1 class="hero-title">
-        Get in Touch<br/>
-        with <span>CIT Extension</span>
+        {!! \App\Models\PageContent::get('contact', 'hero_heading', 'Get in Touch<br/>with <span>CIT Extension</span>') !!}
       </h1>
       <p class="hero-desc">
-        Have questions about our training programs, registration, or partnerships?
-        We're here to help — reach out through any of the channels below.
+        {{ \App\Models\PageContent::get('contact', 'hero_desc', "Have questions about our training programs, registration, or partnerships? We're here to help — reach out through any of the channels below.") }}
       </p>
     </div>
   </div>
@@ -384,18 +382,18 @@
       <span class="section-label-line"></span>
       <span class="section-label-text">How to Reach Us</span>
     </div>
-    <h2 class="section-heading">Contact Information</h2>
-    <p class="section-sub">All the ways you can connect with the CIT Extension Office at SLSU.</p>
+    <h2 class="section-heading">{{ \App\Models\PageContent::get('contact', 'info_section_title', 'Contact Information') }}</h2>
+    <p class="section-sub">{{ \App\Models\PageContent::get('contact', 'info_section_sub', 'All the ways you can connect with the CIT Extension Office at SLSU.') }}</p>
 
     <!-- Contact Cards -->
     <div class="contact-grid">
       @foreach ([
-        ['<i class="fas fa-location-dot"></i>', 'Address',      'College of Industrial Technology, Southern Luzon State University – Main Campus, Lucban, Quezon', 'small', 'blue',   'ico-bg-blue'],
-        ['<i class="fas fa-envelope"></i>',   'Email',        'cit.extension@slsu.edu.ph',  '',      'sky',    'ico-bg-sky'],
-        ['<i class="fas fa-phone"></i>', 'Phone',        '(042) 540-XXXX',             '',      'green',  'ico-bg-green'],
-        ['<i class="fas fa-clock"></i>', 'Office Hours', 'Monday – Friday, 8:00 AM – 5:00 PM', '', 'orange', 'ico-bg-orange'],
-        ['<i class="fas fa-globe"></i>', 'Website',      'www.slsu.edu.ph',            '',      'purple', 'ico-bg-purple'],
-        ['<i class="fas fa-mobile-screen"></i>', 'Facebook',     'facebook.com/slsu.official', '',      'pink',   'ico-bg-pink'],
+        ['<i class="fas fa-location-dot"></i>', 'Address',      \App\Models\PageContent::get('global', 'contact_address', 'College of Industrial Technology, Southern Luzon State University – Main Campus, Lucban, Quezon'), 'small', 'blue',   'ico-bg-blue'],
+        ['<i class="fas fa-envelope"></i>',   'Email',        \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph'),  '',      'sky',    'ico-bg-sky'],
+        ['<i class="fas fa-phone"></i>', 'Phone',        \App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX'),             '',      'green',  'ico-bg-green'],
+        ['<i class="fas fa-clock"></i>', 'Office Hours', \App\Models\PageContent::get('contact', 'office_hours', 'Monday – Friday, 8:00 AM – 5:00 PM'), '', 'orange', 'ico-bg-orange'],
+        ['<i class="fas fa-globe"></i>', 'Website',      \App\Models\PageContent::get('contact', 'website', 'www.slsu.edu.ph'),            '',      'purple', 'ico-bg-purple'],
+        ['<i class="fas fa-mobile-screen"></i>', 'Facebook',     \App\Models\PageContent::get('contact', 'facebook', 'facebook.com/slsu.official'), '',      'pink',   'ico-bg-pink'],
       ] as [$icon, $label, $val, $valClass, $color, $icoClass])
       <div class="contact-card {{ $color }}">
         <div class="contact-card-top">
@@ -413,8 +411,8 @@
       <span class="section-label-line"></span>
       <span class="section-label-text">Send a Message</span>
     </div>
-    <h2 class="section-heading">Get in Touch</h2>
-    <p class="section-sub">Fill out the form below and the Extension Coordinator will get back to you.</p>
+    <h2 class="section-heading">{{ \App\Models\PageContent::get('contact', 'message_section_title', 'Get in Touch') }}</h2>
+    <p class="section-sub">{{ \App\Models\PageContent::get('contact', 'message_section_sub', 'Fill out the form below and the Extension Coordinator will get back to you.') }}</p>
 
     @if (session('success'))
     <div class="form-alert success">
@@ -462,13 +460,13 @@
     <div class="footer-grid">
       <div>
         <div class="footer-logo">
-          <div class="footer-logo-box"><img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT" onerror="this.style.display='none'"/></div>
+          <div class="footer-logo-box"><img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/></div>
           <div class="footer-logo-name">PAThrive</div>
         </div>
-        <p class="footer-tagline">Extension Training Management &amp; Impact Assessment Tracking System — College of Industrial Technology, SLSU</p>
-        <div class="footer-ci"><i class="fas fa-location-dot"></i> SLSU Main Campus, Lucban, Quezon</div>
-        <div class="footer-ci"><i class="fas fa-envelope"></i> cit.extension@slsu.edu.ph</div>
-        <div class="footer-ci"><i class="fas fa-phone"></i> (042) 540-XXXX</div>
+        <p class="footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University') }}</p>
+        <div class="footer-ci"><i class="fas fa-location-dot"></i> {{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
+        <div class="footer-ci"><i class="fas fa-envelope"></i> {{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
+        <div class="footer-ci"><i class="fas fa-phone"></i> {{ \App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX') }}</div>
       </div>
       <div>
         <div class="footer-col-title">Pages</div>

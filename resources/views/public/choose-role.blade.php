@@ -56,15 +56,15 @@
 <div class="page">
 
   <div class="brand">
-    <img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT" style="width:44px;height:44px;object-fit:contain" onerror="this.style.display='none'"/>
+    <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" style="width:44px;height:44px;object-fit:contain" onerror="this.style.display='none'"/>
     <div>
       <div class="brand-name">PAThrive</div>
       <div class="brand-sub">CIT &middot; SLSU</div>
     </div>
   </div>
 
-  <h1>Create Your Account</h1>
-  <p class="sub">Choose your role to get started</p>
+  <h1>{{ \App\Models\PageContent::get('choose-role', 'heading', 'Create Your Account') }}</h1>
+  <p class="sub">{{ \App\Models\PageContent::get('choose-role', 'subheading', 'Choose your role to get started') }}</p>
 
   <div class="cards">
 

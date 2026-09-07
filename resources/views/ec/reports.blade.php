@@ -371,8 +371,7 @@ canvas { max-height: 220px; }
   @endif
 </div>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Chart.js is loaded once in layouts.ec, shared by every EC page's charts -->
 <script>
 // ── Status doughnut ───────────────────────────────────────────────────────
 const statusData = {!! json_encode($byStatus->pluck('cnt')->values()) !!};

@@ -11,12 +11,13 @@ $nav = [
     // reached from the hub itself (see ec/evaluation.blade.php).
     'evaluation'        => ['icon' => 'fa-square-check',   'label' => 'Evaluation',          'badge' => 'red'],
     'reports'           => ['icon' => 'fa-chart-column',   'label' => 'Reports',             'badge' => ''],
+    'analytics'         => ['icon' => 'fa-chart-pie',      'label' => 'Analytics',           'badge' => ''],
 ];
 $activePage = $activePage ?? 'dashboard';
 // $activePage is the 'trainings' route/key on purpose (unchanged) — its
 // display label is "Activities" everywhere now, so the <title> tag needs
 // its own override rather than deriving straight from the key.
-$activePageTitle = $activePage === 'trainings' ? 'Activities' : ucfirst(str_replace('_', ' ', $activePage));
+$activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage === 'page-content' ? 'Site Content' : ucfirst(str_replace('_', ' ', $activePage)));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,6 +29,12 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ucfirst(str_repl
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet"/>
+  {{-- Chart.js — shared here (not loaded per-page) so any EC page's charts
+       (Reports, Analytics) can rely on it being ready. Loaded in <head>,
+       ahead of @yield('content'), since a page's own chart-init <script>
+       lives inside its content section and would run before a
+       layout-level <script> placed after @yield('content') ever executes. --}}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -123,7 +130,7 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ucfirst(str_repl
   </div>
   <div class="sidebar-section">
     <div class="sidebar-label">Assessment</div>
-    @foreach(['evaluation','reports'] as $key)
+    @foreach(['evaluation','reports','analytics'] as $key)
     @php
       // The hub stays highlighted while on any of the 3 sub-pages it links to.
       $isActive = $key === 'evaluation'
@@ -151,6 +158,9 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ucfirst(str_repl
       @if($unreadMsgs > 0)
       <span style="margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px">{{ $unreadMsgs }}</span>
       @endif
+    </a>
+    <a href="{{ route('ec.page-content') }}" class="sidebar-item {{ $activePage === 'page-content' ? 'active' : '' }}">
+      <span><i class="fas fa-file-pen"></i></span><span>Manage Public Site Content</span>
     </a>
   </div>
   <div class="sidebar-footer">

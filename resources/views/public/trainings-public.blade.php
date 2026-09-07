@@ -147,7 +147,7 @@
   <div class="nav-inner">
     <div class="brand">
       <div class="brand-logo">
-        <img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT" onerror="this.style.display='none'"/>
+        <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/>
       </div>
       <div>
         <div class="brand-name">PAThrive</div>
@@ -167,12 +167,12 @@
 <!-- HERO -->
 <div class="hero">
   <div style="max-width:680px;margin:0 auto;padding:0 24px">
-    <div class="eyebrow">Extension Trainings</div>
+    <div class="eyebrow">{{ \App\Models\PageContent::get('trainings-public', 'hero_eyebrow', 'Extension Trainings') }}</div>
     <h1 style="font-size:clamp(28px,4vw,44px);font-weight:800;color:#fff;margin-bottom:16px;line-height:1.2">
-      Training Programs
+      {{ \App\Models\PageContent::get('trainings-public', 'hero_heading', 'Training Programs') }}
     </h1>
     <p style="font-size:15px;color:rgba(255,255,255,.65);line-height:1.7">
-      Browse current and upcoming extension training activities conducted by the College of Industrial Technology, SLSU.
+      {{ \App\Models\PageContent::get('trainings-public', 'hero_desc', 'Browse current and upcoming extension training activities conducted by the College of Industrial Technology, SLSU.') }}
     </p>
   </div>
 </div>
@@ -233,13 +233,13 @@
     <div class="footer-grid">
       <div>
         <div class="footer-logo">
-          <div class="footer-logo-box"><img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT" onerror="this.style.display='none'"/></div>
+          <div class="footer-logo-box"><img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/></div>
           <div class="footer-logo-name">PAThrive</div>
         </div>
-        <p class="footer-tagline">Extension Training Management &amp; Impact Assessment Tracking System — College of Industrial Technology, SLSU</p>
-        <div class="footer-ci"><i class="fas fa-location-dot"></i>SLSU Main Campus, Lucban, Quezon</div>
-        <div class="footer-ci"><i class="fas fa-envelope"></i>cit.extension@slsu.edu.ph</div>
-        <div class="footer-ci"><i class="fas fa-phone"></i>(042) 540-XXXX</div>
+        <p class="footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University') }}</p>
+        <div class="footer-ci"><i class="fas fa-location-dot"></i>{{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
+        <div class="footer-ci"><i class="fas fa-envelope"></i>{{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
+        <div class="footer-ci"><i class="fas fa-phone"></i>{{ \App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX') }}</div>
       </div>
       <div>
         <div class="footer-col-title">Pages</div>

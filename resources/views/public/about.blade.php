@@ -63,7 +63,7 @@
   <div class="lp-nav-inner">
     <div class="lp-brand">
       <div class="lp-brand-logo">
-        <img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT" onerror="this.style.display='none'"/>
+        <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/>
       </div>
       <div>
         <div class="lp-brand-name">PAThrive</div>
@@ -83,9 +83,9 @@
 <!-- PAGE HERO -->
 <div class="page-hero">
   <div style="max-width:700px;margin:0 auto;padding:0 24px">
-    <div class="eyebrow">About PAThrive</div>
-    <h1 style="font-size:clamp(28px,4vw,44px);font-weight:800;color:#fff;margin-bottom:16px;line-height:1.2">About the System &amp; CIT Extension Programs</h1>
-    <p style="font-size:15px;color:rgba(255,255,255,.65);line-height:1.7">Learn about PAThrive and the College of Industrial Technology's commitment to community development through extension services.</p>
+    <div class="eyebrow">{{ \App\Models\PageContent::get('about', 'hero_eyebrow', 'About PAThrive') }}</div>
+    <h1 style="font-size:clamp(28px,4vw,44px);font-weight:800;color:#fff;margin-bottom:16px;line-height:1.2">{{ \App\Models\PageContent::get('about', 'hero_heading', 'About the System & CIT Extension Programs') }}</h1>
+    <p style="font-size:15px;color:rgba(255,255,255,.65);line-height:1.7">{{ \App\Models\PageContent::get('about', 'hero_desc', "Learn about PAThrive and the College of Industrial Technology's commitment to community development through extension services.") }}</p>
   </div>
 </div>
 
@@ -93,17 +93,14 @@
 <section style="padding:80px 0;background:#fff">
   <div style="max-width:1100px;margin:0 auto;padding:0 28px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
     <div>
-      <div class="sec-badge">The System</div>
-      <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:16px;line-height:1.2">What is PAThrive?</h2>
-      <p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">
-        <strong>PAThrive</strong> is a web-based Extension Training Management and Impact Assessment Tracking System developed for the College of Industrial Technology (CIT) of Southern Luzon State University – Main Campus.
-      </p>
-      <p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">
-        The system centralizes the management of CIT extension training programs — from planning and scheduling to participant registration, evaluation, and post-training skills utilization tracking.
-      </p>
-      <p style="font-size:15px;color:#64748B;line-height:1.75">
-        PAThrive supports CHED compliance reporting and enables the Extension Coordinator, Project Leaders, and beneficiaries to collaborate efficiently within a single platform.
-      </p>
+      <div class="sec-badge">{{ \App\Models\PageContent::get('about', 'system_badge', 'The System') }}</div>
+      <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:16px;line-height:1.2">{{ \App\Models\PageContent::get('about', 'system_title', 'What is PAThrive?') }}</h2>
+      @php
+        $systemBodyDefault = '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px"><strong>PAThrive</strong> is a web-based Extension Training Management and Impact Assessment Tracking System developed for the College of Industrial Technology (CIT) of Southern Luzon State University – Main Campus.</p>'
+          . '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">The system centralizes the management of CIT extension training programs — from planning and scheduling to participant registration, evaluation, and post-training skills utilization tracking.</p>'
+          . '<p style="font-size:15px;color:#64748B;line-height:1.75">PAThrive supports CHED compliance reporting and enables the Extension Coordinator, Project Leaders, and beneficiaries to collaborate efficiently within a single platform.</p>';
+      @endphp
+      {!! \App\Models\PageContent::get('about', 'system_body', $systemBodyDefault) !!}
     </div>
     <div class="feature-row">
       @foreach ([
@@ -129,23 +126,20 @@
 <section style="padding:80px 0;background:#F0F6FF">
   <div style="max-width:1100px;margin:0 auto;padding:0 28px">
     <div style="text-align:center;margin-bottom:48px">
-      <div class="sec-badge">About the College</div>
-      <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:12px">College of Industrial Technology (CIT)</h2>
+      <div class="sec-badge">{{ \App\Models\PageContent::get('about', 'college_badge', 'About the College') }}</div>
+      <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:12px">{{ \App\Models\PageContent::get('about', 'college_title', 'College of Industrial Technology (CIT)') }}</h2>
       <p style="font-size:15px;color:#64748B;max-width:640px;margin:0 auto;line-height:1.7">
-        The CIT of Southern Luzon State University provides technical and vocational education that prepares individuals for industry, employment, and entrepreneurship.
+        {{ \App\Models\PageContent::get('about', 'college_desc', 'The CIT of Southern Luzon State University provides technical and vocational education that prepares individuals for industry, employment, and entrepreneurship.') }}
       </p>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start">
       <div>
-        <p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">
-          The <strong>College of Industrial Technology (CIT)</strong> offers various specialization areas such as Culinary Technology, Apparel and Fashion Technology, Computer Technology, Information Technology, Electronics Technology, Automotive Technology, Mechanical Technology, and Print Media Technology.
-        </p>
-        <p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">
-          CIT plays a vital role in developing skilled and competent individuals by combining theoretical knowledge with hands-on training, equipping students and community members with industry-relevant competencies.
-        </p>
-        <p style="font-size:15px;color:#64748B;line-height:1.75">
-          In addition to its academic functions, CIT actively participates in community development through extension services, contributing to the university's mission of promoting inclusive growth and sustainable development.
-        </p>
+        @php
+          $collegeBodyDefault = '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">The <strong>College of Industrial Technology (CIT)</strong> offers various specialization areas such as Culinary Technology, Apparel and Fashion Technology, Computer Technology, Information Technology, Electronics Technology, Automotive Technology, Mechanical Technology, and Print Media Technology.</p>'
+            . '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">CIT plays a vital role in developing skilled and competent individuals by combining theoretical knowledge with hands-on training, equipping students and community members with industry-relevant competencies.</p>'
+            . "<p style=\"font-size:15px;color:#64748B;line-height:1.75\">In addition to its academic functions, CIT actively participates in community development through extension services, contributing to the university's mission of promoting inclusive growth and sustainable development.</p>";
+        @endphp
+        {!! \App\Models\PageContent::get('about', 'college_body', $collegeBodyDefault) !!}
       </div>
       <div class="card-grid" style="grid-template-columns:1fr 1fr">
         @foreach ([
@@ -169,9 +163,9 @@
 <section style="padding:80px 0;background:#fff">
   <div style="max-width:1100px;margin:0 auto;padding:0 28px">
     <div style="text-align:center;margin-bottom:48px">
-      <div class="sec-badge">Extension Programs</div>
-      <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:12px">CIT Extension Programs</h2>
-      <p style="font-size:15px;color:#64748B;max-width:600px;margin:0 auto;line-height:1.7">The extension programs of CIT are part of SLSU's initiatives to deliver knowledge, skills, and technical expertise to communities.</p>
+      <div class="sec-badge">{{ \App\Models\PageContent::get('about', 'programs_badge', 'Extension Programs') }}</div>
+      <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:12px">{{ \App\Models\PageContent::get('about', 'programs_title', 'CIT Extension Programs') }}</h2>
+      <p style="font-size:15px;color:#64748B;max-width:600px;margin:0 auto;line-height:1.7">{{ \App\Models\PageContent::get('about', 'programs_desc', "The extension programs of CIT are part of SLSU's initiatives to deliver knowledge, skills, and technical expertise to communities.") }}</p>
     </div>
     <div class="card-grid">
       @foreach ([
@@ -198,14 +192,14 @@
     <div class="lp-footer-grid">
       <div>
         <div class="lp-footer-logo">
-          <div class="lp-footer-logo-box"><img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT" onerror="this.style.display='none'"/></div>
+          <div class="lp-footer-logo-box"><img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/></div>
           <div class="lp-footer-logo-name">PAThrive</div>
         </div>
-        <p class="lp-footer-tagline">Extension Training Management &amp; Impact Assessment Tracking System — College of Industrial Technology, SLSU</p>
+        <p class="lp-footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University') }}</p>
         <div class="lp-footer-contact">
-          <div class="lp-footer-ci"><i class="fas fa-location-dot"></i> SLSU Main Campus, Lucban, Quezon</div>
-          <div class="lp-footer-ci"><i class="fas fa-envelope"></i> cit.extension@slsu.edu.ph</div>
-          <div class="lp-footer-ci"><i class="fas fa-phone"></i> (042) 540-XXXX</div>
+          <div class="lp-footer-ci"><i class="fas fa-location-dot"></i> {{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
+          <div class="lp-footer-ci"><i class="fas fa-envelope"></i> {{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
+          <div class="lp-footer-ci"><i class="fas fa-phone"></i> {{ \App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX') }}</div>
         </div>
       </div>
       <div>

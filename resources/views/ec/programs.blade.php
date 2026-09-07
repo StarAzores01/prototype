@@ -426,7 +426,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('uploadProgramCover')">Cancel</button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Cover</button>
+        <button type="button" class="btn btn-primary" onclick="pathriveRequestImageUpload(this.form, { title: 'Upload this cover image?' })"><i class="fas fa-check"></i> Save Cover</button>
       </div>
     </form>
   </div>

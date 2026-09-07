@@ -38,7 +38,8 @@
   </label>
 </div>
 
-{{-- Hidden upload form — submitted automatically on file selection --}}
+{{-- Hidden upload form — submitted once the user confirms in the
+     "Upload this image?" panel triggered on file selection --}}
 <form
   method="POST"
   action="{{ $uploadRoute }}"
@@ -76,21 +77,17 @@
       return;
     }
 
-    /* Show preview immediately */
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      var preview = document.getElementById('profilePicPreview');
-      var initials = document.getElementById('profilePicInitials');
-      if (preview) {
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-        if (initials) initials.style.display = 'none';
-      }
-    };
-    reader.readAsDataURL(file);
-
-    /* Submit the hidden form */
-    document.getElementById('avatarUploadForm').submit();
+    /* Custom "Upload this image?" confirmation (see partials.layout-
+       scripts / partials.upload-confirm-modal) instead of uploading
+       immediately. The page's own avatar preview is left untouched
+       until the upload is actually confirmed and the page reloads with
+       the new picture — canceling just clears the file input so the
+       same file can be reselected. */
+    window.pathriveConfirmImageUpload(
+      document.getElementById('avatarUploadForm'),
+      file,
+      { title: 'Upload this image?', onCancel: function () { input.value = ''; } }
+    );
   }
 
   /* Expose to inline onchange handler */

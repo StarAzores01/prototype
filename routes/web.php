@@ -74,7 +74,7 @@ Route::post('/contact.php', [ContactController::class, 'store'])->name('contact.
 | Auth (shared login across all 4 roles, matching the original login.php)
 |--------------------------------------------------------------------------
 */
-Route::middleware('guest:web,beneficiary')->group(function () {
+Route::middleware(['guest:web,beneficiary', 'no-back-cache'])->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])
         ->middleware('throttle:5,1');

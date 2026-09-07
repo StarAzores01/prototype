@@ -423,7 +423,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('uploadCover')">Cancel</button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Picture</button>
+        <button type="button" class="btn btn-primary" onclick="pathriveRequestImageUpload(this.form, { title: 'Upload this image?' })"><i class="fas fa-check"></i> Save Picture</button>
       </div>
     </form>
   </div>

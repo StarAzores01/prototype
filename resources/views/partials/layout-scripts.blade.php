@@ -96,12 +96,38 @@ showToast(@json(session('error')), 'error');
        DOM spec, so it's patched below instead of relying on that event
      • Internal navigation links (sidebar, topbar, profile dropdown)
        — navigating between authenticated pages never causes data loss
+
+   ── Bug fixed here: false "Leave site?" on legitimate submits ──────────
+   _dirty alone isn't enough to suppress the warning for auto-submit-on-
+   change forms (the avatar uploader, status dropdowns): the SAME
+   'change' event that triggers the auto-submit also bubbles from the
+   input up to the form, where the dirty-tracking listener below runs
+   and sets _dirty back to true — AFTER form.submit() already cleared it,
+   because listeners on the event's target (the input) run before the
+   event bubbles to ancestors (the form). So the flag intended to say
+   "don't warn" got flipped back to "warn" by the tail end of the very
+   event that started the submit, and the browser's dialog fired on a
+   perfectly normal upload.
+
+   Fixed with a separate _submitting flag that beforeunload checks FIRST,
+   independent of _dirty: it's set the moment a submit is initiated (real
+   'submit' event or patched form.submit()) and nothing after that point
+   can undo it for this navigation. A short setTimeout clears it back to
+   false if the submit turns out not to actually navigate (e.g. a submit
+   handler elsewhere called preventDefault()), so a cancelled/blocked
+   submit doesn't permanently disable the real guard.
    ──────────────────────────────────────────────────────────────────── */
 (function () {
   var _dirty = false;
+  var _submitting = false;
 
   window.pathriveMarkDirty = function () { _dirty = true; };
   window.pathriveMarkClean = function () { _dirty = false; };
+
+  function markSubmitting() {
+    _submitting = true;
+    setTimeout(function () { _submitting = false; }, 0);
+  }
 
   function isGuardable(form) {
     if (form.hasAttribute('data-no-unsaved-guard')) return false;
@@ -130,6 +156,7 @@ showToast(@json(session('error')), 'error');
   var nativeFormSubmit = HTMLFormElement.prototype.submit;
   HTMLFormElement.prototype.submit = function () {
     _dirty = false;
+    markSubmitting();
     return nativeFormSubmit.apply(this, arguments);
   };
 
@@ -148,6 +175,7 @@ showToast(@json(session('error')), 'error');
   /* Suppress on form submit — user is intentionally saving */
   document.addEventListener('submit', function () {
     _dirty = false;
+    markSubmitting();
   }, { capture: true });
 
   /* Suppress on internal app links (sidebar, topbar, profile dropdown) */
@@ -182,6 +210,7 @@ showToast(@json(session('error')), 'error');
      Modern browsers ignore the custom message string and show their own
      generic "Leave site?" dialog — setting returnValue is enough. */
   window.addEventListener('beforeunload', function (e) {
+    if (_submitting) return;   /* a submit is in flight — never warn on this navigation */
     if (!_dirty) return;
     e.preventDefault();
     e.returnValue = '';   /* required by Chrome/Edge to trigger the dialog */
@@ -214,5 +243,94 @@ showToast(@json(session('error')), 'error');
      unloaded (not cached). Nothing extra needed — beforeunload already
      handles the warning in that path. */
 
+})();
+
+/* ── Image upload confirmation ───────────────────────────────────────────
+   Every image/banner/cover upload (profile picture, program cover image,
+   activity display picture) shows a custom "Upload this image?" panel
+   with a thumbnail preview before the real POST fires, instead of
+   uploading immediately — see partials.upload-confirm-modal for the
+   markup (reuses the existing .modal-overlay/.modal classes, so it looks
+   like every other modal in the app rather than a one-off popup).
+
+     pathriveConfirmImageUpload(form, file, opts)
+       Shows the panel for `file`, wires Confirm to submit `form` and
+       Cancel to run opts.onCancel (if given). opts.title overrides the
+       panel heading (defaults to "Upload this image?").
+
+     pathriveRequestImageUpload(form, opts)
+       Convenience for a form whose Save button is type="button" (never
+       triggers a real 'submit') — reads the file from the form's
+       input[type=file], runs native required-field validation if it's
+       empty, otherwise hands off to pathriveConfirmImageUpload.
+
+   Confirm calls form.submit() — the same native, guard-patched submit
+   used by the avatar auto-uploader (see layout-scripts guard above),
+   which does NOT dispatch a 'submit' event per the DOM spec, so it goes
+   straight through instead of re-entering any submit-time logic.
+   ──────────────────────────────────────────────────────────────────── */
+(function () {
+  function panelEls() {
+    var overlay = document.getElementById('modal-imageUploadConfirm');
+    if (!overlay) return null;
+    return {
+      overlay: overlay,
+      img: document.getElementById('imageUploadConfirmPreview'),
+      title: document.getElementById('imageUploadConfirmTitle'),
+      confirmBtn: document.getElementById('imageUploadConfirmBtn'),
+      cancelBtn: document.getElementById('imageUploadCancelBtn'),
+      closeBtn: document.getElementById('imageUploadCancelXBtn'),
+    };
+  }
+
+  window.pathriveConfirmImageUpload = function (form, file, opts) {
+    opts = opts || {};
+    var els = panelEls();
+    if (!els || !file) {
+      /* Fail open: no confirmation panel available on this page (or
+         nothing was actually selected) — submit rather than silently
+         drop the upload. */
+      form.submit();
+      return;
+    }
+
+    els.title.textContent = opts.title || 'Upload this image?';
+    els.img.src = '';
+
+    var reader = new FileReader();
+    reader.onload = function (e) { els.img.src = e.target.result; };
+    reader.readAsDataURL(file);
+
+    els.overlay.classList.add('open');
+
+    function cleanup() {
+      els.overlay.classList.remove('open');
+      els.confirmBtn.removeEventListener('click', onConfirm);
+      els.cancelBtn.removeEventListener('click', onCancel);
+      els.closeBtn.removeEventListener('click', onCancel);
+    }
+    function onConfirm() {
+      cleanup();
+      form.submit();
+    }
+    function onCancel() {
+      cleanup();
+      if (opts.onCancel) opts.onCancel();
+    }
+
+    els.confirmBtn.addEventListener('click', onConfirm);
+    els.cancelBtn.addEventListener('click', onCancel);
+    els.closeBtn.addEventListener('click', onCancel);
+  };
+
+  window.pathriveRequestImageUpload = function (form, opts) {
+    var fileInput = form.querySelector('input[type="file"]');
+    var file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) {
+      if (fileInput && fileInput.reportValidity) fileInput.reportValidity();
+      return;
+    }
+    window.pathriveConfirmImageUpload(form, file, opts);
+  };
 })();
 </script>

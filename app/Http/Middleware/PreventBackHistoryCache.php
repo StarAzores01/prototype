@@ -22,6 +22,15 @@ use Symfony\Component\HttpFoundation\Response;
  * Applied to the auth:web and beneficiary middleware groups (see
  * routes/web.php) so every page gated behind a login requirement is
  * covered, regardless of which guard protects it.
+ *
+ * Also applied to the guest:web,beneficiary group (login, signup, forgot-
+ * password) — NOT because those pages are sensitive themselves, but
+ * because /login renders a one-shot session flash message (e.g. "You have
+ * been logged out.") straight into the HTML. Without no-store, that
+ * specific render of /login is a valid bfcache/disk-cache candidate, and a
+ * later Back navigation that lands on that exact history entry can replay
+ * the stale flash text without ever contacting the server — indistinguishable
+ * to the user from actually being logged out again. See BUG 4 fix notes.
  */
 class PreventBackHistoryCache
 {

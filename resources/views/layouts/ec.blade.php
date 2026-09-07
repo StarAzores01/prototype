@@ -94,10 +94,7 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ucfirst(str_repl
       <div class="profile-dropdown" id="profileDropdown">
         <a href="{{ route('ec.profile') }}"><i class="fas fa-user"></i> My Profile</a>
         <hr>
-        <form method="POST" action="{{ route('logout') }}" style="margin:0">
-          @csrf
-          <button type="submit" style="all:unset;cursor:pointer;color:var(--red);display:flex;align-items:center;gap:10px;width:100%;padding:9px 16px;font-size:13px"><i class="fas fa-right-from-bracket" style="width:16px;opacity:.6"></i> Logout</button>
-        </form>
+        <button type="button" onclick="openModal('logoutConfirm')" style="all:unset;cursor:pointer;color:var(--red);display:flex;align-items:center;gap:10px;width:100%;padding:9px 16px;font-size:13px"><i class="fas fa-right-from-bracket" style="width:16px;opacity:.6"></i> Logout</button>
       </div>
     </div>
   </div>
@@ -173,6 +170,9 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ucfirst(str_repl
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
+
+@include('partials.upload-confirm-modal')
+@include('partials.logout-confirm-modal')
 
 <!-- Footer links -->
 <div style="text-align:center;padding:12px 24px;font-size:11.5px;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-left:var(--sidebar-w)">

@@ -10,138 +10,80 @@
   <button class="btn btn-primary" onclick="openModal('uploadDoc')"><i class="fas fa-plus"></i> Add Document</button>
 </div>
 
-@php
-  $linkIcon = ['gdrive' => 'fa-brands fa-google-drive', 'youtube' => 'fa-brands fa-youtube', 'external' => 'fa-solid fa-arrow-up-right-from-square'];
-  $visColor = ['private' => 'var(--red)', 'ec_trainer' => 'var(--blue-primary)', 'public' => 'var(--green)'];
-  $today     = now()->startOfDay();
-  $yesterday = now()->subDay()->startOfDay();
-  function docDateLabel($doc, $today, $yesterday) {
-    $ts = $doc->created_at;
-    if (! $ts) return 'Unknown Date';
-    if ($ts->startOfDay()->eq($today))     return 'Today';
-    if ($ts->startOfDay()->eq($yesterday)) return 'Yesterday';
-    return $ts->format('F j, Y');
-  }
-@endphp
-
-<!-- My Documents -->
+<!-- My Documents — grouped by Parent Program; the only card the Archived toggle affects -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
-    <div><div class="card-title">My Documents</div><div class="card-subtitle">{{ $myDocs->count() }} file{{ $myDocs->count() === 1 ? '' : 's' }}</div></div>
+    <div><div class="card-title">{{ $archived ? 'My Archived Documents' : 'My Documents' }}</div><div class="card-subtitle">{{ $myCount }} file{{ $myCount === 1 ? '' : 's' }}</div></div>
+    <a href="{{ route('trainer.documents', $archived ? [] : ['archived' => 1]) }}#myDocuments" class="btn btn-outline btn-sm">
+      @if($archived)<i class="fas fa-arrow-left"></i> Back to Active @else <i class="fas fa-box-archive"></i> Archived @endif
+    </a>
   </div>
-  <div class="table-wrap">
-    @if($myDocs->isEmpty())
-      <div class="empty-state"><i class="fas fa-folder-open"></i><p>No documents yet. Click <strong>Add Document</strong> to get started.</p></div>
-    @else
-    @php $myGrouped = $myDocs->groupBy(fn($d) => docDateLabel($d, $today, $yesterday)); @endphp
-    @foreach($myGrouped as $dateLabel => $group)
-      <div class="doc-date-group-header">
-        <i class="fas fa-calendar-alt" style="margin-right:6px;opacity:.6"></i>{{ $dateLabel }}
-        <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $group->count() }})</span>
+  <div class="table-wrap" id="myDocuments">
+    @if($myProgramGroups->isEmpty() && $myGeneral->isEmpty())
+      <div class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <p>@if($archived) No archived documents. @else No documents yet. Click <strong>Add Document</strong> to get started. @endif</p>
       </div>
-      <table class="data-table">
-        <thead><tr><th>Document</th><th>Type</th><th class="doc-table-linked-to">Activity</th><th>Visibility</th><th>Time</th><th>Actions</th></tr></thead>
-        <tbody>
-        @foreach($group as $d)
-          @php $vis = $d->visibility ?? 'public'; @endphp
-          <tr>
-            <td>
-              <div style="display:flex;align-items:center;gap:8px;min-width:0">
-                @if($d->isLink())
-                  <span style="width:32px;height:32px;border-radius:8px;background:var(--blue-soft);color:var(--blue-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px"><i class="{{ $linkIcon[$d->link_type] ?? 'fa-solid fa-link' }}"></i></span>
-                @else
-                  @php $ico = match(strtolower($d->file_type ?? '')) { 'pdf' => ['fa-file-pdf','#FEE2E2','#EF4444'], 'doc','docx' => ['fa-file-word','#DBEAFE','#1A56DB'], 'xls','xlsx' => ['fa-file-excel','#D1FAE5','#10B981'], 'jpg','jpeg','png','gif','webp' => ['fa-file-image','#E0E7FF','#6366F1'], 'mp4' => ['fa-file-video','#FEF3C7','#F59E0B'], default => ['fa-file','#F1F5F9','#64748B'] }; @endphp
-                  <span style="width:32px;height:32px;border-radius:8px;background:{{ $ico[1] }};color:{{ $ico[2] }};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px"><i class="fas {{ $ico[0] }}"></i></span>
-                @endif
-                <span style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px" title="{{ $d->original_name }}">{{ $d->original_name }}</span>
-              </div>
-            </td>
-            <td><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500)">{{ $d->isLink() ? $d->link_type : $d->file_type }}</span></td>
-            <td class="doc-table-linked-to" style="font-size:12px;color:var(--gray-600)">{{ Str::limit($d->training->title ?? 'General', 28) }}</td>
-            <td>
-              <form method="POST" action="{{ route('trainer.documents.store') }}" style="display:inline">
-                @csrf
-                <input type="hidden" name="action" value="set_visibility"/>
-                <input type="hidden" name="doc_id" value="{{ $d->id }}"/>
-                <select name="visibility" class="filter-select" style="font-size:12px;padding:4px 8px;border-radius:6px;color:{{ $visColor[$vis] }}" onchange="this.form.submit()">
-                  <option value="private"    {{ $vis === 'private'    ? 'selected' : '' }}>Private</option>
-                  <option value="ec_trainer" {{ $vis === 'ec_trainer' ? 'selected' : '' }}>EC &amp; Project Leaders</option>
-                  <option value="public"     {{ $vis === 'public'     ? 'selected' : '' }}>Public</option>
-                </select>
-              </form>
-            </td>
-            <td style="font-size:12px;color:var(--gray-400);white-space:nowrap">{{ $d->created_at?->format('g:i A') ?? '—' }}</td>
-            <td>
-              <div class="action-btns">
-                @if($d->isLink())
-                <a href="{{ $d->link_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline" title="Open link"><i class="fas fa-arrow-up-right-from-square"></i></a>
-                @else
-                <a href="{{ route('files.document', $d) }}?download=1" class="btn btn-sm btn-outline" title="Download"><i class="fas fa-arrow-down"></i></a>
-                <a href="{{ route('files.document', $d) }}" target="_blank" class="btn btn-sm btn-outline" title="Preview"><i class="fas fa-eye"></i></a>
-                @endif
-                <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete this document?')){document.getElementById('del{{ $d->id }}').submit()}" title="Delete"><i class="fas fa-trash"></i></button>
-                <form id="del{{ $d->id }}" method="POST" action="{{ route('trainer.documents.store') }}" style="display:none">@csrf<input type="hidden" name="action" value="delete"/><input type="hidden" name="doc_id" value="{{ $d->id }}"/></form>
-              </div>
-            </td>
-          </tr>
+    @else
+      @foreach($myProgramGroups as $group)
+        <div class="doc-date-group-header">
+          <i class="fas fa-diagram-project" style="margin-right:6px;opacity:.6"></i>{{ $group['program']->title }}
+          <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $group['documents']->count() + $group['activities']->sum(fn($a) => $a['documents']->count()) }})</span>
+        </div>
+        @if($group['documents']->isNotEmpty())
+          @include('partials.document-rows-table', ['documents' => $group['documents'], 'storeRoute' => route('trainer.documents.store'), 'archived' => $archived, 'showUploader' => false])
+        @endif
+        @foreach($group['activities'] as $entry)
+          <div class="doc-date-group-header" style="padding-left:28px;font-size:12px">
+            <i class="fas fa-book" style="margin-right:6px;opacity:.6"></i>{{ $entry['activity']->title ?? 'Activity' }}
+            <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $entry['documents']->count() }})</span>
+          </div>
+          @include('partials.document-rows-table', ['documents' => $entry['documents'], 'storeRoute' => route('trainer.documents.store'), 'archived' => $archived, 'showUploader' => false])
         @endforeach
-        </tbody>
-      </table>
-    @endforeach
+      @endforeach
+      @if($myGeneral->isNotEmpty())
+        <div class="doc-date-group-header">
+          <i class="fas fa-inbox" style="margin-right:6px;opacity:.6"></i>General
+          <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $myGeneral->count() }})</span>
+        </div>
+        @include('partials.document-rows-table', ['documents' => $myGeneral, 'storeRoute' => route('trainer.documents.store'), 'archived' => $archived, 'showUploader' => false, 'showLinkedTo' => true])
+      @endif
     @endif
   </div>
 </div>
 
-<!-- Shared Documents -->
+<!-- Shared Documents — always active-only, regardless of the toggle above; read-only (view/download only, no visibility/archive/delete) unless the row is the trainer's own upload -->
 <div class="card">
   <div class="card-header">
     <div><div class="card-title">Shared Documents</div><div class="card-subtitle">Documents shared by the EC or other project leaders</div></div>
   </div>
   <div class="table-wrap">
-    @if($sharedDocs->isEmpty())
+    @if($sharedProgramGroups->isEmpty() && $sharedGeneral->isEmpty())
       <div class="empty-state"><i class="fas fa-share-nodes"></i><p>No shared documents yet.</p></div>
     @else
-    @php $sharedGrouped = $sharedDocs->groupBy(fn($d) => docDateLabel($d, $today, $yesterday)); @endphp
-    @foreach($sharedGrouped as $dateLabel => $group)
-      <div class="doc-date-group-header">
-        <i class="fas fa-calendar-alt" style="margin-right:6px;opacity:.6"></i>{{ $dateLabel }}
-        <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $group->count() }})</span>
-      </div>
-      <table class="data-table">
-        <thead><tr><th>Document</th><th>Type</th><th class="doc-table-linked-to">Activity</th><th class="doc-table-uploaded-by">Shared By</th><th>Time</th><th>Actions</th></tr></thead>
-        <tbody>
-        @foreach($group as $d)
-          <tr>
-            <td>
-              <div style="display:flex;align-items:center;gap:8px;min-width:0">
-                @if($d->isLink())
-                  <span style="width:32px;height:32px;border-radius:8px;background:var(--blue-soft);color:var(--blue-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px"><i class="{{ $linkIcon[$d->link_type] ?? 'fa-solid fa-link' }}"></i></span>
-                @else
-                  @php $ico = match(strtolower($d->file_type ?? '')) { 'pdf' => ['fa-file-pdf','#FEE2E2','#EF4444'], 'doc','docx' => ['fa-file-word','#DBEAFE','#1A56DB'], 'xls','xlsx' => ['fa-file-excel','#D1FAE5','#10B981'], 'jpg','jpeg','png','gif','webp' => ['fa-file-image','#E0E7FF','#6366F1'], 'mp4' => ['fa-file-video','#FEF3C7','#F59E0B'], default => ['fa-file','#F1F5F9','#64748B'] }; @endphp
-                  <span style="width:32px;height:32px;border-radius:8px;background:{{ $ico[1] }};color:{{ $ico[2] }};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px"><i class="fas {{ $ico[0] }}"></i></span>
-                @endif
-                <span style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px" title="{{ $d->original_name }}">{{ $d->original_name }}</span>
-              </div>
-            </td>
-            <td><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500)">{{ $d->isLink() ? $d->link_type : $d->file_type }}</span></td>
-            <td class="doc-table-linked-to" style="font-size:12px;color:var(--gray-600)">{{ Str::limit($d->training->title ?? 'General', 28) }}</td>
-            <td class="doc-table-uploaded-by" style="font-size:12px;color:var(--gray-600)">{{ $d->uploader?->full_name ?? '—' }}</td>
-            <td style="font-size:12px;color:var(--gray-400);white-space:nowrap">{{ $d->created_at?->format('g:i A') ?? '—' }}</td>
-            <td>
-              <div class="action-btns">
-                @if($d->isLink())
-                <a href="{{ $d->link_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline" title="Open link"><i class="fas fa-arrow-up-right-from-square"></i></a>
-                @else
-                <a href="{{ route('files.document', $d) }}?download=1" class="btn btn-sm btn-outline" title="Download"><i class="fas fa-arrow-down"></i></a>
-                <a href="{{ route('files.document', $d) }}" target="_blank" class="btn btn-sm btn-outline" title="Preview"><i class="fas fa-eye"></i></a>
-                @endif
-              </div>
-            </td>
-          </tr>
+      @foreach($sharedProgramGroups as $group)
+        <div class="doc-date-group-header">
+          <i class="fas fa-diagram-project" style="margin-right:6px;opacity:.6"></i>{{ $group['program']->title }}
+          <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $group['documents']->count() + $group['activities']->sum(fn($a) => $a['documents']->count()) }})</span>
+        </div>
+        @if($group['documents']->isNotEmpty())
+          @include('partials.document-rows-table', ['documents' => $group['documents'], 'canManage' => false])
+        @endif
+        @foreach($group['activities'] as $entry)
+          <div class="doc-date-group-header" style="padding-left:28px;font-size:12px">
+            <i class="fas fa-book" style="margin-right:6px;opacity:.6"></i>{{ $entry['activity']->title ?? 'Activity' }}
+            <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $entry['documents']->count() }})</span>
+          </div>
+          @include('partials.document-rows-table', ['documents' => $entry['documents'], 'canManage' => false])
         @endforeach
-        </tbody>
-      </table>
-    @endforeach
+      @endforeach
+      @if($sharedGeneral->isNotEmpty())
+        <div class="doc-date-group-header">
+          <i class="fas fa-inbox" style="margin-right:6px;opacity:.6"></i>General
+          <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $sharedGeneral->count() }})</span>
+        </div>
+        @include('partials.document-rows-table', ['documents' => $sharedGeneral, 'canManage' => false, 'showLinkedTo' => true])
+      @endif
     @endif
   </div>
 </div>
@@ -249,7 +191,21 @@
   </div>
 </div>
 
+<form method="POST" action="{{ route('trainer.documents.store') }}" id="docActionForm" style="display:none">
+  @csrf
+  <input type="hidden" name="action" id="docActionType"/>
+  <input type="hidden" name="doc_id" id="docActionId"/>
+</form>
+
 <script>
+/** Shared by every row rendered via partials.document-rows-table (delete/archive/unarchive) that has $canManage=true. */
+function submitDocAction(action, id, name, needsConfirm) {
+  if (needsConfirm && !confirm('Delete "' + name + '"? This cannot be undone.')) return;
+  document.getElementById('docActionType').value = action;
+  document.getElementById('docActionId').value = id;
+  document.getElementById('docActionForm').submit();
+}
+
 function switchDocTab(tab) {
   const isFile = tab === 'file';
   document.getElementById('formFileUpload').style.display = isFile ? 'block' : 'none';

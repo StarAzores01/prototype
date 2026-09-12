@@ -215,4 +215,133 @@ showToast(@json(session('error')), 'error');
      handles the warning in that path. */
 
 })();
+<<<<<<< Updated upstream
+=======
+
+/* ── Image upload confirmation ───────────────────────────────────────────
+   Every image/banner/cover upload (profile picture, program cover image,
+   activity display picture) shows a custom "Upload this image?" panel
+   with a thumbnail preview before the real POST fires, instead of
+   uploading immediately — see partials.upload-confirm-modal for the
+   markup (reuses the existing .modal-overlay/.modal classes, so it looks
+   like every other modal in the app rather than a one-off popup).
+
+     pathriveConfirmImageUpload(form, file, opts)
+       Shows the panel for `file`, wires Confirm to submit `form` and
+       Cancel to run opts.onCancel (if given). opts.title overrides the
+       panel heading (defaults to "Upload this image?").
+
+     pathriveRequestImageUpload(form, opts)
+       Convenience for a form whose Save button is type="button" (never
+       triggers a real 'submit') — reads the file from the form's
+       input[type=file], runs native required-field validation if it's
+       empty, otherwise hands off to pathriveConfirmImageUpload.
+
+   Confirm calls form.submit() — the same native, guard-patched submit
+   used by the avatar auto-uploader (see layout-scripts guard above),
+   which does NOT dispatch a 'submit' event per the DOM spec, so it goes
+   straight through instead of re-entering any submit-time logic.
+   ──────────────────────────────────────────────────────────────────── */
+(function () {
+  function panelEls() {
+    var overlay = document.getElementById('modal-imageUploadConfirm');
+    if (!overlay) return null;
+    return {
+      overlay: overlay,
+      img: document.getElementById('imageUploadConfirmPreview'),
+      title: document.getElementById('imageUploadConfirmTitle'),
+      confirmBtn: document.getElementById('imageUploadConfirmBtn'),
+      cancelBtn: document.getElementById('imageUploadCancelBtn'),
+      closeBtn: document.getElementById('imageUploadCancelXBtn'),
+    };
+  }
+
+  window.pathriveConfirmImageUpload = function (form, file, opts) {
+    opts = opts || {};
+    var els = panelEls();
+    if (!els || !file) {
+      /* Fail open: no confirmation panel available on this page (or
+         nothing was actually selected) — submit rather than silently
+         drop the upload. */
+      form.submit();
+      return;
+    }
+
+    els.title.textContent = opts.title || 'Upload this image?';
+    els.img.src = '';
+
+    var reader = new FileReader();
+    reader.onload = function (e) { els.img.src = e.target.result; };
+    reader.readAsDataURL(file);
+
+    els.overlay.classList.add('open');
+
+    function cleanup() {
+      els.overlay.classList.remove('open');
+      els.confirmBtn.removeEventListener('click', onConfirm);
+      els.cancelBtn.removeEventListener('click', onCancel);
+      els.closeBtn.removeEventListener('click', onCancel);
+    }
+    function onConfirm() {
+      cleanup();
+      form.submit();
+    }
+    function onCancel() {
+      cleanup();
+      if (opts.onCancel) opts.onCancel();
+    }
+
+    els.confirmBtn.addEventListener('click', onConfirm);
+    els.cancelBtn.addEventListener('click', onCancel);
+    els.closeBtn.addEventListener('click', onCancel);
+  };
+
+  window.pathriveRequestImageUpload = function (form, opts) {
+    var fileInput = form.querySelector('input[type="file"]');
+    var file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) {
+      if (fileInput && fileInput.reportValidity) fileInput.reportValidity();
+      return;
+    }
+    window.pathriveConfirmImageUpload(form, file, opts);
+  };
+})();
+
+/* ── Date-range pairing ──────────────────────────────────────────────────
+   Every start/end date pair in the app (Program create, Activity create/
+   edit) wires up automatically via two HTML attributes — no per-page
+   script needed, which matters because this partial is included after the
+   page's own main content in every layout, so a content page's own inline
+   script can't reliably call into a function defined here (it wouldn't
+   exist yet at that point in page load). Auto-wiring from data-attributes
+   sidesteps that ordering problem entirely: it just runs, right here, once
+   the page's own content is already fully present in the DOM.
+
+   Usage: give the start date-input a data-range-end attribute set to the
+   end input's id. That is the whole setup — both inputs just need an id.
+
+   Backend validation (after_or_equal / after) is what actually enforces
+   this — this is just the frontend convenience so the picker doesn't even
+   offer an invalid date. ──────────────────────────────────────────────── */
+(function () {
+  function wire(startInput) {
+    var endInput = document.getElementById(startInput.dataset.rangeEnd);
+    if (!endInput) return;
+
+    function sync() {
+      if (startInput.value) {
+        endInput.min = startInput.value;
+        if (endInput.value && endInput.value < startInput.value) endInput.value = '';
+      } else {
+        endInput.removeAttribute('min');
+      }
+    }
+
+    startInput.addEventListener('change', sync);
+    sync();
+  }
+
+  document.querySelectorAll('input[type="date"][data-range-end]').forEach(wire);
+})();
+>>>>>>> Stashed changes
 </script>

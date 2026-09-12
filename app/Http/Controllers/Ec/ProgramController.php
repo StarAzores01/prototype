@@ -43,7 +43,7 @@ class ProgramController extends Controller
 
         return match ($action) {
             'create'          => $this->create($request),
-            'request_unlock'  => $this->requestUnlock($request),
+            'extend_timeline' => $this->extendTimeline($request),
             'update_status'   => $this->updateStatus($request),
             'update_team'     => $this->updateTeam($request),
             'upload'          => $this->uploadDocument($request),
@@ -160,7 +160,6 @@ class ProgramController extends Controller
                 'timeline_end'     => $data['timeline_end'],
                 'budget_allocated' => $data['budget_allocated'],
                 'status'           => 'Proposed',
-                'is_locked'        => true, // always locked on creation — no form field sets this.
                 'created_by'       => Auth::guard('web')->id(),
             ]);
 
@@ -176,11 +175,16 @@ class ProgramController extends Controller
     }
 
     /**
-     * The only way title/description/area/timeline can change once a
-     * program exists: EC picks a field, supplies the new value plus a
-     * required remark, and it's logged to program_amendments. is_locked
-     * stays true throughout — this "unlocks" for the single write, not a
-     * general switch.
+     * The only way a program's effective end date can ever move once it
+     * exists. timeline_start/timeline_end are permanently fixed (see
+     * Program::booted()) — this never touches them. Instead it sets
+     * extended_end_date (Program::effective_end_date reads extended_end_date
+     * ?? timeline_end), so the original stays intact for documentation while
+     * every display of "the program's end date" picks up the extension.
+     * Must move forward of the CURRENT effective end date, not the original
+     * — so a second extension only ever pushes further out, never backward.
+     * EC only (route middleware: role:extension_coordinator) — there is no
+     * trainer-side equivalent, even for a Project Lead.
      *
      * budget_allocated is NOT amendable — it's permanently fixed at
      * creation, full stop, not even through this path. 'budget' used to be
@@ -190,39 +194,31 @@ class ProgramController extends Controller
      * (Ec\TrainingController::updateBudget()) and rolled up by
      * Program::rollup() below.
      */
-    private function requestUnlock(Request $request)
+    private function extendTimeline(Request $request)
     {
+        $program = Program::findOrFail((int) $request->input('program_id'));
+        $currentEffectiveEnd = $program->effective_end_date;
+
         $data = Validator::make($request->all(), [
-            'program_id'          => 'required|integer|exists:programs,id',
-            'field_changed'       => ['required', Rule::in(['timeline'])],
-            'remark'              => 'required|string|max:2000',
-            'new_timeline_start'  => 'required|date',
-            'new_timeline_end'    => 'required|date|after_or_equal:new_timeline_start',
+            'program_id'   => 'required|integer|exists:programs,id',
+            'remark'       => 'required|string|max:2000',
+            'new_end_date' => ['required', 'date', 'after:'.$currentEffectiveEnd->format('Y-m-d')],
         ])->validate();
 
-        $program = Program::findOrFail($data['program_id']);
-
-        DB::transaction(function () use ($program, $data) {
-            $oldValue = $program->timeline_start->format('Y-m-d').' to '.$program->timeline_end->format('Y-m-d');
-            $newValue = $data['new_timeline_start'].' to '.$data['new_timeline_end'];
-            $program->timeline_start = $data['new_timeline_start'];
-            $program->timeline_end = $data['new_timeline_end'];
-
-            // Re-lock explicitly (it never actually left true) so intent stays obvious in code.
-            $program->is_locked = true;
-            $program->save();
-
+        DB::transaction(function () use ($program, $data, $currentEffectiveEnd) {
             ProgramAmendment::create([
                 'program_id'    => $program->id,
-                'field_changed' => $data['field_changed'],
-                'old_value'     => $oldValue,
-                'new_value'     => $newValue,
+                'field_changed' => 'timeline',
+                'old_value'     => $currentEffectiveEnd->format('Y-m-d'),
+                'new_value'     => $data['new_end_date'],
                 'remark'        => $data['remark'],
                 'amended_by'    => Auth::guard('web')->id(),
             ]);
+
+            $program->update(['extended_end_date' => $data['new_end_date']]);
         });
 
-        return redirect()->route('ec.programs', ['view' => $program->id])->with('success', 'Program amended and re-locked.');
+        return redirect()->route('ec.programs', ['view' => $program->id])->with('success', 'Program timeline extended.');
     }
 
     /**

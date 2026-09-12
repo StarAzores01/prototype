@@ -42,16 +42,30 @@
   <div class="stat-card"><div class="stat-icon navy"><i class="fas fa-users"></i></div><div class="stat-body"><div class="stat-value">{{ $viewParticipants->count() }}</div><div class="stat-label">Trainees</div></div></div>
 </div>
 
+<!-- Documents — moved up front so it's visible without scrolling -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header"><div class="card-title">Documents</div><a href="{{ route('trainer.documents') }}" class="btn btn-ghost btn-sm">Upload</a></div>
+  <div class="card-body" style="padding-top:8px">
+    @forelse($viewDocs as $d)
+    <div class="upload-item" style="margin-bottom:8px">
+      <div class="upload-item-body"><div class="upload-item-name">{{ $d->original_name }}</div><div class="upload-item-meta">{{ $d->created_at?->format('M d, Y') ?? '—' }}</div></div>
+    </div>
+    @empty
+    <div class="empty-state" style="padding:16px"><i class="fas fa-folder-open"></i><p>No documents uploaded.</p></div>
+    @endforelse
+  </div>
+</div>
+
 <!-- Project Progress -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
-    <div><div class="card-title"><i class="fas fa-chart-line"></i> Project Progress</div><div class="card-subtitle">Budget and timeline status</div></div>
+    <div><div class="card-title"><i class="fas fa-chart-line"></i> Project Progress</div><div class="card-subtitle">Budget status</div></div>
     <div style="display:flex;align-items:center;gap:10px">
       <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;background:{{ $progress['healthHex'] }}22;color:{{ $progress['healthHex'] }};border:1px solid {{ $progress['healthHex'] }}44"><i class="fas fa-circle" style="font-size:6px"></i> {{ $progress['healthLabel'] }}</span>
       <button class="btn btn-sm btn-outline" onclick="openModal('updateBudget')"><i class="fas fa-sack-dollar"></i> Log Budget Usage</button>
     </div>
   </div>
-  <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:28px">
+  <div class="card-body">
     <div>
       <div style="display:flex;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700;color:var(--text-heading)"><i class="fas fa-sack-dollar"></i> Budget</span>
@@ -67,30 +81,6 @@
       </div>
       @else
       <div style="color:var(--gray-400);font-size:13px;padding:8px 0">No budget assigned.</div>
-      @endif
-    </div>
-    <div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:13px;font-weight:700;color:var(--text-heading)"><i class="fas fa-clock"></i> Timeline</span>
-        @if($progress['timePct'] !== null)<span style="font-size:13px;font-weight:700;color:{{ $progress['timePct'] >= 100 ? 'var(--gray-500)' : ($progress['timePct'] >= 80 ? '#F59E0B' : 'var(--blue-primary)') }}">{{ $progress['timePct'] }}%</span>@endif
-      </div>
-      @if($progress['dateStart'] && $progress['dateEnd'])
-      <div style="background:var(--gray-100);border-radius:8px;height:12px;overflow:hidden;margin-bottom:10px">
-        <div style="height:100%;border-radius:8px;width:{{ $progress['timePct'] }}%;background:{{ $progress['timePct'] >= 100 ? '#6B7280' : ($progress['timePct'] >= 80 ? '#F59E0B' : '#1A56DB') }}"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray-500)">
-        <span>{{ $progress['dateStart']->format('M d, Y') }}</span>
-        <span>{{ $progress['dateEnd']->format('M d, Y') }}</span>
-      </div>
-      <div style="margin-top:6px;font-size:12px;color:var(--gray-500)">
-        @if($progress['timePct'] >= 100)
-        <span style="color:var(--gray-500)"><i class="fas fa-check"></i> Period completed</span>
-        @else
-        <span style="color:var(--blue-primary)"><strong>{{ $progress['daysLeft'] }}</strong> day{{ $progress['daysLeft'] !== 1 ? 's' : '' }} remaining</span>
-        @endif
-      </div>
-      @else
-      <div style="color:var(--gray-400);font-size:13px;padding:8px 0">No period assigned.</div>
       @endif
     </div>
   </div>
@@ -145,18 +135,6 @@
           <span style="font-size:13px;font-weight:600;color:var(--gray-800)">{{ $vl }}</span>
         </div>
         @endforeach
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header"><div class="card-title">Documents</div><a href="{{ route('trainer.documents') }}" class="btn btn-ghost btn-sm">Upload</a></div>
-      <div class="card-body" style="padding-top:8px">
-        @forelse($viewDocs as $d)
-        <div class="upload-item" style="margin-bottom:8px">
-          <div class="upload-item-body"><div class="upload-item-name">{{ $d->original_name }}</div><div class="upload-item-meta">{{ $d->created_at?->format('M d, Y') ?? '—' }}</div></div>
-        </div>
-        @empty
-        <div class="empty-state" style="padding:16px"><i class="fas fa-folder-open"></i><p>No documents uploaded.</p></div>
-        @endforelse
       </div>
     </div>
   </div>

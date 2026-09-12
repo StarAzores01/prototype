@@ -183,11 +183,12 @@ Route::middleware(['auth:web', 'role:trainer', 'no-back-cache'])
 
         // Scoped version of Ec's Programs feature — a trainer only sees/acts on
         // programs they belong to (see Trainer\ProgramController and
-        // Program::scopeVisibleToTrainer()). Sub-actions (create, request_unlock,
-        // update_status, update_team, upload) all dispatch through this single
-        // POST route via the "action" field, same convention as every other
-        // resource in this app (Ec\ProgramController included) — no separate
-        // per-action routes.
+        // Program::scopeVisibleToTrainer()). Sub-actions (create, update_status,
+        // update_team, upload) all dispatch through this single POST route via
+        // the "action" field, same convention as every other resource in this
+        // app (Ec\ProgramController included) — no separate per-action routes.
+        // No timeline/extension action here — only EC can extend a program's
+        // effective end date (Ec\ProgramController::extendTimeline()).
         Route::get('/programs.php', [TrainerProgramController::class, 'index'])->name('programs');
         Route::post('/programs.php', [TrainerProgramController::class, 'store'])->name('programs.store');
 

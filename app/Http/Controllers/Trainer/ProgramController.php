@@ -22,7 +22,10 @@ use Illuminate\Validation\Validator as ValidatorContract;
  * member — Program::scopeVisibleToTrainer()), and several actions that are
  * unrestricted for EC are lead-only here:
  *
- *  - requestUnlock() / updateTeam(): lead only, members get 403.
+ *  - updateTeam(): lead only, members get 403. There is no trainer-side
+ *    timeline/extension action at all — only EC can extend a program's
+ *    effective end date (Ec\ProgramController::extendTimeline()); a Project
+ *    Lead is fully read-only on the timeline, same as any other member.
  *  - updateStatus(): also lead only (see the method doc for why this one
  *    was an inference call, not something the spec stated outright).
  *  - create(): the creating trainer is auto-attached as lead — there's no
@@ -64,7 +67,6 @@ class ProgramController extends Controller
 
         return match ($action) {
             'create'          => $this->create($request),
-            'request_unlock'  => $this->requestUnlock($request),
             'update_status'   => $this->updateStatus($request),
             'update_team'     => $this->updateTeam($request),
             'upload'          => $this->uploadDocument($request),
@@ -110,7 +112,7 @@ class ProgramController extends Controller
             'viewAmendments'  => $amendments,
             'viewDocuments'   => $documents,
             'trainers'        => $this->activeTrainers(),
-            // Gates the Request Unlock / Manage Team buttons + amendment-history note in the view.
+            // Gates the Manage Team button + amendment-history note in the view.
             'isLead'          => $program->isLeadUser($this->trainerId()),
         ]);
     }
@@ -185,7 +187,6 @@ class ProgramController extends Controller
                 'timeline_end'     => $data['timeline_end'],
                 'budget_allocated' => $data['budget_allocated'],
                 'status'           => 'Proposed',
-                'is_locked'        => true,
                 'created_by'       => $trainerId,
             ]);
 
@@ -200,48 +201,13 @@ class ProgramController extends Controller
         return redirect()->route('trainer.programs', ['view' => $program->id])->with('success', 'Program created.');
     }
 
-    /** Timeline-only amendment, same shape as Ec\ProgramController::requestUnlock() — lead only. */
-    private function requestUnlock(Request $request)
-    {
-        $data = Validator::make($request->all(), [
-            'program_id'          => 'required|integer|exists:programs,id',
-            'field_changed'       => ['required', Rule::in(['timeline'])],
-            'remark'              => 'required|string|max:2000',
-            'new_timeline_start'  => 'required|date',
-            'new_timeline_end'    => 'required|date|after_or_equal:new_timeline_start',
-        ])->validate();
-
-        $program = Program::findOrFail($data['program_id']);
-        $this->authorizeLead($program, 'Only this program\'s Project Lead can request an amendment.');
-
-        DB::transaction(function () use ($program, $data) {
-            $oldValue = $program->timeline_start->format('Y-m-d').' to '.$program->timeline_end->format('Y-m-d');
-            $newValue = $data['new_timeline_start'].' to '.$data['new_timeline_end'];
-            $program->timeline_start = $data['new_timeline_start'];
-            $program->timeline_end = $data['new_timeline_end'];
-            $program->is_locked = true;
-            $program->save();
-
-            ProgramAmendment::create([
-                'program_id'    => $program->id,
-                'field_changed' => $data['field_changed'],
-                'old_value'     => $oldValue,
-                'new_value'     => $newValue,
-                'remark'        => $data['remark'],
-                'amended_by'    => Auth::guard('web')->id(),
-            ]);
-        });
-
-        return redirect()->route('trainer.programs', ['view' => $program->id])->with('success', 'Program amended and re-locked.');
-    }
-
     /**
      * Lead only. The spec didn't say this one outright the way it did for
-     * requestUnlock/updateTeam ("lead can freely change status, same as
-     * EC's version") — I'm reading "lead" there as the acting role, not
-     * just an example, and gating it the same way as the other two
-     * authority actions rather than opening it to members. Flagged to the
-     * user as an inference call, not something stated unambiguously.
+     * updateTeam ("lead can freely change status, same as EC's version") —
+     * I'm reading "lead" there as the acting role, not just an example, and
+     * gating it the same way as the other authority action rather than
+     * opening it to members. Flagged to the user as an inference call, not
+     * something stated unambiguously.
      */
     private function updateStatus(Request $request)
     {

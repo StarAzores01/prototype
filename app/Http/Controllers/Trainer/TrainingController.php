@@ -108,8 +108,10 @@ class TrainingController extends Controller
     }
 
     /**
-     * Budget/timeline percentages and the derived "health" pill — same
-     * formula as the EC module's training detail view.
+     * Budget percentage and the derived "health" pill — same formula as the
+     * EC module's training detail view. This used to also track a timeline
+     * percentage; the Activity-level "Timeline Progress" monitoring it fed
+     * has been removed entirely, so health is budget-only from here on.
      */
     private function progress(Training $training): array
     {
@@ -117,34 +119,22 @@ class TrainingController extends Controller
         $budgetUsed = (float) ($training->budget_used ?? 0);
         $budgetPct = $budgetAlloc > 0 ? min(100, round($budgetUsed / $budgetAlloc * 100, 1)) : null;
 
-        $dateStart = $training->date_start;
-        $dateEnd = $training->date_end;
-        $today = now()->startOfDay();
-        $timePct = null;
-        $daysLeft = null;
-
-        if ($dateStart && $dateEnd) {
-            $totalDays = max(1, $dateStart->diffInDays($dateEnd));
-            $elapsed = $today->lt($dateStart) ? 0 : ($today->gt($dateEnd) ? $totalDays : $dateStart->diffInDays($today));
-            $timePct = min(100, round($elapsed / $totalDays * 100, 1));
-            $daysLeft = $today->gt($dateEnd) ? 0 : $today->diffInDays($dateEnd);
-        }
-
-        $healthHex = '#10B981';
-        $healthLabel = 'On Track';
-        if ($budgetPct !== null || $timePct !== null) {
-            $b = $budgetPct ?? 0;
-            $t = $timePct ?? 0;
-            if ($b >= 100 || $b > $t + 20) {
+        $healthHex = 'var(--gray-300)';
+        $healthLabel = 'No data';
+        if ($budgetPct !== null) {
+            if ($budgetPct >= 100) {
                 $healthHex = '#EF4444';
-                $healthLabel = 'Over Budget / Behind';
-            } elseif ($b > $t + 10 || ($t >= 90 && $b > 80)) {
+                $healthLabel = 'Over Budget';
+            } elseif ($budgetPct >= 80) {
                 $healthHex = '#F59E0B';
                 $healthLabel = 'At Risk';
+            } else {
+                $healthHex = '#10B981';
+                $healthLabel = 'On Track';
             }
         }
 
-        return compact('budgetAlloc', 'budgetUsed', 'budgetPct', 'dateStart', 'dateEnd', 'timePct', 'daysLeft', 'healthLabel', 'healthHex');
+        return compact('budgetAlloc', 'budgetUsed', 'budgetPct', 'healthLabel', 'healthHex');
     }
 
     /** Only budget_used is writable here — budget_allocated is locked for good after creation. */
@@ -212,7 +202,7 @@ class TrainingController extends Controller
             'area'                => 'required|string|max:120',
             'description'         => 'nullable|string',
             'date_start'          => 'nullable|date',
-            'date_end'            => 'nullable|date',
+            'date_end'            => 'nullable|date|after_or_equal:date_start',
             'budget_allocated'    => 'required|numeric|min:0|max:9999999999.99',
             'budget_used'         => 'nullable|numeric|min:0|max:9999999999.99',
             'status'              => ['nullable', Rule::in(['Proposed', 'Approved', 'Ongoing', 'Completed'])],

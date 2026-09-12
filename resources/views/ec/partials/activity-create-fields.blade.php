@@ -47,11 +47,11 @@
 <div class="form-row">
   <div class="form-group">
     <label class="form-label">Start Date</label>
-    <input type="date" name="date_start" class="form-control"/>
+    <input type="date" name="date_start" id="activityDateStart" data-range-end="activityDateEnd" class="form-control"/>
   </div>
   <div class="form-group">
     <label class="form-label">End Date</label>
-    <input type="date" name="date_end" class="form-control"/>
+    <input type="date" name="date_end" id="activityDateEnd" class="form-control"/>
   </div>
 </div>
 <div class="form-row">

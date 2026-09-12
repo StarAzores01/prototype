@@ -244,6 +244,11 @@ showToast(@json(session('error')), 'error');
      handles the warning in that path. */
 
 })();
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> origin/dev_v3
 
 /* ── Image upload confirmation ───────────────────────────────────────────
    Every image/banner/cover upload (profile picture, program cover image,
@@ -333,4 +338,45 @@ showToast(@json(session('error')), 'error');
     window.pathriveConfirmImageUpload(form, file, opts);
   };
 })();
+<<<<<<< HEAD
+=======
+
+/* ── Date-range pairing ──────────────────────────────────────────────────
+   Every start/end date pair in the app (Program create, Activity create/
+   edit) wires up automatically via two HTML attributes — no per-page
+   script needed, which matters because this partial is included after the
+   page's own main content in every layout, so a content page's own inline
+   script can't reliably call into a function defined here (it wouldn't
+   exist yet at that point in page load). Auto-wiring from data-attributes
+   sidesteps that ordering problem entirely: it just runs, right here, once
+   the page's own content is already fully present in the DOM.
+
+   Usage: give the start date-input a data-range-end attribute set to the
+   end input's id. That is the whole setup — both inputs just need an id.
+
+   Backend validation (after_or_equal / after) is what actually enforces
+   this — this is just the frontend convenience so the picker doesn't even
+   offer an invalid date. ──────────────────────────────────────────────── */
+(function () {
+  function wire(startInput) {
+    var endInput = document.getElementById(startInput.dataset.rangeEnd);
+    if (!endInput) return;
+
+    function sync() {
+      if (startInput.value) {
+        endInput.min = startInput.value;
+        if (endInput.value && endInput.value < startInput.value) endInput.value = '';
+      } else {
+        endInput.removeAttribute('min');
+      }
+    }
+
+    startInput.addEventListener('change', sync);
+    sync();
+  }
+
+  document.querySelectorAll('input[type="date"][data-range-end]').forEach(wire);
+})();
+>>>>>>> Stashed changes
+>>>>>>> origin/dev_v3
 </script>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Ec;
 
+use App\Http\Controllers\Concerns\GroupsDocumentsByProgram;
 use App\Http\Controllers\Concerns\HandlesDocumentUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
@@ -15,26 +16,42 @@ use Illuminate\Validation\Rule;
 class DocumentController extends Controller
 {
     use HandlesDocumentUploads;
+    use GroupsDocumentsByProgram;
 
+    /**
+     * Grouped by Parent Program (see GroupsDocumentsByProgram) — replaces
+     * the old group-by-upload-date scheme entirely. `?archived=1` switches
+     * the whole list to the Archived Documents view; EC can see and act on
+     * every document either way, no ownership restriction (unlike the
+     * Trainer version).
+     */
     public function index(Request $request)
     {
         $q = trim($request->query('q', ''));
+        $archived = $request->boolean('archived');
 
-        $docsQuery = Document::with(['training', 'program', 'activity', 'uploader']);
+        $docsQuery = Document::with(['training', 'program', 'activity', 'uploader', 'archivedBy'])
+            ->when($archived, fn ($query) => $query->archived(), fn ($query) => $query->active());
+
         if ($q) {
             $docsQuery->where(function ($query) use ($q) {
                 $query->where('original_name', 'like', "%{$q}%")
-                    ->orWhereHas('training', fn ($t) => $t->where('title', 'like', "%{$q}%"));
+                    ->orWhereHas('training', fn ($t) => $t->where('title', 'like', "%{$q}%"))
+                    ->orWhereHas('program', fn ($p) => $p->where('title', 'like', "%{$q}%"))
+                    ->orWhereHas('activity', fn ($a) => $a->where('title', 'like', "%{$q}%"));
             });
         }
-        $docs = $docsQuery->orderByDesc('created_at')->get();
 
-        return view('ec.documents', [
+        $docs = $docsQuery->orderByDesc('created_at')->get();
+        $totalCount = $docs->count();
+
+        return view('ec.documents', array_merge([
             'activePage' => 'documents',
-            'docs'       => $docs,
             'trainings'  => Training::orderBy('title')->get(['id', 'title']),
             'q'          => $q,
-        ]);
+            'archived'   => $archived,
+            'totalCount' => $totalCount,
+        ], $this->groupDocumentsByProgram($docs)));
     }
 
     public function store(Request $request)
@@ -44,6 +61,8 @@ class DocumentController extends Controller
         return match ($action) {
             'upload'         => $this->upload($request),
             'set_visibility' => $this->setVisibility($request),
+            'archive'        => $this->archive($request),
+            'unarchive'      => $this->unarchive($request),
             'delete'         => $this->delete($request),
             default          => back(),
         };
@@ -89,6 +108,38 @@ class DocumentController extends Controller
             $doc->delete();
 
             return redirect()->route('ec.documents')->with('success', 'Document deleted.');
+        }
+
+        return redirect()->route('ec.documents');
+    }
+
+    /**
+     * EC can archive any document — same unrestricted floor as delete()/
+     * setVisibility() above, no extra ownership check (unlike the Trainer
+     * version, which only allows a trainer to archive their own uploads).
+     * Archiving never touches the file itself or its visibility — it just
+     * removes the row from the default active list; it stays fully
+     * downloadable through its existing link.
+     */
+    private function archive(Request $request)
+    {
+        $doc = Document::find((int) $request->input('doc_id'));
+        if ($doc) {
+            $doc->update(['archived_at' => now(), 'archived_by' => Auth::guard('web')->id()]);
+
+            return redirect()->route('ec.documents')->with('success', 'Document archived.');
+        }
+
+        return redirect()->route('ec.documents');
+    }
+
+    private function unarchive(Request $request)
+    {
+        $doc = Document::find((int) $request->input('doc_id'));
+        if ($doc) {
+            $doc->update(['archived_at' => null, 'archived_by' => null]);
+
+            return redirect()->route('ec.documents')->with('success', 'Document restored.');
         }
 
         return redirect()->route('ec.documents');

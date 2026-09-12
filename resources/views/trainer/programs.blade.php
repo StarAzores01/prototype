@@ -27,14 +27,13 @@
     <a href="{{ route('trainer.programs') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
     @if($isLead)
     <button class="btn btn-outline" onclick="openModal('manageTeam')"><i class="fas fa-users-gear"></i> Manage Team</button>
-    <button class="btn btn-primary" onclick="openModal('unlockProgram')"><i class="fas fa-lock-open"></i> Request Unlock &amp; Amend</button>
     @endif
   </div>
 </div>
 
 @if(! $isLead)
 <div class="alert alert-info" style="margin-bottom:20px">
-  <i class="fas fa-circle-info"></i> You're a team member on this program, not the Project Lead — you can view everything here and add activities/documents, but only the Project Lead can request a timeline amendment, change status, or manage the team.
+  <i class="fas fa-circle-info"></i> You're a team member on this program, not the Project Lead — you can view everything here and add activities/documents, but only the Project Lead can change status or manage the team.
 </div>
 @endif
 
@@ -62,16 +61,36 @@
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-icon navy"><i class="fas fa-lock"></i></div>
-    <div class="stat-body"><div class="stat-value" style="font-size:16px">{{ $viewProgram->is_locked ? 'Locked' : 'Unlocked' }}</div><div class="stat-label">Lock Status</div></div>
-  </div>
-  <div class="stat-card">
     <div class="stat-icon blue"><i class="fas fa-book"></i></div>
     <div class="stat-body"><div class="stat-value">{{ $r['completed'] }} / {{ $r['total'] }}</div><div class="stat-label">Activities Completed</div></div>
   </div>
   <div class="stat-card">
     <div class="stat-icon {{ $r['budgetRemain'] < 0 ? 'red' : 'green' }}"><i class="fas fa-sack-dollar"></i></div>
     <div class="stat-body"><div class="stat-value" style="font-size:15px">&#8369;{{ number_format($r['budgetRemain'], 2) }}</div><div class="stat-label">Budget Remaining</div></div>
+  </div>
+</div>
+
+<!-- Documents: this Program's own repository, scoped via program_id — lead or member may both upload; moved up front so it's visible without scrolling -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header">
+    <div class="card-title">Documents</div>
+    <button class="btn btn-ghost btn-sm" onclick="openModal('uploadProgramDoc')"><i class="fas fa-upload"></i> Upload</button>
+  </div>
+  <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+    @php $linkIcon = ['gdrive' => 'fa-brands fa-google-drive', 'youtube' => 'fa-brands fa-youtube', 'external' => 'fa-solid fa-arrow-up-right-from-square']; @endphp
+    @forelse($viewDocuments as $d)
+    <a href="{{ $d->isLink() ? $d->link_url : route('files.document', $d) }}" target="_blank" rel="noopener" class="upload-item" style="text-decoration:none;color:inherit">
+      <div class="upload-item-icon {{ $d->isLink() ? 'img' : 'doc' }}">
+        <i class="{{ $d->isLink() ? ($linkIcon[$d->link_type] ?? 'fa-solid fa-link') : 'fa-solid fa-file' }}"></i>
+      </div>
+      <div class="upload-item-body">
+        <div class="upload-item-name">{{ $d->original_name }}</div>
+        <div class="upload-item-meta">{{ $d->uploader->full_name ?? '' }} &middot; {{ $d->created_at?->format('M d, Y') }}</div>
+      </div>
+    </a>
+    @empty
+    <div class="empty-state" style="padding:16px"><i class="fas fa-folder-open"></i><p>No documents in this program's repository yet.</p></div>
+    @endforelse
   </div>
 </div>
 
@@ -178,9 +197,9 @@
       </div>
     </div>
 
-    <!-- Amendment History -->
+    <!-- Extension History -->
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="fas fa-clock-rotate-left"></i> Amendment History</div></div>
+      <div class="card-header"><div class="card-title"><i class="fas fa-clock-rotate-left"></i> Extension History</div></div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Date</th><th>Field</th><th>Old Value</th><th>New Value</th><th>Remark</th><th>By</th></tr></thead>
@@ -204,26 +223,30 @@
   </div>
 
   <div class="dash-side">
-    <!-- Program Details (read-only — locked fields, see Request Unlock above) -->
+    <!-- Program Details (read-only — budget and the original timeline are permanently fixed at creation; only EC can extend the effective end date) -->
     <div class="card">
       <div class="card-header">
         <div class="card-title">Program Details</div>
-        <span title="Locked — Budget is permanently fixed; the Project Lead can use Request Unlock &amp; Amend to change the timeline" style="color:var(--gray-400)"><i class="fas fa-lock"></i></span>
       </div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
         @php
+          $effectiveEnd = $viewProgram->effective_end_date;
+          $timelineEndVal = e($effectiveEnd?->format('Y-m-d') ?? '—');
+          if ($viewProgram->extended_end_date) {
+            $timelineEndVal .= ' <span style="color:var(--gray-400);font-weight:400">(originally '.e($viewProgram->timeline_end->format('M d, Y')).')</span>';
+          }
           $details = [
-            ['Area / Specialization', $viewProgram->area ?? '—'],
-            ['Timeline Start', $viewProgram->timeline_start?->format('Y-m-d') ?? '—'],
-            ['Timeline End', $viewProgram->timeline_end?->format('Y-m-d') ?? '—'],
+            ['Area / Specialization', e($viewProgram->area ?? '—')],
+            ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? '—')],
+            ['Timeline End', $timelineEndVal],
             ['Budget Allocated', '₱'.number_format((float) $viewProgram->budget_allocated, 2)],
-            ['Created By', $viewProgram->creator->full_name ?? '—'],
-            ['Created', $viewProgram->created_at?->format('M d, Y') ?? '—'],
+            ['Created By', e($viewProgram->creator->full_name ?? '—')],
+            ['Created', e($viewProgram->created_at?->format('M d, Y') ?? '—')],
           ];
         @endphp
         @foreach($details as [$label, $val])
         <div style="display:flex;align-items:flex-start;gap:12px">
-          <div><div style="font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.4px">{{ $label }}</div><div style="font-size:13px;color:var(--gray-800);font-weight:500;margin-top:2px">{{ $val }}</div></div>
+          <div><div style="font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.4px">{{ $label }}</div><div style="font-size:13px;color:var(--gray-800);font-weight:500;margin-top:2px">{!! $val !!}</div></div>
         </div>
         @endforeach
       </div>
@@ -255,73 +278,10 @@
         @endforeach
       </div>
     </div>
-
-    <!-- Documents: this Program's own repository, scoped via program_id — lead or member may both upload -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Documents</div>
-        <button class="btn btn-ghost btn-sm" onclick="openModal('uploadProgramDoc')"><i class="fas fa-upload"></i> Upload</button>
-      </div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
-        @php $linkIcon = ['gdrive' => 'fa-brands fa-google-drive', 'youtube' => 'fa-brands fa-youtube', 'external' => 'fa-solid fa-arrow-up-right-from-square']; @endphp
-        @forelse($viewDocuments as $d)
-        <a href="{{ $d->isLink() ? $d->link_url : route('files.document', $d) }}" target="_blank" rel="noopener" class="upload-item" style="text-decoration:none;color:inherit">
-          <div class="upload-item-icon {{ $d->isLink() ? 'img' : 'doc' }}">
-            <i class="{{ $d->isLink() ? ($linkIcon[$d->link_type] ?? 'fa-solid fa-link') : 'fa-solid fa-file' }}"></i>
-          </div>
-          <div class="upload-item-body">
-            <div class="upload-item-name">{{ $d->original_name }}</div>
-            <div class="upload-item-meta">{{ $d->uploader->full_name ?? '' }} &middot; {{ $d->created_at?->format('M d, Y') }}</div>
-          </div>
-        </a>
-        @empty
-        <div class="empty-state" style="padding:16px"><i class="fas fa-folder-open"></i><p>No documents in this program's repository yet.</p></div>
-        @endforelse
-      </div>
-    </div>
   </div>
 </div>
 
 @if($isLead)
-<!-- MODAL: REQUEST UNLOCK & AMEND -->
-<div class="modal-overlay" id="modal-unlockProgram">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <h2><i class="fas fa-lock-open"></i> Request Unlock &amp; Amend</h2>
-      <button class="modal-close" onclick="closeModal('unlockProgram')"><i class="fas fa-xmark"></i></button>
-    </div>
-    <form method="POST" action="{{ route('trainer.programs.store') }}">
-      @csrf
-      <input type="hidden" name="action" value="request_unlock"/>
-      <input type="hidden" name="program_id" value="{{ $viewProgram->id }}"/>
-      <input type="hidden" name="field_changed" value="timeline"/>
-      <div class="modal-body">
-        <div class="alert alert-info" style="margin-bottom:16px;font-size:13px">
-          <i class="fas fa-circle-info"></i> This program is locked. Timeline is the only field that can still be amended — budget is permanently fixed at creation and cannot be changed, ever.
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">New Start Date *</label>
-            <input type="date" name="new_timeline_start" class="form-control" value="{{ $viewProgram->timeline_start?->format('Y-m-d') }}" required/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">New End Date *</label>
-            <input type="date" name="new_timeline_end" class="form-control" value="{{ $viewProgram->timeline_end?->format('Y-m-d') }}" required/>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Remark (required) *</label>
-          <textarea name="remark" class="form-control" rows="3" placeholder="Explain why this change is needed…" required></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('unlockProgram')">Cancel</button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Amendment</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <!-- MODAL: MANAGE TEAM — lead_id is fixed (read-only); only member_ids are editable here.
      Only EC can transfer the Project Lead to someone else. -->
 @php $currentMembers = $viewProgram->members->values(); @endphp
@@ -492,11 +452,11 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Timeline Start *</label>
-            <input type="date" name="timeline_start" class="form-control" required/>
+            <input type="date" name="timeline_start" id="programTimelineStart" data-range-end="programTimelineEnd" class="form-control" required/>
           </div>
           <div class="form-group">
             <label class="form-label">Timeline End *</label>
-            <input type="date" name="timeline_end" class="form-control" required/>
+            <input type="date" name="timeline_end" id="programTimelineEnd" class="form-control" required/>
           </div>
         </div>
         <div class="form-group">

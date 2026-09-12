@@ -125,8 +125,12 @@ class TrainingController extends Controller
     }
 
     /**
-     * Budget/timeline percentages and the derived "health" pill shown on
-     * the detail view's Project Progress card.
+     * Budget percentage and the derived "health" pill shown on the detail
+     * view's Project Progress card. This used to also track a timeline
+     * percentage (days elapsed vs. total) — the Activity-level "Timeline
+     * Progress" monitoring it fed has been removed entirely (per-Activity
+     * timeline monitoring is retired; Program-level timeline/extension
+     * handling is untouched), so health is budget-only from here on.
      */
     private function progress(Training $training): array
     {
@@ -135,38 +139,21 @@ class TrainingController extends Controller
         $budgetPct = $budgetAlloc > 0 ? min(100, round($budgetUsed / $budgetAlloc * 100, 1)) : null;
         $budgetRemain = $budgetAlloc > 0 ? $budgetAlloc - $budgetUsed : null;
 
-        $dateStart = $training->date_start;
-        $dateEnd = $training->date_end;
-        $today = now()->startOfDay();
-        $timePct = null;
-        $daysLeft = null;
-        $totalDays = null;
+        [$healthLabel, $healthHex] = $this->health($budgetPct);
 
-        if ($dateStart && $dateEnd) {
-            $totalDays = max(1, $dateStart->diffInDays($dateEnd));
-            $elapsed = $today->lt($dateStart) ? 0 : ($today->gt($dateEnd) ? $totalDays : $dateStart->diffInDays($today));
-            $timePct = min(100, round($elapsed / $totalDays * 100, 1));
-            $daysLeft = $today->gt($dateEnd) ? 0 : $today->diffInDays($dateEnd);
-        }
-
-        [$healthLabel, $healthHex] = $this->health($budgetPct, $timePct);
-
-        return compact('budgetAlloc', 'budgetUsed', 'budgetPct', 'budgetRemain', 'dateStart', 'dateEnd', 'timePct', 'daysLeft', 'totalDays', 'healthLabel', 'healthHex');
+        return compact('budgetAlloc', 'budgetUsed', 'budgetPct', 'budgetRemain', 'healthLabel', 'healthHex');
     }
 
-    private function health(?float $budgetPct, ?float $timePct): array
+    /** Same thresholds already used to color the Budget Utilization bar, so the pill and the bar always agree. */
+    private function health(?float $budgetPct): array
     {
-        if ($budgetPct === null && $timePct === null) {
+        if ($budgetPct === null) {
             return ['No data', 'var(--gray-300)'];
         }
-
-        $b = $budgetPct ?? 0;
-        $t = $timePct ?? 0;
-
-        if ($b >= 100 || $b > $t + 20) {
-            return ['Over Budget / Behind', '#EF4444'];
+        if ($budgetPct >= 100) {
+            return ['Over Budget', '#EF4444'];
         }
-        if ($b > $t + 10 || ($t >= 90 && $b > 80)) {
+        if ($budgetPct >= 80) {
             return ['At Risk', '#F59E0B'];
         }
 
@@ -197,7 +184,7 @@ class TrainingController extends Controller
             'area'                => 'required|string|max:120',
             'description'         => 'nullable|string',
             'date_start'          => 'nullable|date',
-            'date_end'            => 'nullable|date',
+            'date_end'            => 'nullable|date|after_or_equal:date_start',
             'budget_used'         => 'nullable|numeric|min:0|max:9999999999.99',
             'status'              => ['nullable', Rule::in(['Proposed', 'Approved', 'Ongoing', 'Completed'])],
             'target_participants' => 'nullable|integer|min:1',

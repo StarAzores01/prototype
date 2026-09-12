@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Trainer;
 
+use App\Http\Controllers\Concerns\GroupsDocumentsByProgram;
 use App\Http\Controllers\Concerns\HandlesDocumentUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
@@ -13,13 +14,24 @@ use Illuminate\Support\Facades\Storage;
 class DocumentController extends Controller
 {
     use HandlesDocumentUploads;
+    use GroupsDocumentsByProgram;
 
-    public function index()
+    /**
+     * Both cards are now grouped by Parent Program (see
+     * GroupsDocumentsByProgram), replacing the old group-by-upload-date
+     * scheme. The `?archived=1` toggle only ever affects "My Documents" —
+     * archiving is a personal, ownership-scoped action (see archive()/
+     * unarchive() below), so "Shared Documents" always shows other
+     * trainers' active documents regardless of the toggle.
+     */
+    public function index(Request $request)
     {
         $trainerId = Auth::guard('web')->id();
+        $archived = $request->boolean('archived');
 
-        $myDocs = Document::with('training')
+        $myDocs = Document::with(['training', 'program', 'activity'])
             ->where('uploaded_by', $trainerId)
+            ->when($archived, fn ($query) => $query->archived(), fn ($query) => $query->active())
             ->orderByDesc('created_at')
             ->get();
 
@@ -31,9 +43,10 @@ class DocumentController extends Controller
         // internal documents just because they're a trainer. A doc with
         // neither scope (the plain dashboard-level "general" upload) is
         // unaffected — it's visible exactly as before.
-        $sharedDocs = Document::with(['training', 'uploader'])
+        $sharedDocs = Document::with(['training', 'uploader', 'program', 'activity'])
             ->where('uploaded_by', '!=', $trainerId)
             ->whereIn('visibility', ['public', 'ec_trainer'])
+            ->active()
             ->where(function ($q) use ($trainerId) {
                 $q->whereNull('program_id')->whereNull('activity_id')
                     ->orWhereHas('program', fn ($p) => $p->visibleToTrainer($trainerId))
@@ -42,11 +55,19 @@ class DocumentController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $myGroups = $this->groupDocumentsByProgram($myDocs);
+        $sharedGroups = $this->groupDocumentsByProgram($sharedDocs);
+
         return view('trainer.documents', [
-            'activePage'  => 'documents',
-            'myDocs'      => $myDocs,
-            'sharedDocs'  => $sharedDocs,
-            'myTrainings' => Training::visibleToTrainer($trainerId)->orderBy('title')->get(['id', 'title']),
+            'activePage'           => 'documents',
+            'archived'             => $archived,
+            'myProgramGroups'      => $myGroups['programGroups'],
+            'myGeneral'            => $myGroups['general'],
+            'myCount'              => $myDocs->count(),
+            'sharedProgramGroups'  => $sharedGroups['programGroups'],
+            'sharedGeneral'        => $sharedGroups['general'],
+            'sharedCount'          => $sharedDocs->count(),
+            'myTrainings'          => Training::visibleToTrainer($trainerId)->orderBy('title')->get(['id', 'title']),
         ]);
     }
 
@@ -57,6 +78,8 @@ class DocumentController extends Controller
         return match ($action) {
             'upload'         => $this->upload($request),
             'set_visibility' => $this->setVisibility($request),
+            'archive'        => $this->archive($request),
+            'unarchive'      => $this->unarchive($request),
             'delete'         => $this->delete($request),
             default          => back(),
         };
@@ -107,6 +130,42 @@ class DocumentController extends Controller
             $doc->delete();
 
             return redirect()->route('trainer.documents')->with('success', 'Document deleted.');
+        }
+
+        return redirect()->route('trainer.documents');
+    }
+
+    /**
+     * Ownership-scoped exactly like delete()/setVisibility() above — a
+     * trainer can only archive their own uploads, never someone else's
+     * (that's what keeps "Shared Documents" unaffected by this action).
+     * Archiving never touches the file or its visibility — it just removes
+     * the row from the default active list; it stays fully downloadable
+     * through its existing link.
+     */
+    private function archive(Request $request)
+    {
+        $trainerId = Auth::guard('web')->id();
+        $doc = Document::where('id', (int) $request->input('doc_id'))->where('uploaded_by', $trainerId)->first();
+
+        if ($doc) {
+            $doc->update(['archived_at' => now(), 'archived_by' => $trainerId]);
+
+            return redirect()->route('trainer.documents')->with('success', 'Document archived.');
+        }
+
+        return redirect()->route('trainer.documents');
+    }
+
+    private function unarchive(Request $request)
+    {
+        $trainerId = Auth::guard('web')->id();
+        $doc = Document::where('id', (int) $request->input('doc_id'))->where('uploaded_by', $trainerId)->first();
+
+        if ($doc) {
+            $doc->update(['archived_at' => null, 'archived_by' => null]);
+
+            return redirect()->route('trainer.documents')->with('success', 'Document restored.');
         }
 
         return redirect()->route('trainer.documents');

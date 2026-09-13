@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Ec;
 
+use App\Mail\StaffAccountCreated;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use App\Models\TrainerWhitelist;
 use App\Models\Training;
@@ -73,15 +77,18 @@ class TrainerController extends Controller
 
     public function store(Request $request)
     {
-        $action = $request->input('action');
+      $action = $request->input('action');
 
-        return match ($action) {
-            'toggle'          => $this->toggle($request),
-            'edit_trainer'    => $this->editTrainer($request),
-            'add_whitelist'   => $this->addWhitelist($request),
-            'remove_whitelist' => $this->removeWhitelist($request),
-            default           => back(),
-        };
+return match ($action) {
+    'toggle' => $this->toggle($request),
+    'edit_trainer' => $this->editTrainer($request),
+    'add_whitelist' => $this->addWhitelist($request),
+    'remove_whitelist' => $this->removeWhitelist($request),
+
+    'create_account_direct' => $this->createAccountDirectly($request),
+
+    default => back(),
+};
     }
 
     private function toggle(Request $request)
@@ -176,5 +183,96 @@ class TrainerController extends Controller
             ->delete();
 
         return back()->with('success', 'Project Leader removed from approved list.');
+    }
+
+    /**
+     * EC creates a Project Leader account directly, bypassing the
+     * whitelist/self-registration flow entirely — no TrainerWhitelist row
+     * is created or required. A temporary password is generated and
+     * emailed; the account is flagged must_change_password so the trainer
+     * is forced through /change-temporary-password on first login (see
+     * ForcePasswordChange middleware). If the credentials email fails to
+     * send, the account is rolled back so no orphaned/inaccessible account
+     * is left behind.
+     */
+    private function createAccountDirectly(Request $request)
+    {
+        $data = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:80',
+            'last_name'  => 'required|string|max:80',
+            'username'   => 'required|string|max:60|unique:users,username',
+            'email'      => 'required|email|max:120|unique:users,email',
+            'position'   => ['required', Rule::in(['Professor', 'Assistant Professor', 'Instructor'])],
+        ])->validate();
+
+        $idNumber = $this->generateTrainerId();
+        $temporaryPassword = Str::password(14);
+
+        $user = User::create([
+            'username'             => $data['username'],
+            'first_name'           => $data['first_name'],
+            'last_name'            => $data['last_name'],
+            'email'                => $data['email'],
+            'id_number'            => $idNumber,
+            'position'             => $data['position'],
+            'role'                 => 'trainer',
+            'password_hash'        => Hash::make($temporaryPassword),
+            'must_change_password' => true,
+            'is_active'            => true,
+        ]);
+
+        try {
+            Mail::to($user->email)->send(new StaffAccountCreated(
+                $user->full_name,
+                $user->email,
+                $temporaryPassword,
+                'Project Leader'
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+
+            $user->delete();
+
+            return back()->withInput()->with(
+                'error',
+                'The account could not be created because the credentials email failed to send. Please try again.'
+            );
+        }
+
+        return back()->with(
+            'success',
+            "{$data['first_name']} {$data['last_name']}'s account was created. Assigned ID: {$idNumber}. Login credentials were emailed to {$data['email']}."
+        );
+    }
+
+    /**
+     * Same dual-table (trainer_whitelist + users) PL-YYYY-#### sequence
+     * used by addWhitelist(), so directly-created and whitelist-registered
+     * accounts never collide on id_number.
+     */
+    private function generateTrainerId(): string
+    {
+        return DB::transaction(function () {
+            $year = date('Y');
+            $like = 'PL-' . $year . '-%';
+
+            $lastWl = TrainerWhitelist::where('id_number', 'like', $like)
+                ->orderByDesc('id_number')->lockForUpdate()->value('id_number');
+            $lastUsr = User::where('id_number', 'like', $like)
+                ->orderByDesc('id_number')->lockForUpdate()->value('id_number');
+
+            $seq = 1;
+            foreach ([$lastWl, $lastUsr] as $last) {
+                if ($last) {
+                    $parts = explode('-', $last);
+                    $n = (int) end($parts);
+                    if ($n >= $seq) {
+                        $seq = $n + 1;
+                    }
+                }
+            }
+
+            return 'PL-' . $year . '-' . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        });
     }
 }

@@ -13,30 +13,29 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
-            'role' => \App\Http\Middleware\EnsureRole::class,
-            'beneficiary' => \App\Http\Middleware\EnsureBeneficiary::class,
-            'no-back-cache' => \App\Http\Middleware\PreventBackHistoryCache::class,
-        ]);
+    $middleware->alias([
+        'role' => \App\Http\Middleware\EnsureRole::class,
+        'beneficiary' => \App\Http\Middleware\EnsureBeneficiary::class,
+        'no-back-cache' => \App\Http\Middleware\PreventBackHistoryCache::class,
+        'force-password-change' => \App\Http\Middleware\ForcePasswordChange::class,
+    ]);
+ $middleware->web(append: [
+        \App\Http\Middleware\ForcePasswordChange::class,
+    ]);
 
-        // Any authenticated user of any role hitting a guest-only page
-        // (login/signup/recovery) should land on THEIR OWN dashboard, not
-        // Laravel's generic default (the 'home'/'dashboard' named route) —
-        // see BUG 3 fix notes in routes/web.php. Reuses the same mapping the
-        // post-login redirect and the public nav's "Go to Dashboard" button
-        // use, via AuthenticatedSessionController::redirectPathFor().
-        $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
-            if ($request->user('beneficiary')) {
-                return AuthenticatedSessionController::redirectPathFor('beneficiary');
-            }
+    $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
+        if ($request->user('beneficiary')) {
+            return AuthenticatedSessionController::redirectPathFor('beneficiary');
+        }
 
-            if ($user = $request->user('web')) {
-                return AuthenticatedSessionController::redirectPathFor($user->role);
-            }
+        if ($user = $request->user('web')) {
+            return AuthenticatedSessionController::redirectPathFor($user->role);
+        }
 
-            return route('home');
-        });
-    })
+        return route('home');
+    });
+})
+
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),

@@ -15,7 +15,8 @@ class User extends Authenticatable
 
     protected $fillable = [
         'username', 'first_name', 'last_name', 'email', 'id_number',
-        'position', 'department', 'role', 'password_hash', 'is_active', 'last_login',
+        'position', 'department', 'role', 'password_hash', 'must_change_password',
+        'is_active', 'last_login',
         'reset_token', 'reset_expires', 'avatar',
     ];
 
@@ -26,6 +27,7 @@ class User extends Authenticatable
         return [
             'is_active'  => 'boolean',
             'last_login' => 'datetime',
+            'must_change_password' => 'boolean',
         ];
     }
 

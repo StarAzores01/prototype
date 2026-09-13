@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\ForcePasswordChangeController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisteredBeneficiaryController;
@@ -101,6 +102,18 @@ Route::middleware(['guest:web,beneficiary', 'no-back-cache'])->group(function ()
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout');
+
+    Route::middleware(['auth:web', 'no-back-cache'])->group(function () {
+    Route::get(
+        '/change-temporary-password',
+        [ForcePasswordChangeController::class, 'edit']
+    )->name('password.force.form');
+
+    Route::post(
+        '/change-temporary-password',
+        [ForcePasswordChangeController::class, 'update']
+    )->name('password.force.update');
+});
 
 /*
 |--------------------------------------------------------------------------

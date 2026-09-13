@@ -69,8 +69,9 @@
     body.auth-body .form-control:focus { border-color: #122B57 !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(26,86,219,.12) !important; }
     body.auth-body .form-control::placeholder { color: #94A3B8 !important; }
     body.auth-body .password-wrap .form-control { padding-right: 44px !important; }
-    body.auth-body .password-toggle { position: absolute !important; right: 13px !important; top: 50% !important; transform: translateY(-50%) !important; cursor: pointer !important; font-size: 16px !important; color: #94A3B8 !important; line-height: 1 !important; transition: color .2s !important; }
-    body.auth-body .password-toggle:hover { color: #122B57 !important; }
+    body.auth-body .password-toggle { position: absolute !important; right: 6px !important; top: 50% !important; transform: translateY(-50%) !important; cursor: pointer !important; font-size: 16px !important; color: #94A3B8 !important; line-height: 1 !important; transition: color .2s !important; background: none !important; border: 0 !important; padding: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+    body.auth-body .password-toggle:hover, body.auth-body .password-toggle:focus-visible { color: #122B57 !important; }
+    body.auth-body .password-toggle:focus-visible { outline: 2px solid #1A56DB !important; outline-offset: 2px !important; border-radius: 6px !important; }
     body.auth-body .btn-primary { background: linear-gradient(135deg, #1A56DB 0%, #1D4ED8 100%) !important; box-shadow: 0 4px 16px rgba(26,86,219,.44) !important; border-radius: 10px !important; font-size: 14.5px !important; font-weight: 700 !important; transition: transform .2s, box-shadow .2s !important; }
     body.auth-body .btn-primary:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 26px rgba(26,86,219,.56) !important; }
     body.auth-body .auth-footer { background: #F7FAFF !important; border-top: 1px solid #E8EFF7 !important; padding: 15px 32px !important; font-size: 13px !important; color: #475569 !important; }
@@ -96,15 +97,15 @@
   <div class="auth-card-body">
     @if (session('error'))<div class="alert alert-danger"><i class="fas fa-triangle-exclamation"></i> {{ session('error') }}</div>@endif
     @if ($errors->any())<div class="alert alert-danger"><i class="fas fa-triangle-exclamation"></i> {{ $errors->first() }}</div>@endif
-    @if (session('success'))<div class="alert alert-success"><i class="fas fa-square-check"></i> {!! session('success') !!}</div>@endif
+    @if (session('success'))<div class="alert alert-success"><i class="fas fa-square-check"></i> {{ session('success') }}</div>@endif
 
     @if ($step === 'request' && !session('success'))
-    <p style="font-size:13px;color:var(--gray-500);margin-bottom:20px">Enter your institutional email address and we'll send you a link to reset your password.</p>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:20px">Enter the email address on your PAThrive staff account and we'll send you a link to reset your password.</p>
     <form method="POST" action="{{ route('ec.recovery') }}">
       @csrf
       <div class="form-group">
-        <label class="form-label">Email/Phone Number *</label>
-        <input type="email" name="email" class="form-control" placeholder="email@slsu.edu.ph/09123456789" required autofocus/>
+        <label class="form-label" for="recoveryEmail">Email Address *</label>
+        <input type="email" id="recoveryEmail" name="email" class="form-control" value="{{ old('email') }}" placeholder="email@slsu.edu.ph" required autofocus/>
       </div>
       <button type="submit" name="request_reset" value="1" class="btn btn-primary" style="width:100%;padding:11px;font-size:14px;justify-content:center">
         <i class="fas fa-paper-plane"></i> Send Reset Link
@@ -119,7 +120,7 @@
         <label class="form-label">New Password *</label>
         <div class="password-wrap">
           <input type="password" name="password" id="pw1" class="form-control" placeholder="New strong password" required/>
-          <span class="password-toggle" onclick="togglePwd('pw1','e1')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <button type="button" class="password-toggle" id="e1" aria-label="Show password" aria-pressed="false" onclick="togglePwd('pw1','e1')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
         <div class="strength-bar" id="strengthBar">
           <span id="s1"></span><span id="s2"></span><span id="s3"></span><span id="s4"></span>
@@ -129,7 +130,7 @@
         <label class="form-label">Confirm New Password *</label>
         <div class="password-wrap">
           <input type="password" name="password2" id="pw2" class="form-control" placeholder="Repeat new password" required/>
-          <span class="password-toggle" onclick="togglePwd('pw2','e2')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <button type="button" class="password-toggle" id="e2" aria-label="Show password" aria-pressed="false" onclick="togglePwd('pw2','e2')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
       </div>
       <button type="submit" name="do_reset" value="1" class="btn btn-primary" style="width:100%;padding:11px;font-size:14px;justify-content:center">
@@ -148,8 +149,17 @@
 function togglePwd(id, iconId) {
   const f = document.getElementById(id);
   const i = document.getElementById(iconId);
-  if (f.type === 'password') { f.type = 'text'; i.innerHTML = "<svg xmlns=\"http:\/\/www.w3.org\/2000\/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24\"\/><line x1=\"1\" y1=\"1\" x2=\"23\" y2=\"23\"\/><\/svg>"; }
-  else { f.type = 'password'; i.innerHTML = "<svg xmlns=\"http:\/\/www.w3.org\/2000\/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\"\/><circle cx=\"12\" cy=\"12\" r=\"3\"\/><\/svg>"; }
+  if (f.type === 'password') {
+    f.type = 'text';
+    i.innerHTML = "<svg xmlns=\"http:\/\/www.w3.org\/2000\/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24\"\/><line x1=\"1\" y1=\"1\" x2=\"23\" y2=\"23\"\/><\/svg>";
+    i.setAttribute('aria-label', 'Hide password');
+    i.setAttribute('aria-pressed', 'true');
+  } else {
+    f.type = 'password';
+    i.innerHTML = "<svg xmlns=\"http:\/\/www.w3.org\/2000\/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\"\/><circle cx=\"12\" cy=\"12\" r=\"3\"\/><\/svg>";
+    i.setAttribute('aria-label', 'Show password');
+    i.setAttribute('aria-pressed', 'false');
+  }
 }
 const pw1 = document.getElementById('pw1');
 if (pw1) pw1.addEventListener('input', function () {

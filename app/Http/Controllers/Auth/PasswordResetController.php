@@ -3,20 +3,33 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\StaffPasswordReset;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 /**
- * EC-only "forgot password" flow (matches the original ecrecovery.php —
- * trainer/evaluator/beneficiary have no equivalent in the source app).
- * No mailer is wired up in this environment, so — exactly like the
- * original's own comment ("In production this would be emailed") — the
- * reset link is shown directly on screen instead of sent by email.
+ * Password recovery for STAFF accounts (users table: EC / trainer /
+ * evaluator — all three share this one flow; Beneficiary is a separate
+ * guard/table entirely and is untouched by this controller). Originally
+ * EC-only (matching the source app's ecrecovery.php) and displayed the
+ * reset link directly on screen because no mailer was configured; both of
+ * those constraints are gone now that Brevo SMTP is wired up, so this
+ * generalizes to all staff roles and actually emails the link.
+ *
+ * Token handling: the raw token is a 256-bit random value, shown only in
+ * the emailed link. Only its SHA-256 hash (64 hex chars, fits the existing
+ * users.reset_token column) is ever persisted, mirroring how a password
+ * itself is never stored in plaintext. It expires after RESET_TTL_MINUTES
+ * and is cleared the moment it's used (or if the email fails to send),
+ * so a token is never valid twice and never lingers unemailed.
  */
 class PasswordResetController extends Controller
 {
+    private const RESET_TTL_MINUTES = 60;
+
     public function create(Request $request)
     {
         $token = trim((string) $request->query('token', ''));
@@ -49,30 +62,65 @@ class PasswordResetController extends Controller
             'email.email' => 'Please enter a valid email address.',
         ])->validate();
 
-        $user = User::where('email', $data['email'])->where('role', 'extension_coordinator')->first();
+        // Beneficiaries live in a separate table/model entirely, so a plain
+        // email lookup on `users` can only ever match a staff account
+        // (extension_coordinator, trainer, or evaluator) — no role filter
+        // needed to keep this scoped to staff.
+        $user = User::where('email', $data['email'])->first();
 
-        if ($user) {
-            $token = bin2hex(random_bytes(32));
-            $user->forceFill([
-                'reset_token'   => $token,
-                'reset_expires' => now()->addHour(),
-            ])->save();
-
-            $resetLink = route('ec.recovery').'?token='.$token;
-
-            return back()->with('success', 'A password reset link has been generated. <br><small style="word-break:break-all"><a href="'.e($resetLink).'">'.e($resetLink).'</a></small><br><small>(In production this would be emailed.)</small>');
+        if (! $user) {
+            return back()->withInput()->with(
+                'error',
+                'No account was found with that email address.'
+            );
         }
 
-        // Don't reveal whether the email exists.
-        return back()->with('success', 'If that email is registered, a reset link has been sent.');
+        $rawToken = bin2hex(random_bytes(32));
+
+        $user->forceFill([
+            'reset_token'   => hash('sha256', $rawToken),
+            'reset_expires' => now()->addMinutes(self::RESET_TTL_MINUTES),
+        ])->save();
+
+        $resetUrl = route('ec.recovery', ['token' => $rawToken]);
+
+        try {
+            Mail::to($user->email)->send(new StaffPasswordReset(
+                $user->full_name,
+                $resetUrl,
+                self::RESET_TTL_MINUTES
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+
+            // Don't leave a live, unemailed token sitting on the account.
+            $user->forceFill([
+                'reset_token'   => null,
+                'reset_expires' => null,
+            ])->save();
+
+            return back()->withInput()->with(
+                'error',
+                'We could not send the reset email right now. Please try again in a few minutes.'
+            );
+        }
+
+        return back()->with(
+            'success',
+            'A password reset link has been sent to your email address. It will expire in ' . self::RESET_TTL_MINUTES . ' minutes.'
+        );
     }
 
     private function doReset(Request $request)
     {
-        $token = trim((string) $request->input('token', ''));
+        $rawToken = trim((string) $request->input('token', ''));
 
         // Original checks token validity first, before password strength/match.
-        $user = User::where('reset_token', $token)->where('reset_expires', '>', now())->first();
+        $user = $rawToken !== ''
+            ? User::where('reset_token', hash('sha256', $rawToken))
+                ->where('reset_expires', '>', now())
+                ->first()
+            : null;
 
         if (! $user) {
             return redirect()->route('ec.recovery')->with('error', 'This reset link is invalid or has expired.');
@@ -87,9 +135,14 @@ class PasswordResetController extends Controller
         ])->validate();
 
         $user->forceFill([
-            'password_hash' => Hash::make($data['password']),
-            'reset_token'   => null,
-            'reset_expires' => null,
+            'password_hash'         => Hash::make($data['password']),
+            'reset_token'           => null,
+            'reset_expires'         => null,
+            // A user who just proved control of their own new password via
+            // this flow doesn't also need to be walked through the separate
+            // forced-first-login change (ForcePasswordChange middleware) —
+            // this only ever un-forces it, it never sets it.
+            'must_change_password'  => false,
         ])->save();
 
         return redirect()->route('login')->with('success', 'Password updated successfully. Please log in.');

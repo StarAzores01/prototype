@@ -95,9 +95,13 @@ Route::middleware(['guest:web,beneficiary', 'no-back-cache'])->group(function ()
     Route::get('/ecsignuppage.php', [RegisteredEcController::class, 'create'])->name('ec.signup');
     Route::post('/ecsignuppage.php', [RegisteredEcController::class, 'store']);
 
-    // EC-only forgot-password flow, matches ecrecovery.php.
+    // Staff (EC / trainer / evaluator) forgot-password flow — originally
+    // EC-only (matching ecrecovery.php), now shared by all 3 "web" guard
+    // roles. Beneficiaries have their own separate guard/table and are not
+    // reachable through this controller at all.
     Route::get('/ecrecovery.php', [PasswordResetController::class, 'create'])->name('ec.recovery');
-    Route::post('/ecrecovery.php', [PasswordResetController::class, 'store']);
+    Route::post('/ecrecovery.php', [PasswordResetController::class, 'store'])
+        ->middleware('throttle:5,1');
 });
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])

@@ -168,7 +168,7 @@ class EvaluationController extends Controller
                 'role'        => 'trainer',
                 'training_id' => $trainingId,
                 'message'     => $message,
-                'link'        => "/trainer/evaluations.php?training={$trainingId}",
+                'link'        => route('trainer.evaluations', ['training' => $trainingId]),
             ]);
         }
 
@@ -183,7 +183,7 @@ class EvaluationController extends Controller
                 'role'        => 'beneficiary',
                 'training_id' => $trainingId,
                 'message'     => $message,
-                'link'        => "/beneficiary/evaluations.php?training={$trainingId}",
+                'link'        => route('beneficiary.evaluations', ['training' => $trainingId]),
             ]);
         }
 

@@ -200,7 +200,7 @@ class SkillsController extends Controller
         $form->update(['sent_at' => now()]);
 
         $message = 'A Skills Utilization survey has been sent for training: '.$training->title;
-        $link = "/beneficiary/skills.php?training={$trainingId}";
+        $link = route('beneficiary.skills', ['training' => $trainingId]);
 
         $beneficiaryIds = Participant::where('training_id', $trainingId)
             ->whereNotNull('beneficiary_id')

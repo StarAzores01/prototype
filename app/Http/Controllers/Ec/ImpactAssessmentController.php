@@ -213,7 +213,7 @@ class ImpactAssessmentController extends Controller
                 'role'        => 'beneficiary',
                 'training_id' => $form->training_id,
                 'message'     => 'A new Impact Assessment survey has been sent to you.',
-                'link'        => '/beneficiary/impact_assessment.php',
+                'link'        => route('beneficiary.impact_assessment'),
             ]);
         }
 

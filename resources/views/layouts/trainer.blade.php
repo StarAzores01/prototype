@@ -157,8 +157,8 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ucfirst($activeP
 
 <!-- Footer links -->
 <div style="text-align:center;padding:12px 24px;font-size:11.5px;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-left:var(--sidebar-w)">
-  <a href="{{ url('/terms.php') }}"   style="color:var(--gray-400);margin:0 8px">Terms of Use</a> ·
-  <a href="{{ url('/privacy.php') }}" style="color:var(--gray-400);margin:0 8px">Privacy Policy</a>
+  <a href="{{ route('terms') }}"   style="color:var(--gray-400);margin:0 8px">Terms of Use</a> ·
+  <a href="{{ route('privacy') }}" style="color:var(--gray-400);margin:0 8px">Privacy Policy</a>
   · PAThrive © {{ date('Y') }} CIT-SLSU
 </div>
 

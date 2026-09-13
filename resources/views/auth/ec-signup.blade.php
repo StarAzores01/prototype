@@ -177,7 +177,7 @@
       <div class="form-group" style="display:flex;align-items:flex-start;gap:10px">
         <input type="checkbox" name="agree" value="1" id="agree" {{ old('agree') ? 'checked' : '' }} style="margin-top:3px;width:16px;height:16px;flex-shrink:0"/>
         <label for="agree" style="font-size:12.5px;color:var(--gray-600);cursor:pointer">
-          I agree to the <a href="{{ url('/terms.php') }}" target="_blank" style="color:var(--blue-primary);font-weight:600">Terms of Use</a> and <a href="{{ url('/privacy.php') }}" target="_blank" style="color:var(--blue-primary);font-weight:600">Privacy Policy</a>
+          I agree to the <a href="{{ route('terms') }}" target="_blank" style="color:var(--blue-primary);font-weight:600">Terms of Use</a> and <a href="{{ route('privacy') }}" target="_blank" style="color:var(--blue-primary);font-weight:600">Privacy Policy</a>
         </label>
       </div>
       @error('agree')<div class="form-error" style="margin-top:-10px;margin-bottom:12px">{{ $message }}</div>@enderror

@@ -37,6 +37,7 @@ use App\Http\Controllers\Evaluator\EvaluationHubController as EvaluatorEvaluatio
 use App\Http\Controllers\Evaluator\ImpactAssessmentController as EvaluatorImpactAssessmentController;
 use App\Http\Controllers\Evaluator\ProfileController as EvaluatorProfileController;
 use App\Http\Controllers\FileDownloadController;
+use App\Http\Controllers\LegacyRedirectController;
 use App\Http\Controllers\PublicSite\AboutController;
 use App\Http\Controllers\PublicSite\ChooseRoleController;
 use App\Http\Controllers\PublicSite\ContactController;
@@ -61,16 +62,20 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Public pages
 |--------------------------------------------------------------------------
-| Converted from the original public/*.php marketing pages.
+| Converted from the original public/*.php marketing pages. URIs are now
+| extension-less ("clean URLs") — see the legacy-redirect block below for
+| the old .php paths. Route *names* are unchanged throughout this whole
+| file, so every route('...') call in the views keeps working untouched;
+| only the URI string each name maps to has changed.
 */
 Route::get('/', [LandingController::class, 'index'])->name('home');
-Route::get('/choose-role.php', [ChooseRoleController::class, 'index'])->name('choose-role');
-Route::get('/about.php', [AboutController::class, 'index'])->name('about');
-Route::get('/trainings-public.php', [TrainingsPublicController::class, 'index'])->name('trainings-public');
-Route::view('/privacy.php', 'public.privacy')->name('privacy');
-Route::view('/terms.php', 'public.terms')->name('terms');
-Route::get('/contact.php', [ContactController::class, 'index'])->name('contact');
-Route::post('/contact.php', [ContactController::class, 'store'])->name('contact.store');
+Route::get('/choose-role', [ChooseRoleController::class, 'index'])->name('choose-role');
+Route::get('/about', [AboutController::class, 'index'])->name('about');
+Route::get('/trainings-public', [TrainingsPublicController::class, 'index'])->name('trainings-public');
+Route::view('/privacy', 'public.privacy')->name('privacy');
+Route::view('/terms', 'public.terms')->name('terms');
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -91,23 +96,25 @@ Route::middleware(['guest:web,beneficiary', 'no-back-cache'])->group(function ()
     Route::get('/beneficiary-signup', [RegisteredBeneficiaryController::class, 'create'])->name('beneficiary.signup');
     Route::post('/beneficiary-signup', [RegisteredBeneficiaryController::class, 'store']);
 
-    // EC self-registration — no whitelist gate, matches ecsignuppage.php.
-    Route::get('/ecsignuppage.php', [RegisteredEcController::class, 'create'])->name('ec.signup');
-    Route::post('/ecsignuppage.php', [RegisteredEcController::class, 'store']);
+    // EC self-registration — no whitelist gate. Moved under /account/ (was
+    // the top-level /ecsignuppage.php).
+    Route::get('/account/ec-signup', [RegisteredEcController::class, 'create'])->name('ec.signup');
+    Route::post('/account/ec-signup', [RegisteredEcController::class, 'store']);
 
-    // Staff (EC / trainer / evaluator) forgot-password flow — originally
-    // EC-only (matching ecrecovery.php), now shared by all 3 "web" guard
-    // roles. Beneficiaries have their own separate guard/table and are not
-    // reachable through this controller at all.
-    Route::get('/ecrecovery.php', [PasswordResetController::class, 'create'])->name('ec.recovery');
-    Route::post('/ecrecovery.php', [PasswordResetController::class, 'store'])
+    // Staff (EC / trainer / evaluator) forgot-password flow — shared by all
+    // 3 "web" guard roles (originally EC-only, matching ecrecovery.php).
+    // Beneficiaries have their own separate guard/table and are not
+    // reachable through this controller at all. Moved under /account/ (was
+    // the top-level /ecrecovery.php).
+    Route::get('/account/recovery', [PasswordResetController::class, 'create'])->name('ec.recovery');
+    Route::post('/account/recovery', [PasswordResetController::class, 'store'])
         ->middleware('throttle:5,1');
 });
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout');
 
-    Route::middleware(['auth:web', 'no-back-cache'])->group(function () {
+Route::middleware(['auth:web', 'no-back-cache'])->group(function () {
     Route::get(
         '/change-temporary-password',
         [ForcePasswordChangeController::class, 'edit']
@@ -146,45 +153,78 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
     ->prefix('ec')
     ->name('ec.')
     ->group(function () {
-        Route::get('/dashboard.php', [EcDashboardController::class, 'index'])->name('dashboard');
-        Route::post('/dashboard.php', [EcDashboardController::class, 'store'])->name('dashboard.store');
+        Route::get('/dashboard', [EcDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/dashboard', [EcDashboardController::class, 'store'])->name('dashboard.store');
 
-        Route::get('/programs.php', [EcProgramController::class, 'index'])->name('programs');
-        Route::post('/programs.php', [EcProgramController::class, 'store'])->name('programs.store');
+        Route::get('/programs', [EcProgramController::class, 'index'])->name('programs');
+        Route::post('/programs', [EcProgramController::class, 'store'])->name('programs.store');
 
-        Route::get('/trainings.php', [EcTrainingController::class, 'index'])->name('trainings');
-        Route::post('/trainings.php', [EcTrainingController::class, 'store'])->name('trainings.store');
+        Route::get('/trainings', [EcTrainingController::class, 'index'])->name('trainings');
+        Route::post('/trainings', [EcTrainingController::class, 'store'])->name('trainings.store');
 
-        Route::get('/messages.php', [EcMessageController::class, 'index'])->name('messages');
-        Route::get('/notifications.php', [EcNotificationController::class, 'index'])->name('notifications');
+        Route::get('/messages', [EcMessageController::class, 'index'])->name('messages');
+        Route::get('/notifications', [EcNotificationController::class, 'index'])->name('notifications');
 
-        Route::get('/profile.php', [EcProfileController::class, 'show'])->name('profile');
-        Route::post('/profile.php', [EcProfileController::class, 'update'])->name('profile.update');
+        Route::get('/profile', [EcProfileController::class, 'show'])->name('profile');
+        Route::post('/profile', [EcProfileController::class, 'update'])->name('profile.update');
 
-        Route::view('/privacy.php', 'ec.privacy', ['activePage' => 'privacy'])->name('privacy');
-        Route::view('/terms.php', 'ec.terms', ['activePage' => 'terms'])->name('terms');
+        Route::view('/privacy', 'ec.privacy', ['activePage' => 'privacy'])->name('privacy');
+        Route::view('/terms', 'ec.terms', ['activePage' => 'terms'])->name('terms');
 
-        Route::get('/participants.php', [EcParticipantController::class, 'index'])->name('participants');
-        Route::post('/participants.php', [EcParticipantController::class, 'store'])->name('participants.store');
-        Route::get('/documents.php', [EcDocumentController::class, 'index'])->name('documents');
-        Route::post('/documents.php', [EcDocumentController::class, 'store'])->name('documents.store');
-        Route::get('/evaluation.php', [EcEvaluationHubController::class, 'index'])->name('evaluation');
+        Route::get('/participants', [EcParticipantController::class, 'index'])->name('participants');
+        Route::post('/participants', [EcParticipantController::class, 'store'])->name('participants.store');
+        Route::get('/documents', [EcDocumentController::class, 'index'])->name('documents');
+        Route::post('/documents', [EcDocumentController::class, 'store'])->name('documents.store');
+        Route::get('/evaluation', [EcEvaluationHubController::class, 'index'])->name('evaluation');
 
-        Route::get('/evaluations.php', [EcEvaluationController::class, 'index'])->name('evaluations');
-        Route::post('/evaluations.php', [EcEvaluationController::class, 'store'])->name('evaluations.store');
-        Route::get('/impact_assessment.php', [EcImpactAssessmentController::class, 'index'])->name('impact_assessment');
-        Route::post('/impact_assessment.php', [EcImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
-        Route::get('/skills.php', [EcSkillsController::class, 'index'])->name('skills');
-        Route::get('/reports.php', [EcReportController::class, 'index'])->name('reports');
-        Route::get('/analytics.php', [EcAnalyticsController::class, 'index'])->name('analytics');
-        Route::get('/trainers.php', [EcTrainerController::class, 'index'])->name('trainers');
-        Route::post('/trainers.php', [EcTrainerController::class, 'store'])->name('trainers.store');
-        Route::get('/evaluators.php', [EcEvaluatorController::class, 'index'])->name('evaluators');
-        Route::post('/evaluators.php', [EcEvaluatorController::class, 'store'])->name('evaluators.store');
+        Route::get('/evaluations', [EcEvaluationController::class, 'index'])->name('evaluations');
+        Route::post('/evaluations', [EcEvaluationController::class, 'store'])->name('evaluations.store');
+        Route::get('/impact_assessment', [EcImpactAssessmentController::class, 'index'])->name('impact_assessment');
+        Route::post('/impact_assessment', [EcImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
+        Route::get('/skills', [EcSkillsController::class, 'index'])->name('skills');
+        Route::get('/reports', [EcReportController::class, 'index'])->name('reports');
+        Route::get('/analytics', [EcAnalyticsController::class, 'index'])->name('analytics');
+        Route::get('/trainers', [EcTrainerController::class, 'index'])->name('trainers');
+        Route::post('/trainers', [EcTrainerController::class, 'store'])->name('trainers.store');
+        Route::get('/evaluators', [EcEvaluatorController::class, 'index'])->name('evaluators');
+        Route::post('/evaluators', [EcEvaluatorController::class, 'store'])->name('evaluators.store');
 
-        Route::get('/page-content.php', [EcPageContentController::class, 'index'])->name('page-content');
-        Route::get('/page-content.php/{pageKey}', [EcPageContentController::class, 'edit'])->name('page-content.edit');
-        Route::post('/page-content.php/{pageKey}', [EcPageContentController::class, 'update'])->name('page-content.update');
+        Route::get('/page-content', [EcPageContentController::class, 'index'])->name('page-content');
+        Route::get('/page-content/{pageKey}', [EcPageContentController::class, 'edit'])->name('page-content.edit');
+        Route::post('/page-content/{pageKey}', [EcPageContentController::class, 'update'])->name('page-content.update');
+
+        // Legacy .php URL redirects (kept for old bookmarks and any links
+        // already emailed/stored before this clean-URL migration; nothing
+        // in the app links to these anymore). GET only — the equivalent
+        // POST endpoints above simply replace their .php predecessors, no
+        // form ever posts to one of these old paths since every <form> in
+        // the app builds its action from route(), not a literal string.
+        foreach ([
+            '/dashboard.php'            => '/ec/dashboard',
+            '/programs.php'             => '/ec/programs',
+            '/trainings.php'            => '/ec/trainings',
+            '/messages.php'             => '/ec/messages',
+            '/notifications.php'        => '/ec/notifications',
+            '/profile.php'              => '/ec/profile',
+            '/privacy.php'              => '/ec/privacy',
+            '/terms.php'                => '/ec/terms',
+            '/participants.php'         => '/ec/participants',
+            '/documents.php'            => '/ec/documents',
+            '/evaluation.php'           => '/ec/evaluation',
+            '/evaluations.php'          => '/ec/evaluations',
+            '/impact_assessment.php'    => '/ec/impact_assessment',
+            '/skills.php'               => '/ec/skills',
+            '/reports.php'              => '/ec/reports',
+            '/analytics.php'            => '/ec/analytics',
+            '/trainers.php'             => '/ec/trainers',
+            '/evaluators.php'           => '/ec/evaluators',
+            '/page-content.php'         => '/ec/page-content',
+            '/page-content.php/{pageKey}' => '/ec/page-content/{pageKey}',
+        ] as $old => $new) {
+            Route::get($old, \Illuminate\Routing\RedirectController::class)
+                ->defaults('destination', $new)
+                ->defaults('status', 301); // GET/HEAD only — never swallow a stray POST from a stale pre-deploy page
+        }
     });
 
 /*
@@ -196,7 +236,7 @@ Route::middleware(['auth:web', 'role:trainer', 'no-back-cache'])
     ->prefix('trainer')
     ->name('trainer.')
     ->group(function () {
-        Route::get('/dashboard.php', [TrainerDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [TrainerDashboardController::class, 'index'])->name('dashboard');
 
         // Scoped version of Ec's Programs feature — a trainer only sees/acts on
         // programs they belong to (see Trainer\ProgramController and
@@ -206,28 +246,54 @@ Route::middleware(['auth:web', 'role:trainer', 'no-back-cache'])
         // app (Ec\ProgramController included) — no separate per-action routes.
         // No timeline/extension action here — only EC can extend a program's
         // effective end date (Ec\ProgramController::extendTimeline()).
-        Route::get('/programs.php', [TrainerProgramController::class, 'index'])->name('programs');
-        Route::post('/programs.php', [TrainerProgramController::class, 'store'])->name('programs.store');
+        Route::get('/programs', [TrainerProgramController::class, 'index'])->name('programs');
+        Route::post('/programs', [TrainerProgramController::class, 'store'])->name('programs.store');
 
-        Route::get('/trainings.php', [TrainerTrainingController::class, 'index'])->name('trainings');
-        Route::post('/trainings.php', [TrainerTrainingController::class, 'store'])->name('trainings.store');
-        Route::get('/participants.php', [TrainerParticipantController::class, 'index'])->name('participants');
-        Route::get('/attendance.php', [TrainerAttendanceController::class, 'index'])->name('attendance');
-        Route::post('/attendance.php', [TrainerAttendanceController::class, 'store'])->name('attendance.store');
-        Route::get('/activity.php', [TrainerActivityController::class, 'index'])->name('activity');
-        Route::post('/activity.php', [TrainerActivityController::class, 'store'])->name('activity.store');
-        Route::get('/modules.php', [TrainerModuleController::class, 'index'])->name('modules');
-        Route::post('/modules.php', [TrainerModuleController::class, 'store'])->name('modules.store');
-        Route::get('/evaluation.php', [TrainerEvaluationHubController::class, 'index'])->name('evaluation');
+        Route::get('/trainings', [TrainerTrainingController::class, 'index'])->name('trainings');
+        Route::post('/trainings', [TrainerTrainingController::class, 'store'])->name('trainings.store');
+        Route::get('/participants', [TrainerParticipantController::class, 'index'])->name('participants');
+        Route::get('/attendance', [TrainerAttendanceController::class, 'index'])->name('attendance');
+        Route::post('/attendance', [TrainerAttendanceController::class, 'store'])->name('attendance.store');
+        Route::get('/activity', [TrainerActivityController::class, 'index'])->name('activity');
+        Route::post('/activity', [TrainerActivityController::class, 'store'])->name('activity.store');
+        Route::get('/modules', [TrainerModuleController::class, 'index'])->name('modules');
+        Route::post('/modules', [TrainerModuleController::class, 'store'])->name('modules.store');
+        Route::get('/evaluation', [TrainerEvaluationHubController::class, 'index'])->name('evaluation');
 
-        Route::get('/skills.php', [TrainerSkillsController::class, 'index'])->name('skills');
-        Route::post('/skills.php', [TrainerSkillsController::class, 'store'])->name('skills.store');
-        Route::get('/evaluations.php', [TrainerEvaluationController::class, 'index'])->name('evaluations');
-        Route::get('/documents.php', [TrainerDocumentController::class, 'index'])->name('documents');
-        Route::post('/documents.php', [TrainerDocumentController::class, 'store'])->name('documents.store');
-        Route::get('/notifications.php', [TrainerNotificationController::class, 'index'])->name('notifications');
-        Route::get('/profile.php', [TrainerProfileController::class, 'show'])->name('profile');
-        Route::post('/profile.php', [TrainerProfileController::class, 'update'])->name('profile.update');
+        Route::get('/skills', [TrainerSkillsController::class, 'index'])->name('skills');
+        Route::post('/skills', [TrainerSkillsController::class, 'store'])->name('skills.store');
+        Route::get('/evaluations', [TrainerEvaluationController::class, 'index'])->name('evaluations');
+        Route::get('/documents', [TrainerDocumentController::class, 'index'])->name('documents');
+        Route::post('/documents', [TrainerDocumentController::class, 'store'])->name('documents.store');
+        Route::get('/notifications', [TrainerNotificationController::class, 'index'])->name('notifications');
+        Route::get('/profile', [TrainerProfileController::class, 'show'])->name('profile');
+        Route::post('/profile', [TrainerProfileController::class, 'update'])->name('profile.update');
+
+        // Legacy .php redirects. /evaluations.php can carry a stored
+        // ?training= link from a notification row created before this
+        // migration, so it goes through LegacyRedirectController (which
+        // forwards the query string) instead of a plain Route::redirect().
+        Route::get('/evaluations.php', [LegacyRedirectController::class, 'to'])
+            ->defaults('destination', '/trainer/evaluations');
+
+        foreach ([
+            '/dashboard.php'     => '/trainer/dashboard',
+            '/programs.php'      => '/trainer/programs',
+            '/trainings.php'     => '/trainer/trainings',
+            '/participants.php'  => '/trainer/participants',
+            '/attendance.php'    => '/trainer/attendance',
+            '/activity.php'      => '/trainer/activity',
+            '/modules.php'       => '/trainer/modules',
+            '/evaluation.php'    => '/trainer/evaluation',
+            '/skills.php'        => '/trainer/skills',
+            '/documents.php'     => '/trainer/documents',
+            '/notifications.php' => '/trainer/notifications',
+            '/profile.php'       => '/trainer/profile',
+        ] as $old => $new) {
+            Route::get($old, \Illuminate\Routing\RedirectController::class)
+                ->defaults('destination', $new)
+                ->defaults('status', 301); // GET/HEAD only — never swallow a stray POST from a stale pre-deploy page
+        }
     });
 
 /*
@@ -239,15 +305,26 @@ Route::middleware(['auth:web', 'role:evaluator', 'no-back-cache'])
     ->prefix('evaluator')
     ->name('evaluator.')
     ->group(function () {
-        Route::get('/dashboard.php', [EvaluatorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [EvaluatorDashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/evaluation.php', [EvaluatorEvaluationHubController::class, 'index'])->name('evaluation');
+        Route::get('/evaluation', [EvaluatorEvaluationHubController::class, 'index'])->name('evaluation');
 
-        Route::get('/impact_assessment.php', [EvaluatorImpactAssessmentController::class, 'index'])->name('impact_assessment');
-        Route::post('/impact_assessment.php', [EvaluatorImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
+        Route::get('/impact_assessment', [EvaluatorImpactAssessmentController::class, 'index'])->name('impact_assessment');
+        Route::post('/impact_assessment', [EvaluatorImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
 
-        Route::get('/profile.php', [EvaluatorProfileController::class, 'show'])->name('profile');
-        Route::post('/profile.php', [EvaluatorProfileController::class, 'update'])->name('profile.update');
+        Route::get('/profile', [EvaluatorProfileController::class, 'show'])->name('profile');
+        Route::post('/profile', [EvaluatorProfileController::class, 'update'])->name('profile.update');
+
+        foreach ([
+            '/dashboard.php'         => '/evaluator/dashboard',
+            '/evaluation.php'        => '/evaluator/evaluation',
+            '/impact_assessment.php' => '/evaluator/impact_assessment',
+            '/profile.php'           => '/evaluator/profile',
+        ] as $old => $new) {
+            Route::get($old, \Illuminate\Routing\RedirectController::class)
+                ->defaults('destination', $new)
+                ->defaults('status', 301); // GET/HEAD only — never swallow a stray POST from a stale pre-deploy page
+        }
     });
 
 /*
@@ -259,19 +336,79 @@ Route::middleware(['beneficiary', 'no-back-cache'])
     ->prefix('beneficiary')
     ->name('beneficiary.')
     ->group(function () {
-        Route::get('/home.php', [BeneficiaryHomeController::class, 'index'])->name('home');
+        Route::get('/home', [BeneficiaryHomeController::class, 'index'])->name('home');
 
-        Route::get('/trainings.php', [BeneficiaryTrainingController::class, 'index'])->name('trainings');
+        Route::get('/trainings', [BeneficiaryTrainingController::class, 'index'])->name('trainings');
 
-        Route::get('/evaluation.php', [BeneficiaryEvaluationHubController::class, 'index'])->name('evaluation');
+        Route::get('/evaluation', [BeneficiaryEvaluationHubController::class, 'index'])->name('evaluation');
 
-        Route::get('/evaluations.php', [BeneficiaryEvaluationController::class, 'index'])->name('evaluations');
-        Route::post('/evaluations.php', [BeneficiaryEvaluationController::class, 'store'])->name('evaluations.store');
-        Route::get('/impact_assessment.php', [BeneficiaryImpactAssessmentController::class, 'index'])->name('impact_assessment');
-        Route::post('/impact_assessment.php', [BeneficiaryImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
-        Route::get('/skills.php', [BeneficiarySkillsController::class, 'index'])->name('skills');
-        Route::post('/skills.php', [BeneficiarySkillsController::class, 'store'])->name('skills.store');
-        Route::get('/notifications.php', [BeneficiaryNotificationController::class, 'index'])->name('notifications');
-        Route::get('/profile.php', [BeneficiaryProfileController::class, 'show'])->name('profile');
-        Route::post('/profile.php', [BeneficiaryProfileController::class, 'update'])->name('profile.update');
+        Route::get('/evaluations', [BeneficiaryEvaluationController::class, 'index'])->name('evaluations');
+        Route::post('/evaluations', [BeneficiaryEvaluationController::class, 'store'])->name('evaluations.store');
+        Route::get('/impact_assessment', [BeneficiaryImpactAssessmentController::class, 'index'])->name('impact_assessment');
+        Route::post('/impact_assessment', [BeneficiaryImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
+        Route::get('/skills', [BeneficiarySkillsController::class, 'index'])->name('skills');
+        Route::post('/skills', [BeneficiarySkillsController::class, 'store'])->name('skills.store');
+        Route::get('/notifications', [BeneficiaryNotificationController::class, 'index'])->name('notifications');
+        Route::get('/profile', [BeneficiaryProfileController::class, 'show'])->name('profile');
+        Route::post('/profile', [BeneficiaryProfileController::class, 'update'])->name('profile.update');
+
+        // Legacy .php redirects. evaluations.php, impact_assessment.php and
+        // skills.php can all carry a stored ?training= link from a
+        // notification row created before this migration, so they go
+        // through LegacyRedirectController (which forwards the query
+        // string) instead of a plain Route::redirect().
+        foreach ([
+            '/evaluations.php'       => '/beneficiary/evaluations',
+            '/impact_assessment.php' => '/beneficiary/impact_assessment',
+            '/skills.php'            => '/beneficiary/skills',
+        ] as $old => $new) {
+            Route::get($old, [LegacyRedirectController::class, 'to'])->defaults('destination', $new);
+        }
+
+        foreach ([
+            '/home.php'          => '/beneficiary/home',
+            '/trainings.php'     => '/beneficiary/trainings',
+            '/evaluation.php'    => '/beneficiary/evaluation',
+            '/notifications.php' => '/beneficiary/notifications',
+            '/profile.php'       => '/beneficiary/profile',
+        ] as $old => $new) {
+            Route::get($old, \Illuminate\Routing\RedirectController::class)
+                ->defaults('destination', $new)
+                ->defaults('status', 301); // GET/HEAD only — never swallow a stray POST from a stale pre-deploy page
+        }
     });
+
+/*
+|--------------------------------------------------------------------------
+| Legacy top-level .php URL redirects
+|--------------------------------------------------------------------------
+| Public marketing pages and the two moved /account/* auth pages. GET only
+| — no old POST endpoint is redirected anywhere in this file (a redirected
+| POST would silently turn into a GET and drop the submitted form data, or
+| require the client to natively replay the method+body, which cannot be
+| relied on — the safe fix is simply that the new canonical POST endpoint
+| is the only one that ever existed at its clean path; nothing legacy to
+| preserve since every <form> in the app already posts via route()).
+|
+| /account/recovery specifically goes through LegacyRedirectController
+| (query-string preserving) rather than a plain Route::redirect(), because
+| an already-emailed password-reset link is ?token=... — a plain redirect
+| would silently drop that token and break any reset link sent before this
+| deploy.
+*/
+Route::get('/ecrecovery.php', [LegacyRedirectController::class, 'to'])
+    ->defaults('destination', '/account/recovery');
+
+foreach ([
+    '/choose-role.php'      => '/choose-role',
+    '/about.php'            => '/about',
+    '/trainings-public.php' => '/trainings-public',
+    '/privacy.php'          => '/privacy',
+    '/terms.php'            => '/terms',
+    '/contact.php'          => '/contact',
+    '/ecsignuppage.php'     => '/account/ec-signup',
+] as $old => $new) {
+    Route::get($old, \Illuminate\Routing\RedirectController::class)
+        ->defaults('destination', $new)
+        ->defaults('status', 301); // GET/HEAD only — never swallow a stray POST from a stale pre-deploy page
+}

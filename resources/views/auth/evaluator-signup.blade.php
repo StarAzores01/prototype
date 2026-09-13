@@ -141,9 +141,9 @@
         <label class="check-row">
           <input type="checkbox" name="agree" value="1" {{ old('agree') ? 'checked' : '' }}/>
           <span>I agree to the
-            <a href="{{ url('/terms.php') }}" target="_blank" style="color:#1A56DB;font-weight:600">Terms of Use</a>
+            <a href="{{ route('terms') }}" target="_blank" style="color:#1A56DB;font-weight:600">Terms of Use</a>
             and
-            <a href="{{ url('/privacy.php') }}" target="_blank" style="color:#1A56DB;font-weight:600">Privacy Policy</a>.
+            <a href="{{ route('privacy') }}" target="_blank" style="color:#1A56DB;font-weight:600">Privacy Policy</a>.
           </span>
         </label>
         @error('agree')<span class="invalid-feedback" style="margin-top:6px">{{ $message }}</span>@enderror

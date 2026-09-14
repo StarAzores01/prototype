@@ -179,8 +179,8 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
 
         Route::get('/evaluations', [EcEvaluationController::class, 'index'])->name('evaluations');
         Route::post('/evaluations', [EcEvaluationController::class, 'store'])->name('evaluations.store');
-        Route::get('/impact_assessment', [EcImpactAssessmentController::class, 'index'])->name('impact_assessment');
-        Route::post('/impact_assessment', [EcImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
+        Route::get('/impact-assessment', [EcImpactAssessmentController::class, 'index'])->name('impact_assessment');
+        Route::post('/impact-assessment', [EcImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
         Route::get('/skills', [EcSkillsController::class, 'index'])->name('skills');
         Route::get('/reports', [EcReportController::class, 'index'])->name('reports');
         Route::get('/analytics', [EcAnalyticsController::class, 'index'])->name('analytics');
@@ -192,13 +192,25 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
         Route::get('/page-content', [EcPageContentController::class, 'index'])->name('page-content');
         Route::get('/page-content/{pageKey}', [EcPageContentController::class, 'edit'])->name('page-content.edit');
         Route::post('/page-content/{pageKey}', [EcPageContentController::class, 'update'])->name('page-content.update');
+    });
 
-        // Legacy .php URL redirects (kept for old bookmarks and any links
-        // already emailed/stored before this clean-URL migration; nothing
-        // in the app links to these anymore). GET only — the equivalent
-        // POST endpoints above simply replace their .php predecessors, no
-        // form ever posts to one of these old paths since every <form> in
-        // the app builds its action from route(), not a literal string.
+// Legacy .php URL redirects (kept for old bookmarks and any links already
+// emailed/stored before this clean-URL migration; nothing in the app links
+// to these anymore). GET only — the equivalent POST endpoints above simply
+// replace their .php predecessors, no form ever posts to one of these old
+// paths since every <form> in the app builds its action from route(), not
+// a literal string.
+//
+// Deliberately its own group, sharing the same middleware+prefix as above
+// but WITHOUT ->name('ec.'): a route with no ->name() of its own that sits
+// inside a name-prefixed group silently inherits the bare prefix ('ec.')
+// as its name — with 20 such routes that means all 20 would collide under
+// that one shared, ambiguous name (confirmed: route('ec.') resolves to an
+// arbitrary one of them). Nothing in the app calls that name today, but
+// keeping these in an unnamed sibling group avoids the landmine entirely.
+Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
+    ->prefix('ec')
+    ->group(function () {
         foreach ([
             '/dashboard.php'            => '/ec/dashboard',
             '/programs.php'             => '/ec/programs',
@@ -212,7 +224,7 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
             '/documents.php'            => '/ec/documents',
             '/evaluation.php'           => '/ec/evaluation',
             '/evaluations.php'          => '/ec/evaluations',
-            '/impact_assessment.php'    => '/ec/impact_assessment',
+            '/impact_assessment.php'    => '/ec/impact-assessment',
             '/skills.php'               => '/ec/skills',
             '/reports.php'              => '/ec/reports',
             '/analytics.php'            => '/ec/analytics',
@@ -268,11 +280,18 @@ Route::middleware(['auth:web', 'role:trainer', 'no-back-cache'])
         Route::get('/notifications', [TrainerNotificationController::class, 'index'])->name('notifications');
         Route::get('/profile', [TrainerProfileController::class, 'show'])->name('profile');
         Route::post('/profile', [TrainerProfileController::class, 'update'])->name('profile.update');
+    });
 
-        // Legacy .php redirects. /evaluations.php can carry a stored
-        // ?training= link from a notification row created before this
-        // migration, so it goes through LegacyRedirectController (which
-        // forwards the query string) instead of a plain Route::redirect().
+// Legacy .php redirects — see the equivalent EC block above for why these
+// are deliberately an unnamed sibling group (same middleware+prefix, no
+// ->name('trainer.')) rather than living inside the named group.
+// /evaluations.php can carry a stored ?training= link from a notification
+// row created before this migration, so it goes through
+// LegacyRedirectController (forwards the query string) instead of a plain
+// Route::redirect().
+Route::middleware(['auth:web', 'role:trainer', 'no-back-cache'])
+    ->prefix('trainer')
+    ->group(function () {
         Route::get('/evaluations.php', [LegacyRedirectController::class, 'to'])
             ->defaults('destination', '/trainer/evaluations');
 
@@ -309,16 +328,23 @@ Route::middleware(['auth:web', 'role:evaluator', 'no-back-cache'])
 
         Route::get('/evaluation', [EvaluatorEvaluationHubController::class, 'index'])->name('evaluation');
 
-        Route::get('/impact_assessment', [EvaluatorImpactAssessmentController::class, 'index'])->name('impact_assessment');
-        Route::post('/impact_assessment', [EvaluatorImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
+        Route::get('/impact-assessment', [EvaluatorImpactAssessmentController::class, 'index'])->name('impact_assessment');
+        Route::post('/impact-assessment', [EvaluatorImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
 
         Route::get('/profile', [EvaluatorProfileController::class, 'show'])->name('profile');
         Route::post('/profile', [EvaluatorProfileController::class, 'update'])->name('profile.update');
+    });
 
+// Legacy .php redirects — see the equivalent EC block above for why these
+// are deliberately an unnamed sibling group (same middleware+prefix, no
+// ->name('evaluator.')) rather than living inside the named group.
+Route::middleware(['auth:web', 'role:evaluator', 'no-back-cache'])
+    ->prefix('evaluator')
+    ->group(function () {
         foreach ([
             '/dashboard.php'         => '/evaluator/dashboard',
             '/evaluation.php'        => '/evaluator/evaluation',
-            '/impact_assessment.php' => '/evaluator/impact_assessment',
+            '/impact_assessment.php' => '/evaluator/impact-assessment',
             '/profile.php'           => '/evaluator/profile',
         ] as $old => $new) {
             Route::get($old, \Illuminate\Routing\RedirectController::class)
@@ -344,22 +370,28 @@ Route::middleware(['beneficiary', 'no-back-cache'])
 
         Route::get('/evaluations', [BeneficiaryEvaluationController::class, 'index'])->name('evaluations');
         Route::post('/evaluations', [BeneficiaryEvaluationController::class, 'store'])->name('evaluations.store');
-        Route::get('/impact_assessment', [BeneficiaryImpactAssessmentController::class, 'index'])->name('impact_assessment');
-        Route::post('/impact_assessment', [BeneficiaryImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
+        Route::get('/impact-assessment', [BeneficiaryImpactAssessmentController::class, 'index'])->name('impact_assessment');
+        Route::post('/impact-assessment', [BeneficiaryImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
         Route::get('/skills', [BeneficiarySkillsController::class, 'index'])->name('skills');
         Route::post('/skills', [BeneficiarySkillsController::class, 'store'])->name('skills.store');
         Route::get('/notifications', [BeneficiaryNotificationController::class, 'index'])->name('notifications');
         Route::get('/profile', [BeneficiaryProfileController::class, 'show'])->name('profile');
         Route::post('/profile', [BeneficiaryProfileController::class, 'update'])->name('profile.update');
+    });
 
-        // Legacy .php redirects. evaluations.php, impact_assessment.php and
-        // skills.php can all carry a stored ?training= link from a
-        // notification row created before this migration, so they go
-        // through LegacyRedirectController (which forwards the query
-        // string) instead of a plain Route::redirect().
+// Legacy .php redirects — see the equivalent EC block above for why these
+// are deliberately an unnamed sibling group (same middleware+prefix, no
+// ->name('beneficiary.')) rather than living inside the named group.
+// evaluations.php, impact_assessment.php and skills.php can all carry a
+// stored ?training= link from a notification row created before this
+// migration, so they go through LegacyRedirectController (which forwards
+// the query string) instead of a plain Route::redirect().
+Route::middleware(['beneficiary', 'no-back-cache'])
+    ->prefix('beneficiary')
+    ->group(function () {
         foreach ([
             '/evaluations.php'       => '/beneficiary/evaluations',
-            '/impact_assessment.php' => '/beneficiary/impact_assessment',
+            '/impact_assessment.php' => '/beneficiary/impact-assessment',
             '/skills.php'            => '/beneficiary/skills',
         ] as $old => $new) {
             Route::get($old, [LegacyRedirectController::class, 'to'])->defaults('destination', $new);

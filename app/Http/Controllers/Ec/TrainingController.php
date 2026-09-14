@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Ec;
 use App\Http\Controllers\Concerns\HandlesCoverImageUpload;
 use App\Http\Controllers\Concerns\HandlesDocumentUploads;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Ec\Concerns\ValidatesTeamRoles;
 use App\Models\Document;
 use App\Models\Participant;
 use App\Models\Program;
@@ -16,11 +15,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator as ValidatorContract;
 
 class TrainingController extends Controller
 {
-    use ValidatesTeamRoles;
     use HandlesDocumentUploads;
     use HandlesCoverImageUpload;
 
@@ -81,10 +78,22 @@ class TrainingController extends Controller
             $query->where('status', $status);
         }
 
+        $trainings = $query->orderByDesc('date_start')->get();
+
+        // Grouped by the linked Program ("Project") for the card grid —
+        // grouping by id (not title) so two programs that happen to share a
+        // title never get merged into one section. Unassigned activities
+        // (program_id null) land in their own group, key 0. groupBy()
+        // preserves each group's first-occurrence order from $trainings
+        // (already date_start desc), so sections naturally read most
+        // recently scheduled first without any extra sort here.
+        $trainingsByProject = $trainings->groupBy(fn ($t) => $t->program_id ?? 0);
+
         return view('ec.trainings', [
-            'activePage' => 'trainings',
-            'mode'       => 'list',
-            'trainings'  => $query->orderByDesc('date_start')->get(),
+            'activePage'         => 'trainings',
+            'mode'               => 'list',
+            'trainings'          => $trainings,
+            'trainingsByProject' => $trainingsByProject,
             'areas'      => Training::whereNotNull('area')->distinct()->orderBy('area')->pluck('area'),
             'trainers'   => $this->activeTrainers(),
             'programs'   => $this->allPrograms(),
@@ -197,30 +206,32 @@ class TrainingController extends Controller
         return $rules;
     }
 
-    /** lead_id/member_ids validation, shared by create() and update(). */
-    private function teamRules(): array
+    /**
+     * An activity doesn't have its own Project Leader / Team Members
+     * anymore — it inherits whoever is assigned to its Program. Returns
+     * null lead_id (and no members) when the program has no lead yet, so
+     * callers can skip syncTeam() rather than attach a nonexistent user id.
+     *
+     * @return array{lead_id: ?int, member_ids: int[]}
+     */
+    private function teamFromProgram(?int $programId): array
     {
+        $program = $programId ? Program::with(['lead', 'members'])->find($programId) : null;
+
         return [
-            'lead_id'       => 'required|integer|exists:users,id',
-            'member_ids'    => 'nullable|array|max:3',
-            'member_ids.*'  => 'integer|distinct|exists:users,id',
+            'lead_id'    => optional($program?->lead->first())->id,
+            'member_ids' => $program?->members->pluck('id')->all() ?? [],
         ];
     }
 
     private function create(Request $request)
     {
-        $this->scrubMemberIds($request);
-
-        $data = Validator::make($request->all(), $this->trainingRules() + $this->teamRules() + [
+        $data = Validator::make($request->all(), $this->trainingRules() + [
             // Every new Activity must be nested under a Program from now on.
             // Pre-existing Activities may still have program_id = null; that's
             // untouched here since this path only ever creates new rows.
             'program_id' => 'required|integer|exists:programs,id',
-        ], [
-            'member_ids.max' => 'You can assign at most 3 team members.',
-        ])->after(function (ValidatorContract $validator) use ($request) {
-            $this->validateTeamRoles($validator, (int) $request->input('lead_id'), (array) $request->input('member_ids', []));
-        })->validate();
+        ])->validate();
 
         $training = DB::transaction(function () use ($data) {
             $training = Training::create([
@@ -237,7 +248,10 @@ class TrainingController extends Controller
                 'program_id'           => $data['program_id'],
             ]);
 
-            $this->syncTeam($training, (int) $data['lead_id'], $data['member_ids'] ?? []);
+            $team = $this->teamFromProgram($data['program_id']);
+            if ($team['lead_id']) {
+                $this->syncTeam($training, $team['lead_id'], $team['member_ids']);
+            }
 
             return $training;
         });
@@ -247,21 +261,15 @@ class TrainingController extends Controller
 
     private function update(Request $request)
     {
-        $this->scrubMemberIds($request);
-
         // trainingRules(false): budget_allocated is not accepted here at all —
         // it's permanently fixed at creation, no path to change it afterward.
-        $data = Validator::make($request->all(), $this->trainingRules(false) + $this->teamRules() + [
+        $data = Validator::make($request->all(), $this->trainingRules(false) + [
             'training_id' => 'required|integer|exists:trainings,id',
             // Nullable here (unlike create()) so editing a pre-existing,
             // not-yet-nested Activity doesn't force EC to pick a program
             // just to change something unrelated. They can still assign one.
             'program_id'  => 'nullable|integer|exists:programs,id',
-        ], [
-            'member_ids.max' => 'You can assign at most 3 team members.',
-        ])->after(function (ValidatorContract $validator) use ($request) {
-            $this->validateTeamRoles($validator, (int) $request->input('lead_id'), (array) $request->input('member_ids', []));
-        })->validate();
+        ])->validate();
 
         $training = Training::findOrFail($data['training_id']);
 
@@ -279,7 +287,18 @@ class TrainingController extends Controller
                 // budget_allocated deliberately absent — see trainingRules(false) above.
             ]);
 
-            $this->syncTeam($training, (int) $data['lead_id'], $data['member_ids'] ?? []);
+            // Re-sync the inherited team whenever a program is assigned —
+            // covers both "picked a program for the first time" and
+            // "switched to a different program". No program (still) assigned
+            // means nothing to inherit from, so the existing team (if any,
+            // from before this became inherited-only) is left untouched
+            // rather than cleared.
+            if ($data['program_id'] ?? null) {
+                $team = $this->teamFromProgram($data['program_id']);
+                if ($team['lead_id']) {
+                    $this->syncTeam($training, $team['lead_id'], $team['member_ids']);
+                }
+            }
         });
 
         return redirect()->route('ec.trainings', ['view' => $data['training_id']])->with('success', 'Activity updated.');

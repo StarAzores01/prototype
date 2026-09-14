@@ -7,6 +7,9 @@
     <h1>Skills Utilization</h1>
     <p>Create and send skills surveys to beneficiaries</p>
   </div>
+  @if(!in_array($mode, ['responses', 'builder'], true))
+  <a href="{{ route('trainer.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+  @endif
 </div>
 
 @if($mode === 'responses')

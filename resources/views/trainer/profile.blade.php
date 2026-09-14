@@ -73,7 +73,7 @@
         <div style="font-size:12px;color:var(--gray-400);margin-top:4px">Project Leader / Faculty</div>
         <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;text-align:left">
           @foreach([['fa-envelope', $trainer->email ?? '—'],['fa-id-card', $trainer->id_number ?? '—'],['fa-briefcase', $trainer->position ?? '—']] as [$ic, $vl])
-          <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gray-700)"><i class="fas {{ $ic }}" style="width:16px;color:var(--blue-primary)"></i>{{ $vl }}</div>
+          <div class="profile-info-row"><i class="fas {{ $ic }}"></i>{{ $vl }}</div>
           @endforeach
         </div>
       </div>

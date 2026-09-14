@@ -19,4 +19,28 @@ class NotificationController extends Controller
 
         return redirect()->route('ec.dashboard');
     }
+
+    /**
+     * Clicking a single notification in the topbar dropdown lands here: mark
+     * just that one read, then follow through to whatever it actually points
+     * at (a contact message, an activity, etc.) instead of leaving it unread
+     * with nowhere to go. Same visibility rule as the unread count/list in
+     * EcLayoutComposer, so a user can only mark-read what they could already see.
+     */
+    public function open(int $id)
+    {
+        $userId = Auth::guard('web')->id();
+
+        $notification = Notification::where('id', $id)
+            ->where(function ($q) use ($userId) {
+                $q->where('role', 'all')->orWhere('user_id', $userId);
+            })
+            ->first();
+
+        if ($notification) {
+            $notification->update(['is_read' => true]);
+        }
+
+        return redirect($notification->link ?? route('ec.dashboard'));
+    }
 }

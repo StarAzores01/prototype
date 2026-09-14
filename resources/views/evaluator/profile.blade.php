@@ -120,9 +120,7 @@
             ['fa-id-card',  $evaluator->id_number ?? '—'],
             ['fa-building', $evaluator->department ?? '—'],
           ] as [$icon, $val])
-          <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gray-700)">
-            <i class="fas {{ $icon }}" style="width:16px;color:#8B5CF6"></i>{{ $val }}
-          </div>
+          <div class="profile-info-row"><i class="fas {{ $icon }}" style="color:#8B5CF6"></i>{{ $val }}</div>
           @endforeach
         </div>
       </div>

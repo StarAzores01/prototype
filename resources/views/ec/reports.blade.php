@@ -20,19 +20,6 @@
 .rpt-section-title { font-size: 17px; font-weight: 800; color: var(--text-heading); }
 .rpt-section-sub   { font-size: 12.5px; color: var(--gray-400); margin-top: 2px; }
 
-/* mini stat row */
-.mini-stats { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
-.mini-stat {
-  background: var(--surface); border: 1px solid var(--gray-200); border-radius: 12px;
-  padding: 14px 20px; min-width: 120px; flex: 1;
-}
-.mini-stat-val { font-size: 26px; font-weight: 800; color: var(--text-heading); line-height: 1; }
-.mini-stat-lbl { font-size: 11.5px; color: var(--gray-400); margin-top: 4px; }
-.mini-stat.blue   .mini-stat-val { color: var(--blue-primary); }
-.mini-stat.green  .mini-stat-val { color: var(--green); }
-.mini-stat.orange .mini-stat-val { color: var(--yellow); }
-.mini-stat.purple .mini-stat-val { color: #8B5CF6; }
-
 /* chart row */
 .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 @media(max-width:860px){ .chart-row { grid-template-columns: 1fr; } }
@@ -84,39 +71,40 @@ canvas { max-height: 220px; }
 </style>
 
 <div class="page-header">
-  <div>
-    <div class="page-title">Reports</div>
-    <div class="page-sub">Comprehensive overview of activity accomplishments, beneficiaries, skills utilization, and evaluations</div>
+  <div class="page-header-left">
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Reports</span></div>
+    <h1>Reports</h1>
+    <p>Comprehensive overview of activity accomplishments, beneficiaries, skills utilization, and evaluations</p>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
      TOP SUMMARY STATS
 ════════════════════════════════════════════════════════════ -->
-<div class="mini-stats" style="margin-bottom:36px">
-  <div class="mini-stat blue">
-    <div class="mini-stat-val">{{ $totalTrainings }}</div>
-    <div class="mini-stat-lbl">Total Activities</div>
+<div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:36px">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-book"></i></div>
+    <div class="stat-body"><div class="stat-value">{{ $totalTrainings }}</div><div class="stat-label">Total Activities</div></div>
   </div>
-  <div class="mini-stat green">
-    <div class="mini-stat-val">{{ $completedCount }}</div>
-    <div class="mini-stat-lbl">Completed</div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-circle-check"></i></div>
+    <div class="stat-body"><div class="stat-value">{{ $completedCount }}</div><div class="stat-label">Completed</div></div>
   </div>
-  <div class="mini-stat orange">
-    <div class="mini-stat-val">{{ $ongoingCount }}</div>
-    <div class="mini-stat-lbl">Ongoing</div>
+  <div class="stat-card">
+    <div class="stat-icon yellow"><i class="fas fa-hourglass-half"></i></div>
+    <div class="stat-body"><div class="stat-value">{{ $ongoingCount }}</div><div class="stat-label">Ongoing</div></div>
   </div>
-  <div class="mini-stat" style="">
-    <div class="mini-stat-val" style="color:#8B5CF6">{{ $proposedCount }}</div>
-    <div class="mini-stat-lbl">Proposed</div>
+  <div class="stat-card">
+    <div class="stat-icon navy"><i class="fas fa-lightbulb"></i></div>
+    <div class="stat-body"><div class="stat-value">{{ $proposedCount }}</div><div class="stat-label">Proposed</div></div>
   </div>
-  <div class="mini-stat">
-    <div class="mini-stat-val">{{ $totalPart }}</div>
-    <div class="mini-stat-lbl">Total Participants</div>
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+    <div class="stat-body"><div class="stat-value">{{ $totalPart }}</div><div class="stat-label">Total Participants</div></div>
   </div>
-  <div class="mini-stat">
-    <div class="mini-stat-val">{{ $totalBen }}</div>
-    <div class="mini-stat-lbl">Registered Beneficiaries</div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-user-check"></i></div>
+    <div class="stat-body"><div class="stat-value">{{ $totalBen }}</div><div class="stat-label">Registered Beneficiaries</div></div>
   </div>
 </div>
 
@@ -173,6 +161,7 @@ canvas { max-height: 220px; }
   </div>
 
   <div class="card" style="padding:0;overflow:hidden">
+    <div class="table-wrap">
     <table class="data-table">
       <thead>
         <tr>
@@ -204,6 +193,7 @@ canvas { max-height: 220px; }
         @endforelse
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 

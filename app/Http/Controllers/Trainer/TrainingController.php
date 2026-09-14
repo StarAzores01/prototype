@@ -69,10 +69,19 @@ class TrainingController extends Controller
             $query->where('status', $status);
         }
 
+        $trainings = $query->orderByDesc('date_start')->get();
+
+        // Grouped by the linked Program ("Project") for the card grid — same
+        // treatment as Ec\TrainingController::listView(), kept consistent
+        // across roles. Unassigned activities (program_id null) group under
+        // key 0.
+        $trainingsByProject = $trainings->groupBy(fn ($t) => $t->program_id ?? 0);
+
         return view('trainer.trainings', [
-            'activePage' => 'trainings',
-            'mode'       => 'list',
-            'trainings'  => $query->orderByDesc('date_start')->get(),
+            'activePage'         => 'trainings',
+            'mode'               => 'list',
+            'trainings'          => $trainings,
+            'trainingsByProject' => $trainingsByProject,
             'q'          => $q,
             'status'     => $status,
         ]);

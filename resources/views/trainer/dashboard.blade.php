@@ -36,7 +36,7 @@
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>Activity Name</th><th>Area</th><th>Schedule</th><th>Enrolled</th><th>Target</th><th>Status</th><th>Actions</th></tr>
+        <tr><th>Activity Name</th><th>Project</th><th>Area</th><th>Schedule</th><th>Enrolled</th><th>Target</th><th>Status</th><th>Actions</th></tr>
       </thead>
       <tbody>
       @forelse($myTrainings as $t)
@@ -48,6 +48,7 @@
             <div style="font-size:11px;color:var(--gray-400);margin-top:2px">{{ \Illuminate\Support\Str::limit($t->description, 60, '…') }}</div>
             @endif
           </td>
+          <td style="font-size:12px;color:var(--gray-700)">{{ $t->program?->title ?? '—' }}</td>
           <td style="font-size:12px;color:var(--gray-600)">{{ $t->area }}</td>
           <td style="font-size:12px;color:var(--gray-400)">{{ $t->date_start?->format('Y-m-d') ?? '—' }}</td>
           <td><strong>{{ (int) $t->enrolled }}</strong></td>
@@ -56,7 +57,7 @@
           <td><a href="{{ route('trainer.trainings') }}?view={{ $t->id }}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> View</a></td>
         </tr>
       @empty
-        <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--gray-400)">No activities assigned yet.</td></tr>
+        <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gray-400)">No activities assigned yet.</td></tr>
       @endforelse
       </tbody>
     </table>

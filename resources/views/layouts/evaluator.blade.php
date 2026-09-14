@@ -16,6 +16,13 @@ $activePage = $activePage ?? 'dashboard';
   @include('partials.theme-init-script')
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- Without this, mobile WebKit/Chrome auto-detect plain-text emails and
+       phone numbers and re-style them as blue underlined tap links — the
+       exact cause of the Profile page's info rows looking inconsistent
+       (e.g. email/phone styled like links, ID number/position staying
+       plain) even though the markup and CSS treat every row identically. -->
+  <meta name="format-detection" content="telephone=no, date=no, address=no, email=no"/>
+  <link rel="icon" href="{{ asset('imgs/favicon.ico') }}"/>
   <title>PAThrive – {{ ucfirst(str_replace('_', ' ', $activePage)) }} (Evaluator)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
@@ -29,7 +36,7 @@ $activePage = $activePage ?? 'dashboard';
       <i class="fas fa-bars"></i>
     </button>
     <div class="brand-logo">
-      <img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT Logo" onerror="this.style.display='none';this.parentElement.textContent='PA'"/>
+      <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT Logo" onerror="this.style.display='none';this.parentElement.textContent='PA'"/>
     </div>
     <div class="brand-text">
       <div class="brand-name">PAThrive</div>

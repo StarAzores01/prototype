@@ -164,6 +164,7 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
 
         Route::get('/messages', [EcMessageController::class, 'index'])->name('messages');
         Route::get('/notifications', [EcNotificationController::class, 'index'])->name('notifications');
+        Route::get('/notifications/{id}/open', [EcNotificationController::class, 'open'])->name('notifications.open');
 
         Route::get('/profile', [EcProfileController::class, 'show'])->name('profile');
         Route::post('/profile', [EcProfileController::class, 'update'])->name('profile.update');
@@ -275,9 +276,11 @@ Route::middleware(['auth:web', 'role:trainer', 'no-back-cache'])
         Route::get('/skills', [TrainerSkillsController::class, 'index'])->name('skills');
         Route::post('/skills', [TrainerSkillsController::class, 'store'])->name('skills.store');
         Route::get('/evaluations', [TrainerEvaluationController::class, 'index'])->name('evaluations');
+        Route::post('/evaluations', [TrainerEvaluationController::class, 'store'])->name('evaluations.store');
         Route::get('/documents', [TrainerDocumentController::class, 'index'])->name('documents');
         Route::post('/documents', [TrainerDocumentController::class, 'store'])->name('documents.store');
         Route::get('/notifications', [TrainerNotificationController::class, 'index'])->name('notifications');
+        Route::get('/notifications/{id}/open', [TrainerNotificationController::class, 'open'])->name('notifications.open');
         Route::get('/profile', [TrainerProfileController::class, 'show'])->name('profile');
         Route::post('/profile', [TrainerProfileController::class, 'update'])->name('profile.update');
     });

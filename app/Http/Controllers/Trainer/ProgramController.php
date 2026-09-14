@@ -70,6 +70,7 @@ class ProgramController extends Controller
             'update_status'   => $this->updateStatus($request),
             'update_team'     => $this->updateTeam($request),
             'upload'          => $this->uploadDocument($request),
+            'upload_cover'    => $this->uploadCover($request),
             default            => back(),
         };
     }
@@ -80,11 +81,16 @@ class ProgramController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        // Grouped by Area for the card grid — same treatment as
+        // Ec\ProgramController::listView(), kept consistent across roles.
+        $programsByArea = $programs->groupBy(fn ($p) => $p->area ?: 'No Area Specified');
+
         return view('trainer.programs', [
-            'activePage' => 'programs',
-            'mode'       => 'list',
-            'programs'   => $programs,
-            'trainers'   => $this->activeTrainers(),
+            'activePage'     => 'programs',
+            'mode'           => 'list',
+            'programs'       => $programs,
+            'programsByArea' => $programsByArea,
+            'trainers'       => $this->activeTrainers(),
         ]);
     }
 
@@ -291,6 +297,51 @@ class ProgramController extends Controller
         }
 
         return redirect()->route('trainer.programs', ['view' => $programId])->with('success', 'Document added to program.');
+    }
+
+    /**
+     * Program's own cover image — lead or member may both change it, same as
+     * viewing and the document repository (uploadDocument() above). This is
+     * the exact same `cover_image` column Ec\ProgramController::uploadCover()
+     * writes to, so whichever role changes it, the same picture is what every
+     * role sees everywhere the program's card is shown — there's only ever
+     * one column, never a separate image per role.
+     */
+    private function uploadCover(Request $request)
+    {
+        $programId = (int) $request->input('program_id');
+        $program = Program::find($programId);
+
+        if (! $program || ! $program->isVisibleTo($this->trainerId())) {
+            return back()->with('error', 'You are not on this program\'s team.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'cover_image' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:5120',
+        ]);
+        if ($validator->fails()) {
+            return back()->with('error', $validator->errors()->first());
+        }
+
+        $file = $request->file('cover_image');
+        $ext = strtolower($file->getClientOriginalExtension());
+
+        if (! in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+            return back()->with('error', 'Only JPG, PNG, GIF, and WEBP images are allowed.');
+        }
+
+        $old = $program->cover_image;
+        $stored = 'prog_cover_'.bin2hex(random_bytes(8)).'.'.$ext;
+        $file->storeAs('uploads', $stored, 'local');
+
+        $program->update(['cover_image' => $stored]);
+
+        if ($old) {
+            \Illuminate\Support\Facades\Storage::disk('local')->delete('uploads/'.$old);
+        }
+
+        return redirect()->route('trainer.programs', ['view' => $programId])
+            ->with('success', 'Program cover image updated.');
     }
 
     private function authorizeLead(Program $program, string $message): void

@@ -45,7 +45,7 @@
 </div>
 
 <!-- Storage Overview -->
-<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+<div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:24px">
   <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-floppy-disk"></i></div><div class="stat-body"><div class="stat-value" style="font-size:18px">{{ round($totalSize / 1024 / 1024, 1) }} MB</div><div class="stat-label">Used Storage</div></div></div>
   <div class="stat-card"><div class="stat-icon red"><i class="fas fa-file"></i></div><div class="stat-body"><div class="stat-value">{{ $pdfCount }}</div><div class="stat-label">PDFs Uploaded</div></div></div>
   <div class="stat-card"><div class="stat-icon navy"><i class="fas fa-video"></i></div><div class="stat-body"><div class="stat-value">{{ $vidCount }}</div><div class="stat-label">Videos Uploaded</div></div></div>

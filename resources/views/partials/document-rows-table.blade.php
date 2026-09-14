@@ -57,6 +57,7 @@
     <i class="fas fa-calendar-alt" style="margin-right:6px;opacity:.6"></i>{{ $dateLabel }}
     <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $dateGroup->count() }} file{{ $dateGroup->count() === 1 ? '' : 's' }})</span>
   </div>
+  <div class="table-wrap">
   <table class="data-table">
     <thead>
       <tr>
@@ -157,4 +158,5 @@
     @endforeach
     </tbody>
   </table>
+  </div>
 @endforeach

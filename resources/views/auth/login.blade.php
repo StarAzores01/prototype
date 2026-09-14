@@ -13,7 +13,7 @@
         radial-gradient(ellipse 60% 50% at 15% 60%, rgba(13, 63, 171, 0.45) 0%, transparent 60%),
         radial-gradient(ellipse 50% 40% at 85% 20%, rgba(13, 63, 171, 0.45) 0%, transparent 55%),
         linear-gradient(150deg, #010E1F 0%, #051828 35%, #07213A 65%, #040F1C 100%) !important;
-      position: relative; overflow: hidden;
+      position: relative; overflow-x: hidden;
     }
 
     /* Grid texture overlay */
@@ -86,13 +86,9 @@
       background: rgba(255,255,255,.05); pointer-events: none;
     }
 
-    /* Logo box inside header */
+    /* Logo — no background/border/shadow box, just the raw logo */
     body.auth-body .auth-card-header .brand-logo {
       width: 58px !important; height: 58px !important;
-      border-radius: 15px !important;
-      background: rgba(255,255,255,.14) !important;
-      border: 1.5px solid rgba(255,255,255,.28) !important;
-      box-shadow: 0 4px 18px rgba(0,0,0,.28) !important;
       display: flex !important; align-items: center !important;
       justify-content: center !important; margin: 0 auto 14px !important;
       position: relative; z-index: 1;
@@ -234,7 +230,7 @@
         <i class="fas fa-arrow-left"></i> Back to Home
       </a>
       <div class="brand-logo" style="margin:0 auto 14px">
-        <img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT"
+        <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT"
              style="width:44px;height:44px;object-fit:contain"
              onerror="this.style.display='none'"/>
       </div>

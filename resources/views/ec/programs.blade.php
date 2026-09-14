@@ -13,7 +13,7 @@
     <h1>{{ $viewProgram->title }}</h1>
     <p>{{ $viewProgram->area }}</p>
   </div>
-  <div style="display:flex;gap:10px">
+  <div class="page-header-actions">
     <a href="{{ route('ec.programs') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
     <button class="btn btn-outline" onclick="openModal('manageTeam')"><i class="fas fa-users-gear"></i> Manage Team</button>
     <button class="btn btn-primary" onclick="openModal('extendTimeline')"><i class="fas fa-calendar-plus"></i> Extend Timeline</button>
@@ -97,7 +97,7 @@
       <div class="card-subtitle">Activity completion and budget utilization across the whole program</div>
     </div>
   </div>
-  <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:28px">
+  <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px">
 
     <!-- Activity completion -->
     <div>
@@ -445,44 +445,52 @@
 @if($programs->isEmpty())
 <div class="empty-state"><i class="fas fa-diagram-project"></i><p>No programs yet. <a href="#" onclick="openModal('addProgram')">Create one.</a></p></div>
 @else
-<div class="home-grid">
-  @foreach($programs as $p)
-    @php
-      $pr = \App\Http\Controllers\Ec\ProgramController::rollup($p);
-      $icon = \App\Support\TrainingCategoryIcon::icon($p->area);
-    @endphp
-    <div class="training-card">
-      <div class="training-card-img" style="background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
-        @if($p->cover_image)
-          <img src="{{ route('files.program-cover', $p) }}" alt="{{ $p->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
-        @endif
-        <div class="training-card-cat" style="z-index:2;position:relative">{{ $p->area }}</div>
-        @if(!$p->cover_image)
-          <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
-        @endif
-      </div>
-      <div class="training-card-body">
-        <div class="training-card-title">{{ $p->title }}</div>
-        <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, '…') }}</div>
-        <div class="training-card-meta">
-          <span><i class="fas fa-user-tie"></i> {{ optional($p->lead->first())->full_name ?? 'No lead' }}</span>
-          <span><i class="fas fa-book"></i> {{ $pr['completed'] }}/{{ $pr['total'] }} done</span>
-        </div>
-        <div style="background:var(--gray-100);border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px">
-          <div style="height:100%;border-radius:8px;width:{{ $pr['progressPct'] }}%;background:{{ $pr['progressPct'] >= 100 ? '#10B981' : '#1A56DB' }}"></div>
-        </div>
-        <div style="font-size:11.5px;color:var(--gray-500);margin-bottom:12px">
-          Remaining: <strong style="color:{{ $pr['budgetRemain'] < 0 ? '#EF4444' : 'var(--gray-800)' }}">&#8369;{{ number_format($pr['budgetRemain'], 2) }}</strong>
-          of &#8369;{{ number_format($pr['budgetAlloc'], 2) }}
-        </div>
-        <div class="training-card-footer">
-          <span class="badge badge-{{ strtolower($p->status) }}">{{ $p->status }}</span>
-          <a href="{{ route('ec.programs') }}?view={{ $p->id }}" class="btn btn-sm btn-primary">View Details</a>
-        </div>
-      </div>
+@foreach($programsByArea as $area => $areaPrograms)
+  <div class="card-group">
+    <div class="card-group-header">
+      <div class="card-group-title"><i class="fas fa-layer-group"></i> {{ $area }}</div>
+      <span class="card-group-count">{{ $areaPrograms->count() }} {{ \Illuminate\Support\Str::plural('project', $areaPrograms->count()) }}</span>
     </div>
-  @endforeach
-</div>
+    <div class="home-grid home-grid-grouped">
+      @foreach($areaPrograms as $p)
+        @php
+          $pr = \App\Http\Controllers\Ec\ProgramController::rollup($p);
+          $icon = \App\Support\TrainingCategoryIcon::icon($p->area);
+        @endphp
+        <div class="training-card">
+          <div class="training-card-img" style="background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
+            @if($p->cover_image)
+              <img src="{{ route('files.program-cover', $p) }}" alt="{{ $p->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
+            @endif
+            <div class="training-card-cat" style="z-index:2;position:relative">{{ $p->area }}</div>
+            @if(!$p->cover_image)
+              <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+            @endif
+          </div>
+          <div class="training-card-body">
+            <div class="training-card-title">{{ $p->title }}</div>
+            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, '…') }}</div>
+            <div class="training-card-meta">
+              <span><i class="fas fa-user-tie"></i> {{ optional($p->lead->first())->full_name ?? 'No lead' }}</span>
+              <span><i class="fas fa-book"></i> {{ $pr['completed'] }}/{{ $pr['total'] }} done</span>
+            </div>
+            <div style="background:var(--gray-100);border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px">
+              <div style="height:100%;border-radius:8px;width:{{ $pr['progressPct'] }}%;background:{{ $pr['progressPct'] >= 100 ? '#10B981' : '#1A56DB' }}"></div>
+            </div>
+            <div style="font-size:11.5px;color:var(--gray-500);margin-bottom:12px">
+              Remaining: <strong style="color:{{ $pr['budgetRemain'] < 0 ? '#EF4444' : 'var(--gray-800)' }}">&#8369;{{ number_format($pr['budgetRemain'], 2) }}</strong>
+              of &#8369;{{ number_format($pr['budgetAlloc'], 2) }}
+            </div>
+            <div class="training-card-footer">
+              <span class="badge badge-{{ strtolower($p->status) }}">{{ $p->status }}</span>
+              <a href="{{ route('ec.programs') }}?view={{ $p->id }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+          </div>
+        </div>
+      @endforeach
+    </div>
+  </div>
+@endforeach
 @endif
 
 <!-- MODAL: CREATE PROGRAM -->
@@ -496,59 +504,7 @@
       @csrf
       <input type="hidden" name="action" value="create"/>
       <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Program Title *</label>
-            <input type="text" name="title" class="form-control" placeholder="e.g. Community Livelihood Initiative 2026" required/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Area / Specialization *</label>
-            <input type="text" name="area" class="form-control" placeholder="e.g. Culinary Technology" maxlength="120" required/>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Description (optional)</label>
-          <textarea name="description" class="form-control" rows="3" placeholder="Briefly describe the program…"></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Timeline Start *</label>
-            <input type="date" name="timeline_start" id="programTimelineStart" data-range-end="programTimelineEnd" class="form-control" required/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Timeline End *</label>
-            <input type="date" name="timeline_end" id="programTimelineEnd" class="form-control" required/>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Budget Allocated (₱) *</label>
-          <input type="number" name="budget_allocated" class="form-control" placeholder="e.g. 200000" min="0" step="0.01" required/>
-        </div>
-
-        <hr style="border:none;border-top:1px solid var(--gray-100);margin:8px 0 16px">
-        <div class="form-group">
-          <label class="form-label">Project Lead * <span style="font-weight:400;color:var(--gray-400)">(exactly one, from Project Leaders)</span></label>
-          <select name="lead_id" class="form-control" required>
-            <option value="">— Select Project Lead —</option>
-            @foreach($trainers as $tr)
-            <option value="{{ $tr->id }}">{{ $tr->first_name }} {{ $tr->last_name }}</option>
-            @endforeach
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Team Members <span style="font-weight:400;color:var(--gray-400)">(optional, up to 3)</span></label>
-          <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
-            @for($i = 0; $i < 3; $i++)
-            <select name="member_ids[]" class="form-control">
-              <option value="">— None —</option>
-              @foreach($trainers as $tr)
-              <option value="{{ $tr->id }}">{{ $tr->first_name }} {{ $tr->last_name }}</option>
-              @endforeach
-            </select>
-            @endfor
-          </div>
-          <div style="font-size:11px;color:var(--gray-400);margin-top:4px">A team member can't also be the Project Lead, and can't be selected twice.</div>
-        </div>
+        @include('ec.partials.program-create-fields', ['trainers' => $trainers])
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('addProgram')">Cancel</button>

@@ -16,7 +16,7 @@
     body.auth-body .auth-card-header{background:linear-gradient(140deg,#122B57 0%,#071428 55%,#0B1E3D 100%) !important;padding:30px 32px 26px !important;text-align:center;position:relative;overflow:hidden}
     body.auth-body .auth-card-header::before{content:'';position:absolute;top:-48px;right:-48px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none}
     body.auth-body .auth-card-header::after{content:'';position:absolute;bottom:-32px;left:-32px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none}
-    body.auth-body .auth-card-header .brand-logo{width:58px !important;height:58px !important;border-radius:15px !important;background:rgba(255,255,255,.14) !important;border:1.5px solid rgba(255,255,255,.28) !important;box-shadow:0 4px 18px rgba(0,0,0,.28) !important;display:flex !important;align-items:center !important;justify-content:center !important;margin:0 auto 14px !important;position:relative;z-index:1}
+    body.auth-body .auth-card-header .brand-logo{width:58px !important;height:58px !important;display:flex !important;align-items:center !important;justify-content:center !important;margin:0 auto 14px !important;position:relative;z-index:1}
     body.auth-body .auth-card-header .brand-logo img{width:40px !important;height:40px !important;object-fit:contain !important}
     body.auth-body .auth-card-header h1{color:#fff !important;font-size:20px !important;font-weight:800 !important;margin-bottom:5px !important;position:relative;z-index:1}
     body.auth-body .auth-card-header p{color:rgba(255,255,255,.72) !important;font-size:12.5px !important;position:relative;z-index:1}
@@ -53,7 +53,7 @@
       <i class="fas fa-arrow-left"></i> Back
     </a>
     <div class="brand-logo">
-      <img src="{{ asset('imgs/logofinalpt.png') }}" alt="PAThrive" onerror="this.style.display='none'"/>
+      <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="PAThrive" onerror="this.style.display='none'"/>
     </div>
     <h1>Evaluator Sign Up</h1>
     <p>PAThrive &nbsp;&middot;&nbsp; CIT-SLSU &nbsp;&middot;&nbsp; Impact Assessment</p>
@@ -141,9 +141,9 @@
         <label class="check-row">
           <input type="checkbox" name="agree" value="1" {{ old('agree') ? 'checked' : '' }}/>
           <span>I agree to the
-            <a href="{{ route('terms') }}" target="_blank" style="color:#1A56DB;font-weight:600">Terms of Use</a>
+            <a href="{{ route('terms') }}" style="color:#1A56DB;font-weight:600">Terms of Use</a>
             and
-            <a href="{{ route('privacy') }}" target="_blank" style="color:#1A56DB;font-weight:600">Privacy Policy</a>.
+            <a href="{{ route('privacy') }}" style="color:#1A56DB;font-weight:600">Privacy Policy</a>.
           </span>
         </label>
         @error('agree')<span class="invalid-feedback" style="margin-top:6px">{{ $message }}</span>@enderror

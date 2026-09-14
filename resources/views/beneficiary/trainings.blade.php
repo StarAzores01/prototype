@@ -32,7 +32,7 @@
       <div class="card-header"><div class="card-title">About this Activity</div></div>
       <div class="card-body">
         @if($viewTraining->description)
-        <p style="font-size:14px;color:var(--gray-700);line-height:1.8">{!! nl2br(e($viewTraining->description)) !!}</p>
+        <p style="font-size:14px;color:var(--gray-700);line-height:1.8;overflow-wrap:anywhere">{!! nl2br(e($viewTraining->description)) !!}</p>
         @else
         <p style="color:var(--gray-400);font-size:13px">No description provided.</p>
         @endif
@@ -94,9 +94,9 @@
           ];
         @endphp
         @foreach($details as [$lb, $vl])
-        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--gray-100)">
           <span style="font-size:12px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.3px">{{ $lb }}</span>
-          <span style="font-size:13px;font-weight:600;color:var(--gray-800)">{{ $vl }}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--gray-800);min-width:0;overflow-wrap:anywhere;text-align:right">{{ $vl }}</span>
         </div>
         @endforeach
       </div>

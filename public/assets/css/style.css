@@ -56,6 +56,7 @@
 
 /* ===== RESET ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { font-family: 'Poppins', sans-serif; background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
 a { text-decoration: none; color: inherit; }
 ul { list-style: none; }
@@ -75,12 +76,10 @@ input, select, textarea { font-family: inherit; }
   padding: 0 20px; border-right: 1px solid rgba(255,255,255,.08); height: 100%;
 }
 .brand-logo {
-  width: 46px; height: 46px; border-radius: 10px;
-  background: #DBEAFE;
-  border: 1.5px solid #93C5FD;
+  width: 46px; height: 46px;
   display: flex; align-items: center; justify-content: center;
   font-size: 17px; color: #fff; font-weight: 800; font-family: 'Space Grotesk', sans-serif;
-  box-shadow: 0 2px 10px rgba(0,0,0,.3); flex-shrink: 0;
+  flex-shrink: 0;
 }
 .brand-logo img { width: 40px; height: 40px; object-fit: contain; }
 .brand-text { color: #fff; }
@@ -177,6 +176,18 @@ input, select, textarea { font-family: inherit; }
 .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-400); margin-bottom: 6px; }
 .breadcrumb span { color: var(--blue-primary); font-weight: 500; }
 
+/* A page-header's multi-button action row (e.g. a Program's Back/Manage
+   Team/Extend Timeline) — the row wraps onto extra lines rather than
+   overflow, but each button keeps its own single-line box (no internal
+   text wrap growing it taller); on narrow screens the font shrinks first
+   so more buttons keep fitting per row before wrapping is even needed. */
+.page-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.page-header-actions .btn { white-space: nowrap; }
+@media (max-width: 480px) {
+  .page-header-actions { gap: 6px; }
+  .page-header-actions .btn { font-size: 11px; }
+}
+
 /* ===== BUTTONS ===== */
 .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; transition: var(--transition); }
 .btn-primary { background: linear-gradient(135deg, var(--blue-primary), var(--blue-mid)); color: #fff; box-shadow: 0 3px 10px rgba(26,86,219,.35); }
@@ -212,6 +223,12 @@ input, select, textarea { font-family: inherit; }
 .card {
   background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm);
   border: 1px solid var(--gray-200); transition: transform .18s ease, box-shadow .18s ease;
+  /* Same min-width: auto override as .dash-main/.dash-side below — a card
+     is itself a flex item (of .dash-main/.dash-side, or wherever else it's
+     used), so without this its own wide content (a table forced wide for
+     mobile scrolling) stops it from shrinking to fit, instead pushing the
+     whole layout past the viewport. */
+  min-width: 0;
 }
 .card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .card-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; justify-content: space-between; }
@@ -221,8 +238,19 @@ input, select, textarea { font-family: inherit; }
 
 /* ===== DASHBOARD GRID ===== */
 .dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
-.dash-main { display: flex; flex-direction: column; gap: 20px; }
-.dash-side { display: flex; flex-direction: column; gap: 20px; }
+/* min-width: 0 overrides the browser default of min-width: auto on grid/flex
+   items, which otherwise refuses to shrink an item below its content's
+   intrinsic minimum width. Without it, a wide child anywhere down the tree
+   (e.g. a table forced to min-width: 600px for mobile horizontal scrolling)
+   pushes .dash-main — and everything stretched alongside it, like an
+   unrelated Description card with no wide content of its own — past the
+   viewport instead of staying put while just that one table scrolls inside
+   its own .table-wrap. This is also why the breakage was zoom-sensitive:
+   which side of the threshold a card landed on depended on exact sub-pixel
+   layout math at that specific zoom level. */
+.dash-grid > * { min-width: 0; }
+.dash-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dash-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
 /* ===== BAR CHART ===== */
 .bar-chart { display: flex; align-items: flex-end; gap: 10px; height: 160px; padding: 10px 0; }
@@ -297,8 +325,26 @@ select.filter-select:focus { border-color: var(--blue-primary); }
 .upload-item-name { font-size: 12.5px; font-weight: 600; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .upload-item-meta { font-size: 11px; color: var(--gray-400); }
 
+/* ===== PROFILE INFO ROWS (My Profile sidebar) ===== */
+/* Same icon + value row for every field (email, ID number, position,
+   phone, etc.) so they line up identically no matter what the value is.
+   The `a` reset matters even though this markup never renders a real
+   <a> itself — mobile WebKit/Chrome auto-detect plain-text emails and
+   phone numbers and silently re-style them as tap links, which is what
+   made some rows look different from the rest; format-detection is
+   disabled site-wide for this too (see the layout <head>s), this is
+   just the belt-and-suspenders half of that fix. */
+.profile-info-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--gray-700); line-height: 1.4; }
+.profile-info-row i { width: 16px; flex-shrink: 0; text-align: center; color: var(--blue-primary); }
+.profile-info-row a { color: inherit; text-decoration: none; font: inherit; }
+
 /* ===== TRAINING CARDS (Home) ===== */
-.home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+/* auto-fit (not auto-fill): auto-fill reserves a same-width empty track for
+   every column that *could* fit even when there's no card left to put in
+   it, which is exactly what left a single card sitting next to a wide dead
+   strip of nothing. auto-fit collapses those unused tracks instead, so the
+   real cards are the ones that fill the row. */
+.home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
 .training-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); overflow: hidden; transition: transform .18s ease, box-shadow .18s ease; }
 .training-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
 .training-card-img { height: 150px; background: linear-gradient(135deg, var(--navy), var(--blue-primary)); display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; overflow: hidden; color: var(--white); }
@@ -310,6 +356,18 @@ select.filter-select:focus { border-color: var(--blue-primary); }
 .training-card-meta  { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .training-card-meta span { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--gray-400); }
 .training-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--gray-100); }
+
+/* ===== GROUPED CARD SECTIONS (Activities by Project, Programs by Area) ===== */
+.card-group + .card-group { margin-top: 32px; }
+.card-group-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--gray-200); }
+.card-group-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text-heading); }
+.card-group-title i { color: var(--blue-primary); font-size: 12px; }
+.card-group-count { font-size: 12px; color: var(--gray-400); font-weight: 500; }
+/* Caps how wide a card grows when auto-fit gives a sparsely-filled group
+   the rest of the row to itself — without this a group with just one or
+   two cards would stretch them oversized instead of just sitting compact
+   and left-aligned like their neighboring groups. */
+.home-grid-grouped .training-card { max-width: 360px; }
 
 /* ===== PARTICIPANT AVATAR ===== */
 .participant-avatar { width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
@@ -530,20 +588,17 @@ select.filter-select:focus { border-color: var(--blue-primary); }
 }
 
 /* ===== LOGO SIZE ===== */
+/* No background/border/shadow "chip" here on purpose — just the raw
+   logo, sized consistently wherever it appears. */
 .brand-logo,
 .lp-brand-logo,
 .lp-footer-logo-box,
 .footer-logo-box {
   width: 46px !important;
   height: 46px !important;
-  border-radius: 12px !important;
-  background: rgba(255,255,255,0.12) !important;
-  border: 1.5px solid rgba(56,189,248,0.55) !important;
-  box-shadow: 0 0 0 3px rgba(56,189,248,0.12), 0 4px 14px rgba(0,0,0,0.40) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  overflow: hidden !important;
   flex-shrink: 0 !important;
 }
 .brand-logo img,

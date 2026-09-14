@@ -16,7 +16,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $recentTrainings = Training::with('trainer')
+        $recentTrainings = Training::with(['trainer', 'program'])
             ->withCount('participants as enrolled')
             ->orderByDesc('created_at')
             ->get();

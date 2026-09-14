@@ -22,13 +22,14 @@
 </div>
 @else
 <div class="card" style="padding:0;overflow:hidden">
+  <div class="table-wrap">
   <table class="data-table">
     <thead>
       <tr>
         <th style="width:32px"></th>
         <th>Name</th>
         <th>Email</th>
-        <th>Subject</th>
+        <th style="padding-right:28px">Subject</th>
         <th>Date</th>
         <th style="width:120px">Actions</th>
       </tr>
@@ -43,7 +44,7 @@
         </td>
         <td>{{ $msg->name }}</td>
         <td><a href="mailto:{{ $msg->email }}" style="color:var(--blue-primary)">{{ $msg->email }}</a></td>
-        <td>
+        <td style="padding-right:28px">
           <span style="cursor:pointer;color:var(--text-heading)" onclick="toggleMsg({{ $msg->id }})">
             {{ $msg->subject }}
           </span>
@@ -65,6 +66,7 @@
       @endforeach
     </tbody>
   </table>
+  </div>
 </div>
 @endif
 

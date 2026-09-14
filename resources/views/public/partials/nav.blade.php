@@ -18,9 +18,9 @@
 @php $navPrefix = $navPrefix ?? ''; @endphp
 @if($loggedIn)
   <div class="{{ $navPrefix }}nav-actions">
-    <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.85);display:inline-flex;align-items:center;gap:6px;white-space:nowrap">
-      <i class="fas fa-circle-user"></i> {{ $userName }}
-      <span style="color:rgba(255,255,255,.5);font-weight:500">({{ $roleLabel }})</span>
+    <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.85);display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:100%;min-width:0">
+      <i class="fas fa-circle-user"></i> <span style="min-width:0;overflow-wrap:anywhere">{{ $userName }}</span>
+      <span style="color:rgba(255,255,255,.5);font-weight:500;overflow-wrap:anywhere">({{ $roleLabel }})</span>
     </span>
     <a href="{{ $dashboardUrl }}" class="{{ $navPrefix }}btn-signup">
       <i class="fas fa-gauge"></i> Go to Dashboard

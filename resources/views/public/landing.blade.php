@@ -84,30 +84,20 @@
     .lp-brand { display: flex; align-items: center; gap: 12px; }
 
     /* ── LOGO CONTAINER — nav ── */
+    /* No background/border/shadow "chip" — just the raw logo. */
     .lp-brand-logo {
       width: 46px;
       height: 46px;
-      border-radius: 12px;
-      overflow: hidden;
-      /* Layered ring: accent colour outer → semi-transparent mid → transparent centre */
-      background: rgba(255,255,255,0.12);
-      border: 1.5px solid rgba(56,189,248,0.55);
-      box-shadow:
-        0 0 0 3px rgba(56,189,248,0.12),   /* accent halo */
-        0 4px 14px rgba(0,0,0,0.40);        /* depth */
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      padding: 3px;                          /* keeps image from touching the border */
     }
     .lp-brand-logo img {
       width: 100%;
       height: 100%;
       object-fit: contain;
       display: block;
-      /* gentle brightness boost so a dark-toned logo pops */
-      filter: brightness(1.15) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
     }
 
     .lp-brand-name { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -.4px; }
@@ -141,6 +131,19 @@
       font-family: 'Sora', sans-serif;
     }
     .lp-btn-signup:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(26,86,219,.6); }
+
+    /* ── MOBILE NAV TOGGLE ── */
+    .lp-nav-collapse { display: contents; }
+    .lp-hamburger {
+      display: none; flex-direction: column; justify-content: center; align-items: center;
+      gap: 5px; width: 40px; height: 40px; border-radius: var(--lp-rs);
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .lp-hamburger span { display: block; width: 20px; height: 2px; border-radius: 2px; background: #fff; transition: var(--lp-t); }
+    .lp-hamburger.lp-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .lp-hamburger.lp-open span:nth-child(2) { opacity: 0; }
+    .lp-hamburger.lp-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
     /* ── HERO ── */
     .lp-hero {
@@ -311,7 +314,7 @@
     /* ── TICKER ── */
     .lp-ticker {
       background: linear-gradient(90deg, var(--lp-blue), var(--lp-blue-b));
-      padding: 10px 0; overflow: hidden;
+      padding: 10px 0; overflow: hidden; contain: layout paint;
     }
     .lp-ticker-inner { display: flex; align-items: center; gap: 0; max-width: 1200px; margin: 0 auto; padding: 0 28px; }
     .lp-ticker-lbl {
@@ -323,11 +326,16 @@
     .lp-ticker-track {
       display: flex; gap: 48px; white-space: nowrap;
       animation: lpTick 30s linear infinite;
+      will-change: transform;
     }
     .lp-ticker-track:hover { animation-play-state: paused; }
     @keyframes lpTick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
     .lp-ticker-item { font-size: 13px; color: rgba(255,255,255,.9); display: flex; align-items: center; gap: 8px; }
     .lp-ticker-dot  { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.5); }
+    /* Respect reduced-motion preference — also cheaper on low-power mobile devices */
+    @media (prefers-reduced-motion: reduce) {
+      .lp-ticker-track { animation: none; }
+    }
 
     /* ── SECTION SHARED ── */
     .lp-section { padding: 88px 0; }
@@ -510,21 +518,14 @@
     .lp-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
 
     /* ── FOOTER BRAND LOGO ── */
+    /* No background/border/shadow "chip" — just the raw logo. */
     .lp-footer-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
     .lp-footer-logo-box {
       width: 46px;
       height: 46px;
-      border-radius: 12px;
-      overflow: hidden;
-      background: rgba(255,255,255,0.10);
-      border: 1.5px solid rgba(56,189,248,0.50);
-      box-shadow:
-        0 0 0 3px rgba(56,189,248,0.10),
-        0 4px 12px rgba(0,0,0,0.40);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 3px;
       flex-shrink: 0;
     }
     .lp-footer-logo-box img {
@@ -532,14 +533,13 @@
       height: 100%;
       object-fit: contain;
       display: block;
-      filter: brightness(1.15) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
     }
 
     .lp-footer-logo-name { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #fff; }
     .lp-footer-tagline { font-size: 13px; color: rgba(255,255,255,.4); line-height: 1.7; max-width: 280px; margin-bottom: 16px; }
     .lp-footer-contact { display: flex; flex-direction: column; gap: 8px; }
     .lp-footer-ci { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: rgba(255,255,255,.45); }
-    .lp-footer-ci i { font-size: 11px; color: var(--lp-accent); margin-top: 2px; flex-shrink: 0; }
+    .lp-footer-ci i { font-size: 11px; color: var(--lp-accent); margin-top: 2px; flex-shrink: 0; width: 14px; text-align: center; }
     .lp-footer-col-title { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700; color: rgba(255,255,255,.7); margin-bottom: 16px; text-transform: uppercase; letter-spacing: .6px; }
     .lp-footer-links { display: flex; flex-direction: column; gap: 9px; }
     .lp-footer-link { font-size: 13px; color: rgba(255,255,255,.4); transition: var(--lp-t); text-decoration: none; display: block; }
@@ -559,24 +559,31 @@
       display: flex;
       justify-content: center;
     }
-    .lp-vid-main { display: flex; flex-direction: column; width: 100%; max-width: 720px; }
+    /* The whole card — video + caption — is ONE rounded/bordered/shadowed
+       unit, so the two pieces read as a single connected component with
+       no seam between the video's bottom corners and the caption's top
+       corners. .lp-vid-frame and .lp-vid-caption themselves stay plain
+       rectangles (no radius/border/shadow of their own) and just stack
+       edge-to-edge inside it; this parent clips both to match. */
+    .lp-vid-main {
+      display: flex; flex-direction: column; width: 100%; max-width: 720px;
+      border-radius: 18px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.1);
+      box-shadow: 0 12px 48px rgba(0,0,0,.5);
+    }
     .lp-vid-frame {
       position: relative;
-      border-radius: 18px;
-      overflow: hidden;
       background: #000;
       aspect-ratio: 16/9;
-      box-shadow: 0 12px 48px rgba(0,0,0,.5);
     }
     .lp-vid-player {
       width: 100%; height: 100%;
-      display: block; object-fit: cover;
+      display: block; object-fit: cover; border: 0;
     }
     .lp-vid-placeholder {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       background: linear-gradient(145deg, var(--lp-navy-mid), var(--lp-navy-soft));
-      border-radius: 18px;
     }
     .lp-vid-placeholder.hidden { display: none; }
     .lp-vid-ph-inner { text-align: center; padding: 32px; }
@@ -601,8 +608,6 @@
       display: flex; align-items: center; gap: 10px;
       padding: 12px 16px;
       background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.1); border-top: none;
-      border-radius: 0 0 18px 18px;
     }
     .lp-vid-cap-tag {
       font-size: 10px; font-weight: 700; text-transform: uppercase;
@@ -611,6 +616,7 @@
       flex-shrink: 0;
     }
     .lp-vid-cap-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); }
+    .lp-vid-cta { text-align: center; margin-top: 40px; }
 
     /* ── COURSE CARDS ── */
     .lp-course-grid {
@@ -630,8 +636,12 @@
       box-shadow: 0 12px 40px rgba(0,0,0,.35);
     }
     .lp-cc-thumb {
-      height: 110px;
+      height: 110px; position: relative;
       display: flex; align-items: center; justify-content: center; font-size: 48px;
+    }
+    .lp-cc-thumb-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover; display: block;
     }
     .lp-cc-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
     .lp-cc-area { font-size: 14px; font-weight: 700; color: #fff; }
@@ -651,7 +661,21 @@
       .lp-about-visual { display: none; }
       .lp-footer-grid { grid-template-columns: 1fr 1fr; }
       .lp-sdg-grid    { grid-template-columns: 1fr; max-width: 360px; }
-      .lp-links       { display: none; }
+      .lp-hamburger   { display: flex; }
+      .lp-nav-collapse {
+        display: flex; flex-direction: column;
+        position: absolute; top: 100%; left: 0; right: 0;
+        background: rgba(9,24,47,.98); backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        padding: 8px 20px 20px; max-height: 0; overflow: hidden;
+        opacity: 0; visibility: hidden;
+        transition: max-height .3s ease, opacity .25s ease;
+      }
+      .lp-nav-collapse.lp-open { max-height: 480px; opacity: 1; visibility: visible; }
+      .lp-links       { flex-direction: column; align-items: stretch; gap: 2px; width: 100%; }
+      .lp-link        { padding: 12px 14px; }
+      .lp-nav-actions { flex-direction: column; align-items: stretch; gap: 8px; width: 100%; padding-top: 12px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,.08); }
+      .lp-btn-login, .lp-btn-signup { justify-content: center; width: 100%; }
     }
     @media (max-width: 600px) {
       .lp-train-grid  { grid-template-columns: 1fr; }
@@ -659,6 +683,17 @@
       .lp-footer-grid { grid-template-columns: 1fr; }
       .lp-contact-grid{ grid-template-columns: 1fr; }
       .lp-course-grid { grid-template-columns: 1fr; }
+      /* Latest ticker — smaller footprint + lighter scroll on phones */
+      .lp-ticker      { padding: 7px 0; }
+      .lp-ticker-inner{ padding: 0 16px; }
+      .lp-ticker-lbl  { font-size: 9.5px; padding: 3px 10px; margin-right: 10px; }
+      .lp-ticker-track{ gap: 26px; animation-duration: 20s; }
+      .lp-ticker-item { font-size: 11.5px; gap: 6px; }
+      .lp-ticker-dot  { width: 4px; height: 4px; }
+      /* Video montage — less dead space between the caption card and the
+         CTA button below it, and a shorter bottom pad on this section. */
+      #courses        { padding-bottom: 48px; }
+      .lp-vid-cta     { margin-top: 24px; }
     }
   </style>
 </head>
@@ -680,16 +715,23 @@
       </div>
     </div>
 
-    <!-- Nav links -->
-    <div class="lp-links">
-      <a href="{{ route('home') }}"             class="lp-link active">Home</a>
-      <a href="{{ route('about') }}"             class="lp-link">About</a>
-      <a href="{{ route('trainings-public') }}"  class="lp-link">Trainings</a>
-      <a href="{{ route('contact') }}"           class="lp-link">Contact</a>
+    <!-- Nav links + auth buttons (collapses into the mobile menu below 960px) -->
+    <div class="lp-nav-collapse" id="lpNavCollapse">
+      <div class="lp-links">
+        <a href="{{ route('home') }}"             class="lp-link active">Home</a>
+        <a href="{{ route('about') }}"             class="lp-link">About</a>
+        <a href="{{ route('trainings-public') }}"  class="lp-link">Trainings</a>
+        <a href="{{ route('contact') }}"           class="lp-link">Contact</a>
+      </div>
+
+      <!-- Auth buttons -->
+      @include('public.partials.nav', ['navPrefix' => 'lp-'])
     </div>
 
-    <!-- Auth buttons -->
-    @include('public.partials.nav', ['navPrefix' => 'lp-'])
+    <!-- Mobile menu toggle (tablet/mobile only) -->
+    <button type="button" class="lp-hamburger" id="lpHamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="lpNavCollapse">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
 
@@ -765,15 +807,29 @@
     @php
       $hasHomepageVideo = (bool) ($homepageVideo?->video_url);
       $homepageVideoTitle = $homepageVideo?->video_title ?: 'CIT Extension Training Highlights';
+      // Only YouTube/Vimeo/direct-file links can be embedded + autoplayed inline.
+      // Everything else (Google Drive, Facebook, Dropbox, ...) keeps the
+      // original "open in a new tab" placeholder below — a generic link
+      // can't be embedded or autoplayed.
+      $homepageEmbed = $homepageVideo?->embed();
     @endphp
     <div class="lp-vid-layout">
 
-      <!-- Main player — external link only (YouTube/Drive/Vimeo etc.), set
-           by the Extension Coordinator from the bottom of their Dashboard.
-           Not an embedded <video>: it just opens the link in a new tab,
-           same convention as every other external video link in this app. -->
+      <!-- Main player. When the EC-provided link is from a platform we can
+           embed (YouTube, Vimeo, direct video file), it plays inline —
+           muted autoplay, so every browser's autoplay policy allows it.
+           Any other link (Drive, Facebook, Dropbox, etc.) falls back to the
+           original click-through card that opens the link in a new tab. -->
       <div class="lp-vid-main">
-        @if($hasHomepageVideo)
+        @if($homepageEmbed)
+        <div class="lp-vid-frame">
+          @if($homepageEmbed['type'] === 'file')
+          <video class="lp-vid-player" src="{{ $homepageEmbed['src'] }}" autoplay muted loop playsinline aria-label="{{ $homepageVideoTitle }}"></video>
+          @else
+          <iframe class="lp-vid-player" src="{{ $homepageEmbed['src'] }}" title="{{ $homepageVideoTitle }}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          @endif
+        </div>
+        @elseif($hasHomepageVideo)
         <a href="{{ $homepageVideo->video_url }}" target="_blank" rel="noopener" class="lp-vid-frame" style="display:block">
           <div class="lp-vid-placeholder">
             <div class="lp-vid-ph-inner">
@@ -812,7 +868,7 @@
 
     </div><!-- /lp-vid-layout -->
 
-    <div style="text-align:center;margin-top:40px">
+    <div class="lp-vid-cta">
       <a href="{{ route('trainings-public') }}" class="lp-btn-hero-ghost" style="display:inline-flex">
         View All Training Programs <i class="fas fa-arrow-right" style="margin-left:8px"></i>
       </a>
@@ -840,7 +896,11 @@
     <div class="lp-course-grid">
 
       <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#F59E0B,#FBBF24)">🍳</div>
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#F59E0B,#FBBF24)">
+          @if($img = \App\Models\PageContent::get('training-categories', 'culinary_image'))
+            <img src="{{ $img }}" alt="Culinary Technology" class="lp-cc-thumb-img"/>
+          @endif
+        </div>
         <div class="lp-cc-body">
           <div class="lp-cc-area">Culinary Technology</div>
           <p class="lp-cc-desc">Professional food preparation, bakery, pastry arts, and kitchen management for employment or entrepreneurship.</p>
@@ -849,7 +909,11 @@
       </div>
 
       <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#6366F1,#818CF8)">💻</div>
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#6366F1,#818CF8)">
+          @if($img = \App\Models\PageContent::get('training-categories', 'computer_image'))
+            <img src="{{ $img }}" alt="Computer Technology" class="lp-cc-thumb-img"/>
+          @endif
+        </div>
         <div class="lp-cc-body">
           <div class="lp-cc-area">Computer Technology</div>
           <p class="lp-cc-desc">Digital literacy, basic programming, office productivity tools, and computer hardware servicing.</p>
@@ -858,7 +922,11 @@
       </div>
 
       <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#64748B,#94A3B8)">🔧</div>
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#64748B,#94A3B8)">
+          @if($img = \App\Models\PageContent::get('training-categories', 'automotive_image'))
+            <img src="{{ $img }}" alt="Automotive Technology" class="lp-cc-thumb-img"/>
+          @endif
+        </div>
         <div class="lp-cc-body">
           <div class="lp-cc-area">Automotive Technology</div>
           <p class="lp-cc-desc">Engine diagnostics, brake systems, preventive maintenance, and electrical repair for vehicles.</p>
@@ -867,7 +935,11 @@
       </div>
 
       <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#10B981,#34D399)">⚡</div>
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#10B981,#34D399)">
+          @if($img = \App\Models\PageContent::get('training-categories', 'electronics_image'))
+            <img src="{{ $img }}" alt="Electronics Technology" class="lp-cc-thumb-img"/>
+          @endif
+        </div>
         <div class="lp-cc-body">
           <div class="lp-cc-area">Electronics Technology</div>
           <p class="lp-cc-desc">Solar panel installation, consumer electronics repair, and electrical wiring for homes and small businesses.</p>
@@ -876,7 +948,11 @@
       </div>
 
       <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#EC4899,#F472B6)">🪡</div>
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#EC4899,#F472B6)">
+          @if($img = \App\Models\PageContent::get('training-categories', 'apparel_image'))
+            <img src="{{ $img }}" alt="Apparel & Fashion Technology" class="lp-cc-thumb-img"/>
+          @endif
+        </div>
         <div class="lp-cc-body">
           <div class="lp-cc-area">Apparel &amp; Fashion Technology</div>
           <p class="lp-cc-desc">Dressmaking, pattern-making, garment construction, and fashion design for local industry.</p>
@@ -885,7 +961,11 @@
       </div>
 
       <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#1A56DB,#3B82F6)">⚙️</div>
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#1A56DB,#3B82F6)">
+          @if($img = \App\Models\PageContent::get('training-categories', 'mechanical_image'))
+            <img src="{{ $img }}" alt="Mechanical Technology" class="lp-cc-thumb-img"/>
+          @endif
+        </div>
         <div class="lp-cc-body">
           <div class="lp-cc-area">Mechanical Technology</div>
           <p class="lp-cc-desc">Machining, welding, metal fabrication, and mechanical systems maintenance for industrial applications.</p>
@@ -894,7 +974,11 @@
       </div>
 
       <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)">🖨️</div>
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)">
+          @if($img = \App\Models\PageContent::get('training-categories', 'printmedia_image'))
+            <img src="{{ $img }}" alt="Print Media Technology" class="lp-cc-thumb-img"/>
+          @endif
+        </div>
         <div class="lp-cc-body">
           <div class="lp-cc-area">Print Media Technology</div>
           <p class="lp-cc-desc">Graphic design, desktop publishing, digital printing, and print production for media and business.</p>
@@ -903,7 +987,11 @@
       </div>
 
       <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#0EA5E9,#38BDF8)">🌐</div>
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#0EA5E9,#38BDF8)">
+          @if($img = \App\Models\PageContent::get('training-categories', 'it_image'))
+            <img src="{{ $img }}" alt="Information Technology" class="lp-cc-thumb-img"/>
+          @endif
+        </div>
         <div class="lp-cc-body">
           <div class="lp-cc-area">Information Technology</div>
           <p class="lp-cc-desc">Web development, systems analysis, network fundamentals, and IT support for the digital economy.</p>
@@ -960,8 +1048,6 @@
           <span class="lp-footer-link">Apparel and Fashion Technology</span>
           <span class="lp-footer-link">Print Media Technology</span>
           <span class="lp-footer-link">Information Technology</span>
-          <span class="lp-footer-link">Apparel &amp; Fashion</span>
-          <span class="lp-footer-link">General Programs</span>
         </div>
       </div>
 
@@ -988,8 +1074,6 @@
       </div>
       <div class="lp-footer-badges">
         <div class="lp-footer-badge">ISO/IEC 25010:2023</div>
-        <div class="lp-footer-badge">CHED Compliant</div>
-        <div class="lp-footer-badge">SDG Aligned</div>
       </div>
     </div>
   </div>
@@ -1003,6 +1087,21 @@
 window.addEventListener('scroll', () => {
   document.getElementById('lpNav').classList.toggle('scrolled', window.scrollY > 60);
 });
+
+/* ── Mobile nav toggle ── */
+(function () {
+  const btn = document.getElementById('lpHamburger');
+  const menu = document.getElementById('lpNavCollapse');
+  if (!btn || !menu) return;
+  const setOpen = (open) => {
+    menu.classList.toggle('lp-open', open);
+    btn.classList.toggle('lp-open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  btn.addEventListener('click', () => setOpen(!menu.classList.contains('lp-open')));
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+  window.addEventListener('resize', () => { if (window.innerWidth > 960) setOpen(false); });
+})();
 
 /* ── Smooth scroll for nav links ── */
 document.querySelectorAll('.lp-link, .lp-footer-link').forEach(a => {

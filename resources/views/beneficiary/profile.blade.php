@@ -147,9 +147,7 @@
             ['fa-map-marker-alt', $beneficiary->address ?? '—'],
             ['fa-user', $beneficiary->username ?? '—'],
           ] as [$icon, $val])
-          <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gray-700)">
-            <i class="fas {{ $icon }}" style="width:16px;color:var(--blue-primary)"></i> {{ $val }}
-          </div>
+          <div class="profile-info-row"><i class="fas {{ $icon }}"></i>{{ $val }}</div>
           @endforeach
         </div>
       </div>

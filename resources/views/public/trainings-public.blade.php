@@ -20,6 +20,21 @@
     'Mechanical Technology'          => ['#374151','#6B7280'],
     'Print Media Technology'         => ['#7C2D12','#C2410C'],
   ];
+
+  // Same EC-managed photo, per training area, shown on the landing page's
+  // Courses Offered cards — see config/page_content_sections.php
+  // ('training-categories'). Falls back to the colored gradient + icon
+  // below until EC uploads one for that area.
+  $catImageKeys = [
+    'Culinary Technology'            => 'culinary_image',
+    'Electronics Technology'         => 'electronics_image',
+    'Computer Technology'            => 'computer_image',
+    'Apparel and Fashion Technology' => 'apparel_image',
+    'Information Technology'         => 'it_image',
+    'Automotive Technology'          => 'automotive_image',
+    'Mechanical Technology'          => 'mechanical_image',
+    'Print Media Technology'         => 'printmedia_image',
+  ];
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -40,9 +55,7 @@
     .nav-inner{display:flex;align-items:center;justify-content:space-between;
                width:100%;max-width:1200px;margin:0 auto;padding:0 28px}
     .brand{display:flex;align-items:center;gap:12px}
-    .brand-logo{width:54px;height:54px;border-radius:12px;overflow:hidden;
-                background:#DBEAFE;
-                border:1.5px solid #93C5FD;
+    .brand-logo{width:54px;height:54px;
                 display:flex;align-items:center;justify-content:center;flex-shrink:0}
     .brand-logo img{width:46px;height:46px;object-fit:contain}
     .brand-name{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.4px}
@@ -62,6 +75,12 @@
                 box-shadow:0 2px 10px rgba(26,86,219,.45);transition:all .24s;
                 text-decoration:none;display:inline-flex;align-items:center;gap:7px}
     .btn-signup:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(26,86,219,.6)}
+    .nav-collapse{display:contents}
+    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);cursor:pointer;flex-shrink:0}
+    .hamburger span{display:block;width:20px;height:2px;border-radius:2px;background:#fff;transition:all .24s}
+    .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger.open span:nth-child(2){opacity:0}
+    .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
     .hero{padding:120px 0 64px;
           background:linear-gradient(135deg,#09182F 0%,#102545 50%,#1A3A72 100%);
           text-align:center}
@@ -94,6 +113,7 @@
               background:rgba(255,255,255,.92);color:#09182F;
               font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.3px}
     .card-em{position:relative;z-index:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+    .card-img-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
     .card-body{padding:20px;flex:1;display:flex;flex-direction:column;gap:10px}
     .card-title{font-size:16px;font-weight:700;color:#09182F;line-height:1.35}
     .card-desc{font-size:13px;color:#64748B;line-height:1.65;flex:1}
@@ -116,15 +136,14 @@
     .container{max-width:1200px;margin:0 auto;padding:0 28px}
     .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
     .footer-logo{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-    .footer-logo-box{width:50px;height:50px;border-radius:12px;overflow:hidden;
-                     background:#DBEAFE;
-                     border:1.5px solid #93C5FD;
+    .footer-logo-box{width:50px;height:50px;
                      display:flex;align-items:center;justify-content:center}
     .footer-logo-box img{width:44px;height:44px;object-fit:contain}
     .footer-logo-name{font-size:18px;font-weight:800;color:#fff}
     .footer-tagline{font-size:13px;color:rgba(255,255,255,.4);line-height:1.7;max-width:280px;margin-bottom:16px}
-    .footer-ci{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:rgba(255,255,255,.45);margin-bottom:6px}
-    .footer-ci i{font-size:11px;color:#38BDF8;margin-top:2px;flex-shrink:0}
+    .footer-contact{display:flex;flex-direction:column;gap:8px}
+    .footer-ci{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:rgba(255,255,255,.45)}
+    .footer-ci i{font-size:11px;color:#38BDF8;margin-top:2px;flex-shrink:0;width:14px;text-align:center}
     .footer-col-title{font-size:13px;font-weight:700;color:rgba(255,255,255,.7);
                       margin-bottom:16px;text-transform:uppercase;letter-spacing:.6px}
     .footer-links{display:flex;flex-direction:column;gap:9px}
@@ -136,7 +155,16 @@
     .footer-badges{display:flex;gap:8px}
     .footer-badge{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);
                   border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:20px}
-    @media(max-width:960px){.footer-grid{grid-template-columns:1fr 1fr}.nav-links{display:none}}
+    @media(max-width:960px){
+      .footer-grid{grid-template-columns:1fr 1fr}
+      .hamburger{display:flex}
+      .nav-collapse{display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:rgba(9,24,47,.98);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.08);padding:8px 20px 20px;max-height:0;overflow:hidden;opacity:0;visibility:hidden;transition:max-height .3s ease,opacity .25s ease}
+      .nav-collapse.open{max-height:480px;opacity:1;visibility:visible}
+      .nav-links{flex-direction:column;align-items:stretch;gap:2px;width:100%}
+      .nav-link{padding:12px 14px}
+      .nav-actions{flex-direction:column;align-items:stretch;gap:8px;width:100%;padding-top:12px;margin-top:8px;border-top:1px solid rgba(255,255,255,.08)}
+      .btn-login,.btn-signup{justify-content:center;width:100%}
+    }
     @media(max-width:600px){.footer-grid{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
   </style>
 </head>
@@ -154,13 +182,18 @@
         <div class="brand-sub">CIT &middot; SLSU</div>
       </div>
     </div>
-    <div class="nav-links">
-      <a href="{{ route('home') }}"            class="nav-link">Home</a>
-      <a href="{{ route('about') }}"            class="nav-link">About</a>
-      <a href="{{ route('trainings-public') }}" class="nav-link active">Trainings</a>
-      <a href="{{ route('contact') }}"          class="nav-link">Contact</a>
+    <div class="nav-collapse" id="navCollapse">
+      <div class="nav-links">
+        <a href="{{ route('home') }}"            class="nav-link">Home</a>
+        <a href="{{ route('about') }}"            class="nav-link">About</a>
+        <a href="{{ route('trainings-public') }}" class="nav-link active">Trainings</a>
+        <a href="{{ route('contact') }}"          class="nav-link">Contact</a>
+      </div>
+      @include('public.partials.nav')
     </div>
-    @include('public.partials.nav')
+    <button type="button" class="hamburger" id="navHamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navCollapse">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
 
@@ -196,11 +229,17 @@
         $c = $catColors[$p['cat']] ?? ['#1A56DB','#2E6BF0'];
         $grad = "linear-gradient(135deg,{$c[0]},{$c[1]})";
         $badgeClass = 'badge-'.strtolower($p['status']);
+        $catImgKey = $catImageKeys[$p['cat']] ?? null;
+        $catImg = $catImgKey ? \App\Models\PageContent::get('training-categories', $catImgKey) : null;
       @endphp
       <div class="card" data-status="{{ $p['status'] }}">
         <div class="card-img" style="background:{{ $grad }}">
           <div class="card-cat">{{ $p['cat'] }}</div>
-          <div class="card-em"><i class="fas {{ $p['emoji'] }}" style="color:#fff"></i></div>
+          @if($catImg)
+            <img src="{{ $catImg }}" alt="{{ $p['cat'] }}" class="card-img-photo"/>
+          @else
+            <div class="card-em"><i class="fas {{ $p['emoji'] }}" style="color:#fff"></i></div>
+          @endif
         </div>
         <div class="card-body">
           <div class="card-title">{{ $p['title'] }}</div>
@@ -237,17 +276,19 @@
           <div class="footer-logo-name">PAThrive</div>
         </div>
         <p class="footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University') }}</p>
-        <div class="footer-ci"><i class="fas fa-location-dot"></i>{{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
-        <div class="footer-ci"><i class="fas fa-envelope"></i>{{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
-        <div class="footer-ci"><i class="fas fa-phone"></i>{{ \App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX') }}</div>
+        <div class="footer-contact">
+          <div class="footer-ci"><i class="fas fa-location-dot"></i> {{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
+          <div class="footer-ci"><i class="fas fa-envelope"></i> {{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
+          <div class="footer-ci"><i class="fas fa-phone"></i> {{ \App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX') }}</div>
+        </div>
       </div>
       <div>
-        <div class="footer-col-title">Pages</div>
+        <div class="footer-col-title">Quick Links</div>
         <div class="footer-links">
-          <a href="{{ route('home') }}"            class="footer-link">Home</a>
-          <a href="{{ route('about') }}"            class="footer-link">About</a>
-          <a href="{{ route('trainings-public') }}" class="footer-link">Training Programs</a>
-          <a href="{{ route('contact') }}"          class="footer-link">Contact Us</a>
+          <a href="{{ route('home') }}"             class="footer-link">Home</a>
+          <a href="{{ route('about') }}"             class="footer-link">About PAThrive</a>
+          <a href="{{ route('trainings-public') }}"  class="footer-link">Training Programs</a>
+          <a href="{{ route('contact') }}"           class="footer-link">Contact Us</a>
         </div>
       </div>
       <div>
@@ -270,7 +311,7 @@
             <a href="{{ $dashboardUrl }}" class="footer-link">Go to Dashboard</a>
           @else
             <a href="{{ route('login') }}"       class="footer-link">Log In to System</a>
-            <a href="{{ route('choose-role') }}" class="footer-link">Sign Up</a>
+            <a href="{{ route('choose-role') }}" class="footer-link">Register as Participant</a>
           @endif
           <a href="{{ route('terms') }}"       class="footer-link">Terms of Use</a>
           <a href="{{ route('privacy') }}"     class="footer-link">Privacy Policy</a>
@@ -280,8 +321,7 @@
     <div class="footer-bottom">
       <div class="footer-copy">&copy; {{ now()->year }} PAThrive – SLSU College of Industrial Technology. All rights reserved.</div>
       <div class="footer-badges">
-        <div class="footer-badge">CHED Compliant</div>
-        <div class="footer-badge">SDG Aligned</div>
+        <div class="footer-badge">ISO/IEC 25010:2023</div>
       </div>
     </div>
   </div>
@@ -291,6 +331,20 @@
 window.addEventListener('scroll', () => {
   document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 60);
 });
+
+(function () {
+  const btn = document.getElementById('navHamburger');
+  const menu = document.getElementById('navCollapse');
+  if (!btn || !menu) return;
+  const setOpen = (open) => {
+    menu.classList.toggle('open', open);
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  btn.addEventListener('click', () => setOpen(!menu.classList.contains('open')));
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+  window.addEventListener('resize', () => { if (window.innerWidth > 960) setOpen(false); });
+})();
 
 function filter(el, status) {
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));

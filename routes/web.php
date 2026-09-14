@@ -140,6 +140,7 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
 
         Route::get('/messages.php', [EcMessageController::class, 'index'])->name('messages');
         Route::get('/notifications.php', [EcNotificationController::class, 'index'])->name('notifications');
+        Route::get('/notifications.php/{id}/open', [EcNotificationController::class, 'open'])->name('notifications.open');
 
         Route::get('/profile.php', [EcProfileController::class, 'show'])->name('profile');
         Route::post('/profile.php', [EcProfileController::class, 'update'])->name('profile.update');
@@ -206,9 +207,11 @@ Route::middleware(['auth:web', 'role:trainer', 'no-back-cache'])
         Route::get('/skills.php', [TrainerSkillsController::class, 'index'])->name('skills');
         Route::post('/skills.php', [TrainerSkillsController::class, 'store'])->name('skills.store');
         Route::get('/evaluations.php', [TrainerEvaluationController::class, 'index'])->name('evaluations');
+        Route::post('/evaluations.php', [TrainerEvaluationController::class, 'store'])->name('evaluations.store');
         Route::get('/documents.php', [TrainerDocumentController::class, 'index'])->name('documents');
         Route::post('/documents.php', [TrainerDocumentController::class, 'store'])->name('documents.store');
         Route::get('/notifications.php', [TrainerNotificationController::class, 'index'])->name('notifications');
+        Route::get('/notifications.php/{id}/open', [TrainerNotificationController::class, 'open'])->name('notifications.open');
         Route::get('/profile.php', [TrainerProfileController::class, 'show'])->name('profile');
         Route::post('/profile.php', [TrainerProfileController::class, 'update'])->name('profile.update');
     });

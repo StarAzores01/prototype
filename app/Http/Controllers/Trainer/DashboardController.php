@@ -24,7 +24,8 @@ class DashboardController extends Controller
 
         $docsUploaded = Document::where('uploaded_by', $trainerId)->count();
 
-        $myTrainings = Training::withCount('participants as enrolled')
+        $myTrainings = Training::with('program')
+            ->withCount('participants as enrolled')
             ->visibleToTrainer($trainerId)
             ->orderByDesc('date_start')
             ->get();

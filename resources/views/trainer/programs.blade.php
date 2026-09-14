@@ -23,7 +23,7 @@
     <h1>{{ $viewProgram->title }}</h1>
     <p>{{ $viewProgram->area }}</p>
   </div>
-  <div style="display:flex;gap:10px">
+  <div class="page-header-actions">
     <a href="{{ route('trainer.programs') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
     @if($isLead)
     <button class="btn btn-outline" onclick="openModal('manageTeam')"><i class="fas fa-users-gear"></i> Manage Team</button>
@@ -36,6 +36,27 @@
   <i class="fas fa-circle-info"></i> You're a team member on this program, not the Project Lead — you can view everything here and add activities/documents, but only the Project Lead can change status or manage the team.
 </div>
 @endif
+
+<!-- Program Cover Image — lead or member may both change it; same
+     cover_image column EC's own "Change Cover" writes to, so whoever
+     uploads it, it's the one picture shown everywhere this program's
+     card appears. -->
+<div class="card" style="margin-bottom:24px;overflow:hidden;padding:0">
+  <div style="position:relative;height:220px">
+    @if($viewProgram->cover_image)
+      <img src="{{ route('files.program-cover', $viewProgram) }}" alt="{{ $viewProgram->title }}" style="width:100%;height:100%;object-fit:cover;display:block"/>
+    @else
+      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
+        <i class="fas {{ \App\Support\TrainingCategoryIcon::icon($viewProgram->area) }}" style="font-size:64px;color:rgba(255,255,255,.85)"></i>
+      </div>
+    @endif
+    <div style="position:absolute;bottom:12px;right:12px;display:flex;gap:8px">
+      <button class="btn btn-sm btn-outline" style="background:rgba(255,255,255,.94)" onclick="openModal('uploadProgramCover')">
+        <i class="fas fa-camera"></i> Change Cover
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Info Cards -->
 <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:24px">
@@ -102,7 +123,7 @@
       <div class="card-subtitle">Activity completion and budget utilization across the whole program</div>
     </div>
   </div>
-  <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:28px">
+  <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px">
 
     <!-- Activity completion -->
     <div>
@@ -153,7 +174,7 @@
       <div class="card-header"><div class="card-title"><i class="fas fa-circle" style="font-size:6px"></i> Description</div></div>
       <div class="card-body">
         @if($viewProgram->description)
-          <p style="font-size:14px;color:var(--gray-700);line-height:1.8">{!! nl2br(e($viewProgram->description)) !!}</p>
+          <p style="font-size:14px;color:var(--gray-700);line-height:1.8;overflow-wrap:anywhere">{!! nl2br(e($viewProgram->description)) !!}</p>
         @else
           <p style="color:var(--gray-400);font-size:13px">No description provided.</p>
         @endif
@@ -245,8 +266,8 @@
           ];
         @endphp
         @foreach($details as [$label, $val])
-        <div style="display:flex;align-items:flex-start;gap:12px">
-          <div><div style="font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.4px">{{ $label }}</div><div style="font-size:13px;color:var(--gray-800);font-weight:500;margin-top:2px">{!! $val !!}</div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px;min-width:0">
+          <div style="min-width:0"><div style="font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.4px">{{ $label }}</div><div style="font-size:13px;color:var(--gray-800);font-weight:500;margin-top:2px;overflow-wrap:anywhere">{!! $val !!}</div></div>
         </div>
         @endforeach
       </div>
@@ -371,6 +392,32 @@
   </div>
 </div>
 
+<!-- MODAL: CHANGE PROGRAM COVER IMAGE -->
+<div class="modal-overlay" id="modal-uploadProgramCover">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h2><i class="fas fa-camera"></i> Change Program Cover</h2>
+      <button class="modal-close" onclick="closeModal('uploadProgramCover')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('trainer.programs.store') }}" enctype="multipart/form-data">
+      @csrf
+      <input type="hidden" name="action" value="upload_cover"/>
+      <input type="hidden" name="program_id" value="{{ $viewProgram->id }}"/>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Cover Image <span style="color:var(--red)">*</span></label>
+          <input type="file" name="cover_image" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" required/>
+          <div class="form-hint">JPG, PNG, GIF, or WEBP — max 5 MB</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('uploadProgramCover')">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="pathriveRequestImageUpload(this.form, { title: 'Upload this cover image?' })"><i class="fas fa-check"></i> Save Cover</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 @else
 {{-- ═══════════════════════════════════════════════════════ CARD GRID VIEW ════ --}}
 <div class="page-header">
@@ -385,39 +432,52 @@
 @if($programs->isEmpty())
 <div class="empty-state"><i class="fas fa-diagram-project"></i><p>You're not on any program's team yet. <a href="#" onclick="openModal('addProgram')">Create one.</a></p></div>
 @else
-<div class="home-grid">
-  @foreach($programs as $p)
-    @php
-      $pr = \App\Http\Controllers\Trainer\ProgramController::rollup($p);
-      $icon = \App\Support\TrainingCategoryIcon::icon($p->area);
-    @endphp
-    <div class="training-card">
-      <div class="training-card-img" style="background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
-        <div class="training-card-cat">{{ $p->area }}</div>
-        <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
-      </div>
-      <div class="training-card-body">
-        <div class="training-card-title">{{ $p->title }}</div>
-        <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, '…') }}</div>
-        <div class="training-card-meta">
-          <span><i class="fas fa-user-tie"></i> {{ optional($p->lead->first())->full_name ?? 'No lead' }}</span>
-          <span><i class="fas fa-book"></i> {{ $pr['completed'] }}/{{ $pr['total'] }} done</span>
-        </div>
-        <div style="background:var(--gray-100);border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px">
-          <div style="height:100%;border-radius:8px;width:{{ $pr['progressPct'] }}%;background:{{ $pr['progressPct'] >= 100 ? '#10B981' : '#1A56DB' }}"></div>
-        </div>
-        <div style="font-size:11.5px;color:var(--gray-500);margin-bottom:12px">
-          Remaining: <strong style="color:{{ $pr['budgetRemain'] < 0 ? '#EF4444' : 'var(--gray-800)' }}">&#8369;{{ number_format($pr['budgetRemain'], 2) }}</strong>
-          of &#8369;{{ number_format($pr['budgetAlloc'], 2) }}
-        </div>
-        <div class="training-card-footer">
-          <span class="badge badge-{{ strtolower($p->status) }}">{{ $p->status }}</span>
-          <a href="{{ route('trainer.programs') }}?view={{ $p->id }}" class="btn btn-sm btn-primary">View Details</a>
-        </div>
-      </div>
+@foreach($programsByArea as $area => $areaPrograms)
+  <div class="card-group">
+    <div class="card-group-header">
+      <div class="card-group-title"><i class="fas fa-layer-group"></i> {{ $area }}</div>
+      <span class="card-group-count">{{ $areaPrograms->count() }} {{ \Illuminate\Support\Str::plural('project', $areaPrograms->count()) }}</span>
     </div>
-  @endforeach
-</div>
+    <div class="home-grid home-grid-grouped">
+      @foreach($areaPrograms as $p)
+        @php
+          $pr = \App\Http\Controllers\Trainer\ProgramController::rollup($p);
+          $icon = \App\Support\TrainingCategoryIcon::icon($p->area);
+        @endphp
+        <div class="training-card">
+          <div class="training-card-img" style="background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
+            @if($p->cover_image)
+              <img src="{{ route('files.program-cover', $p) }}" alt="{{ $p->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
+            @endif
+            <div class="training-card-cat" style="z-index:2;position:relative">{{ $p->area }}</div>
+            @if(!$p->cover_image)
+              <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+            @endif
+          </div>
+          <div class="training-card-body">
+            <div class="training-card-title">{{ $p->title }}</div>
+            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, '…') }}</div>
+            <div class="training-card-meta">
+              <span><i class="fas fa-user-tie"></i> {{ optional($p->lead->first())->full_name ?? 'No lead' }}</span>
+              <span><i class="fas fa-book"></i> {{ $pr['completed'] }}/{{ $pr['total'] }} done</span>
+            </div>
+            <div style="background:var(--gray-100);border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px">
+              <div style="height:100%;border-radius:8px;width:{{ $pr['progressPct'] }}%;background:{{ $pr['progressPct'] >= 100 ? '#10B981' : '#1A56DB' }}"></div>
+            </div>
+            <div style="font-size:11.5px;color:var(--gray-500);margin-bottom:12px">
+              Remaining: <strong style="color:{{ $pr['budgetRemain'] < 0 ? '#EF4444' : 'var(--gray-800)' }}">&#8369;{{ number_format($pr['budgetRemain'], 2) }}</strong>
+              of &#8369;{{ number_format($pr['budgetAlloc'], 2) }}
+            </div>
+            <div class="training-card-footer">
+              <span class="badge badge-{{ strtolower($p->status) }}">{{ $p->status }}</span>
+              <a href="{{ route('trainer.programs') }}?view={{ $p->id }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+          </div>
+        </div>
+      @endforeach
+    </div>
+  </div>
+@endforeach
 @endif
 
 <!-- MODAL: CREATE PROGRAM — no lead_id field: the creating trainer is

@@ -8,7 +8,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet"/>
   <style>
-    body { font-family:'Poppins',sans-serif; margin:0; background:#F0F6FF; color:#334155; }
+    body { font-family:'Poppins',sans-serif; margin:0; background:#F0F6FF; color:#334155; overflow-x:hidden; }
     .lp-nav { position:fixed;top:0;left:0;right:0;z-index:500;height:68px;background:rgba(9,24,47,.96);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;transition:all .24s; }
     .lp-nav.scrolled { background:rgba(9,24,47,.99);box-shadow:0 4px 24px rgba(0,0,0,.3); }
     .lp-nav-inner { display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1200px;margin:0 auto;padding:0 28px; }
@@ -25,6 +25,12 @@
     .lp-btn-login:hover { background:rgba(255,255,255,.15);color:#fff; }
     .lp-btn-signup { padding:8px 20px;border-radius:8px;font-size:13.5px;font-weight:700;background:linear-gradient(135deg,#1A56DB,#2E6BF0);color:#fff;box-shadow:0 2px 10px rgba(26,86,219,.45);transition:all .24s;text-decoration:none;display:inline-flex;align-items:center;gap:7px; }
     .lp-btn-signup:hover { transform:translateY(-1px);box-shadow:0 4px 18px rgba(26,86,219,.6); }
+    .lp-nav-collapse { display:contents; }
+    .lp-hamburger { display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);cursor:pointer;flex-shrink:0; }
+    .lp-hamburger span { display:block;width:20px;height:2px;border-radius:2px;background:#fff;transition:all .24s; }
+    .lp-hamburger.lp-open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+    .lp-hamburger.lp-open span:nth-child(2) { opacity:0; }
+    .lp-hamburger.lp-open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
     .page-hero { padding:120px 0 60px;background:linear-gradient(135deg,#09182F,#102545,#1A3A72);text-align:center; }
     .eyebrow { display:inline-flex;align-items:center;gap:8px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.25);color:#38BDF8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;padding:5px 14px;border-radius:40px;margin-bottom:20px; }
     .sec-badge { display:inline-flex;align-items:center;gap:8px;background:rgba(26,86,219,.08);color:#1A56DB;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;padding:5px 14px;border-radius:40px;border:1px solid rgba(26,86,219,.15);margin-bottom:14px; }
@@ -33,6 +39,17 @@
     .feature-ico { width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
     .card-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px; }
     .info-card { background:#fff;border-radius:14px;padding:24px;border:1px solid #EEF2F7;box-shadow:0 2px 8px rgba(9,24,47,.06); }
+    /* "What is PAThrive?" and "About the College" both pair a text column
+       with card content side by side — fine at desktop width, but with no
+       override they never dropped below full desktop width, forcing this
+       whole page wider than the viewport on mobile (which is also why the
+       hero above them looked like it was overflowing/off-center). */
+    @media(max-width:860px){
+      .about-grid-2col, .about-cit-grid { grid-template-columns:1fr !important; gap:32px !important; }
+    }
+    @media(max-width:600px){
+      .about-info-cards { grid-template-columns:1fr !important; }
+    }
     .lp-footer { background:#05101F;padding:52px 0 28px; }
     .lp-container { max-width:1200px;margin:0 auto;padding:0 28px; }
     .lp-footer-grid { display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px; }
@@ -43,7 +60,7 @@
     .lp-footer-tagline { font-size:13px;color:rgba(255,255,255,.4);line-height:1.7;max-width:280px;margin-bottom:16px; }
     .lp-footer-contact { display:flex;flex-direction:column;gap:8px; }
     .lp-footer-ci { display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:rgba(255,255,255,.45); }
-    .lp-footer-ci i { font-size:11px;color:#38BDF8;margin-top:2px;flex-shrink:0; }
+    .lp-footer-ci i { font-size:11px;color:#38BDF8;margin-top:2px;flex-shrink:0;width:14px;text-align:center; }
     .lp-footer-col-title { font-size:13px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:16px;text-transform:uppercase;letter-spacing:.6px; }
     .lp-footer-links { display:flex;flex-direction:column;gap:9px; }
     .lp-footer-link { font-size:13px;color:rgba(255,255,255,.4);transition:all .24s;text-decoration:none;display:block; }
@@ -52,7 +69,16 @@
     .lp-footer-copy { font-size:12px;color:rgba(255,255,255,.3); }
     .lp-footer-badges { display:flex;gap:8px; }
     .lp-footer-badge { font-size:10px;font-weight:600;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:20px; }
-    @media(max-width:960px){ .lp-footer-grid{grid-template-columns:1fr 1fr;} .lp-links{display:none;} }
+    @media(max-width:960px){
+      .lp-footer-grid{grid-template-columns:1fr 1fr;}
+      .lp-hamburger{display:flex;}
+      .lp-nav-collapse{display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:rgba(9,24,47,.98);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.08);padding:8px 20px 20px;max-height:0;overflow:hidden;opacity:0;visibility:hidden;transition:max-height .3s ease,opacity .25s ease;}
+      .lp-nav-collapse.lp-open{max-height:480px;opacity:1;visibility:visible;}
+      .lp-links{flex-direction:column;align-items:stretch;gap:2px;width:100%;}
+      .lp-link{padding:12px 14px;}
+      .lp-nav-actions{flex-direction:column;align-items:stretch;gap:8px;width:100%;padding-top:12px;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);}
+      .lp-btn-login,.lp-btn-signup{justify-content:center;width:100%;}
+    }
     @media(max-width:600px){ .lp-footer-grid{grid-template-columns:1fr;} }
   </style>
 </head>
@@ -70,13 +96,18 @@
         <div class="lp-brand-sub">CIT &middot; SLSU</div>
       </div>
     </div>
-    <div class="lp-links">
-      <a href="{{ route('home') }}"            class="lp-link">Home</a>
-      <a href="{{ route('about') }}"            class="lp-link active">About</a>
-      <a href="{{ route('trainings-public') }}" class="lp-link">Trainings</a>
-      <a href="{{ route('contact') }}"          class="lp-link">Contact</a>
+    <div class="lp-nav-collapse" id="lpNavCollapse">
+      <div class="lp-links">
+        <a href="{{ route('home') }}"            class="lp-link">Home</a>
+        <a href="{{ route('about') }}"            class="lp-link active">About</a>
+        <a href="{{ route('trainings-public') }}" class="lp-link">Trainings</a>
+        <a href="{{ route('contact') }}"          class="lp-link">Contact</a>
+      </div>
+      @include('public.partials.nav', ['navPrefix' => 'lp-'])
     </div>
-    @include('public.partials.nav', ['navPrefix' => 'lp-'])
+    <button type="button" class="lp-hamburger" id="lpHamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="lpNavCollapse">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
 
@@ -91,7 +122,7 @@
 
 <!-- WHAT IS PATHRIVE -->
 <section style="padding:80px 0;background:#fff">
-  <div style="max-width:1100px;margin:0 auto;padding:0 28px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
+  <div class="about-grid-2col" style="max-width:1100px;margin:0 auto;padding:0 28px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
     <div>
       <div class="sec-badge">{{ \App\Models\PageContent::get('about', 'system_badge', 'The System') }}</div>
       <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:16px;line-height:1.2">{{ \App\Models\PageContent::get('about', 'system_title', 'What is PAThrive?') }}</h2>
@@ -132,7 +163,7 @@
         {{ \App\Models\PageContent::get('about', 'college_desc', 'The CIT of Southern Luzon State University provides technical and vocational education that prepares individuals for industry, employment, and entrepreneurship.') }}
       </p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start">
+    <div class="about-cit-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start">
       <div>
         @php
           $collegeBodyDefault = '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">The <strong>College of Industrial Technology (CIT)</strong> offers various specialization areas such as Culinary Technology, Apparel and Fashion Technology, Computer Technology, Information Technology, Electronics Technology, Automotive Technology, Mechanical Technology, and Print Media Technology.</p>'
@@ -141,7 +172,7 @@
         @endphp
         {!! \App\Models\PageContent::get('about', 'college_body', $collegeBodyDefault) !!}
       </div>
-      <div class="card-grid" style="grid-template-columns:1fr 1fr">
+      <div class="card-grid about-info-cards" style="grid-template-columns:1fr 1fr">
         @foreach ([
           ['fa-graduation-cap','Technical & Vocational Education','Offering 8 specialization areas aligned with industry needs.'],
           ['fa-screwdriver-wrench','Hands-On Training','Combining theory with practical skills for workforce readiness.'],
@@ -203,12 +234,12 @@
         </div>
       </div>
       <div>
-        <div class="lp-footer-col-title">Pages</div>
+        <div class="lp-footer-col-title">Quick Links</div>
         <div class="lp-footer-links">
-          <a href="{{ route('home') }}"            class="lp-footer-link">Home</a>
-          <a href="{{ route('about') }}"            class="lp-footer-link">About</a>
-          <a href="{{ route('trainings-public') }}" class="lp-footer-link">Training Programs</a>
-          <a href="{{ route('contact') }}"          class="lp-footer-link">Contact Us</a>
+          <a href="{{ route('home') }}"             class="lp-footer-link">Home</a>
+          <a href="{{ route('about') }}"             class="lp-footer-link">About PAThrive</a>
+          <a href="{{ route('trainings-public') }}"  class="lp-footer-link">Training Programs</a>
+          <a href="{{ route('contact') }}"           class="lp-footer-link">Contact Us</a>
         </div>
       </div>
       <div>
@@ -231,7 +262,7 @@
             <a href="{{ $dashboardUrl }}" class="lp-footer-link">Go to Dashboard</a>
           @else
             <a href="{{ route('login') }}"       class="lp-footer-link">Log In to System</a>
-            <a href="{{ route('choose-role') }}" class="lp-footer-link">Sign Up</a>
+            <a href="{{ route('choose-role') }}" class="lp-footer-link">Register as Participant</a>
           @endif
           <a href="{{ route('terms') }}"       class="lp-footer-link">Terms of Use</a>
           <a href="{{ route('privacy') }}"     class="lp-footer-link">Privacy Policy</a>
@@ -241,8 +272,7 @@
     <div class="lp-footer-bottom">
       <div class="lp-footer-copy">&copy; {{ now()->year }} PAThrive – SLSU College of Industrial Technology. All rights reserved.</div>
       <div class="lp-footer-badges">
-        <div class="lp-footer-badge">CHED Compliant</div>
-        <div class="lp-footer-badge">SDG Aligned</div>
+        <div class="lp-footer-badge">ISO/IEC 25010:2023</div>
       </div>
     </div>
   </div>
@@ -252,6 +282,20 @@
 window.addEventListener('scroll', () => {
   document.getElementById('lpNav').classList.toggle('scrolled', window.scrollY > 60);
 });
+
+(function () {
+  const btn = document.getElementById('lpHamburger');
+  const menu = document.getElementById('lpNavCollapse');
+  if (!btn || !menu) return;
+  const setOpen = (open) => {
+    menu.classList.toggle('lp-open', open);
+    btn.classList.toggle('lp-open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  btn.addEventListener('click', () => setOpen(!menu.classList.contains('lp-open')));
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+  window.addEventListener('resize', () => { if (window.innerWidth > 960) setOpen(false); });
+})();
 </script>
 </body>
 </html>

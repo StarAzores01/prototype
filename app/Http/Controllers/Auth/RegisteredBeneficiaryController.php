@@ -38,6 +38,7 @@ class RegisteredBeneficiaryController extends Controller
             'sex'         => ['nullable', Rule::in(['Male', 'Female', 'Other'])],
             'password'    => 'required|string|min:8',
             'password2'   => 'required|same:password',
+            'agree'       => 'required',
         ])->validate();
 
         $fullName = trim($data['first_name'].' '.$data['last_name']);

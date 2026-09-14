@@ -10,62 +10,17 @@
   <button class="btn btn-primary" onclick="openModal('addEvaluator')"><i class="fas fa-plus"></i> Add Evaluator</button>
 </div>
 
-<!-- Registered Evaluators -->
+<!-- Whitelist (Approved List) — shown first, matching the Project Leaders page's
+     established order: the approved/pre-registration list before the registered one. -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
-    <div class="card-title"><i class="fas fa-user"></i> Registered Evaluators</div>
-    <form method="GET" action="{{ route('ec.evaluators') }}" style="display:flex;gap:8px">
-      <input type="text" name="q" class="form-control" placeholder="Search..." value="{{ $q }}" style="width:220px"/>
-      <button type="submit" class="btn btn-outline btn-sm"><i class="fas fa-magnifying-glass"></i></button>
-      @if($q)<a href="{{ route('ec.evaluators') }}" class="btn btn-outline btn-sm"><i class="fas fa-xmark"></i></a>@endif
-    </form>
-  </div>
-  <div class="card-body" style="padding:0">
-    @if($evaluators->isEmpty())
-    <div style="padding:32px;text-align:center;color:var(--gray-400)">No registered evaluators yet.</div>
-    @else
-    <table class="data-table">
-      <thead><tr><th>Name</th><th>ID</th><th>Department</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody>
-        @foreach($evaluators as $ev)
-        <tr>
-          <td style="font-weight:600">{{ $ev->first_name }} {{ $ev->last_name }}</td>
-          <td><code>{{ $ev->id_number }}</code></td>
-          <td>{{ $ev->department }}</td>
-          <td>{{ $ev->email }}</td>
-          <td>
-            <span class="badge {{ $ev->is_active ? 'badge-success' : 'badge-danger' }}">
-              {{ $ev->is_active ? 'Active' : 'Inactive' }}
-            </span>
-          </td>
-          <td style="display:flex;gap:6px">
-            <button class="btn btn-outline btn-sm" onclick="openEditModal({{ $ev->toJson() }})"><i class="fas fa-pen"></i> Edit</button>
-            <form method="POST" action="{{ route('ec.evaluators.store') }}" style="display:inline">
-              @csrf
-              <input type="hidden" name="action" value="toggle"/>
-              <input type="hidden" name="user_id" value="{{ $ev->id }}"/>
-              <button type="submit" class="btn btn-sm {{ $ev->is_active ? '' : 'btn-outline' }}" style="{{ $ev->is_active ? 'background:#FEE2E2;color:#991B1B;border:none' : '' }}">
-                {!! $ev->is_active ? '<i class="fas fa-ban"></i> Disable' : '<i class="fas fa-square-check"></i> Enable' !!}
-              </button>
-            </form>
-          </td>
-        </tr>
-        @endforeach
-      </tbody>
-    </table>
-    @endif
-  </div>
-</div>
-
-<!-- Whitelist -->
-<div class="card">
-  <div class="card-header">
-    <div class="card-title"><i class="fas fa-clipboard-list"></i> Approved Evaluators List (Pre-registration)</div>
+    <div class="card-title"><i class="fas fa-clipboard-list"></i> Approved Evaluators List</div>
   </div>
   <div class="card-body" style="padding:0">
     @if($whitelist->isEmpty())
     <div style="padding:32px;text-align:center;color:var(--gray-400)">No evaluators on the approved list yet.</div>
     @else
+    <div class="table-wrap">
     <table class="data-table">
       <thead><tr><th>Name</th><th>Assigned ID</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
@@ -91,6 +46,58 @@
         @endforeach
       </tbody>
     </table>
+    </div>
+    @endif
+  </div>
+</div>
+
+<!-- Registered Evaluators -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-user"></i> Registered Evaluators</div>
+    <form method="GET" action="{{ route('ec.evaluators') }}" style="display:flex;gap:8px">
+      <input type="text" name="q" class="form-control" placeholder="Search..." value="{{ $q }}" style="width:220px"/>
+      <button type="submit" class="btn btn-outline btn-sm"><i class="fas fa-magnifying-glass"></i></button>
+      @if($q)<a href="{{ route('ec.evaluators') }}" class="btn btn-outline btn-sm"><i class="fas fa-xmark"></i></a>@endif
+    </form>
+  </div>
+  <div class="card-body" style="padding:0">
+    @if($evaluators->isEmpty())
+    <div style="padding:32px;text-align:center;color:var(--gray-400)">No registered evaluators yet.</div>
+    @else
+    <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>ID</th><th>Department</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        @foreach($evaluators as $ev)
+        <tr>
+          <td style="font-weight:600">{{ $ev->first_name }} {{ $ev->last_name }}</td>
+          <td><code>{{ $ev->id_number }}</code></td>
+          <td>{{ $ev->department }}</td>
+          <td>{{ $ev->email }}</td>
+          <td>
+            <span class="badge {{ $ev->is_active ? 'badge-success' : 'badge-danger' }}">
+              {{ $ev->is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-outline btn-sm" onclick="openEditModal({{ $ev->toJson() }})"><i class="fas fa-pen"></i> Edit</button>
+              <form method="POST" action="{{ route('ec.evaluators.store') }}" style="display:inline">
+                @csrf
+                <input type="hidden" name="action" value="toggle"/>
+                <input type="hidden" name="user_id" value="{{ $ev->id }}"/>
+                <button type="submit" class="btn btn-sm {{ $ev->is_active ? '' : 'btn-outline' }}" style="{{ $ev->is_active ? 'background:#FEE2E2;color:#991B1B;border:none' : '' }}">
+                  {!! $ev->is_active ? '<i class="fas fa-ban"></i> Disable' : '<i class="fas fa-square-check"></i> Enable' !!}
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        @endforeach
+      </tbody>
+    </table>
+    </div>
     @endif
   </div>
 </div>

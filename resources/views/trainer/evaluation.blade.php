@@ -57,7 +57,7 @@
     <div><div class="card-title"><i class="fas fa-chart-line"></i> Skills Utilization Overview</div></div>
     <a href="{{ route('trainer.skills') }}" class="btn btn-ghost btn-sm">View Details</a>
   </div>
-  <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+  <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px">
     @foreach([['Personal Use', $skillsOverview['personal']], ['Income-Generating', $skillsOverview['income']], ['Employment', $skillsOverview['employment']]] as [$label, $pct])
     <div style="text-align:center;padding:16px;background:var(--gray-50);border-radius:10px">
       <div style="font-size:24px;font-weight:800;color:var(--navy)">{{ $pct }}%</div>

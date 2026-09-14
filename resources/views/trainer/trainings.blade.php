@@ -90,7 +90,7 @@
   <div class="dash-main">
     <div class="card">
       <div class="card-header"><div class="card-title">Description</div></div>
-      <div class="card-body"><p style="font-size:14px;color:var(--gray-700);line-height:1.8">{!! $viewTraining->description ? nl2br(e($viewTraining->description)) : '<span style="color:var(--gray-400)">No description.</span>' !!}</p></div>
+      <div class="card-body"><p style="font-size:14px;color:var(--gray-700);line-height:1.8;overflow-wrap:anywhere">{!! $viewTraining->description ? nl2br(e($viewTraining->description)) : '<span style="color:var(--gray-400)">No description.</span>' !!}</p></div>
     </div>
     <div class="card">
       <div class="card-header"><div class="card-title">Participants</div><a href="{{ route('trainer.attendance') }}?training={{ $viewTraining->id }}" class="btn btn-sm btn-outline">Manage</a></div>
@@ -130,9 +130,9 @@
           ];
         @endphp
         @foreach($details as [$lb, $vl])
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-100)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 12px;padding:8px 0;border-bottom:1px solid var(--gray-100)">
           <span style="font-size:12px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.4px">{{ $lb }}</span>
-          <span style="font-size:13px;font-weight:600;color:var(--gray-800)">{{ $vl }}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--gray-800);min-width:0;overflow-wrap:anywhere;text-align:right">{{ $vl }}</span>
         </div>
         @endforeach
       </div>
@@ -257,42 +257,59 @@
 @if($trainings->isEmpty())
 <div class="empty-state"><i class="fas fa-book"></i><p>No activities assigned yet.</p></div>
 @else
-<div class="home-grid">
-  @foreach($trainings as $t)
-    @php
-      $hs = $statusMap[$t->status] ?? $t->status;
-      $sc = $statusClass[$hs] ?? 'badge-approved';
-      $icon = \App\Support\TrainingCategoryIcon::icon($t->area);
-      $c = $catColors[$t->area] ?? ['#1A56DB', '#2E6BF0'];
-    @endphp
-    <div class="training-card">
-      <div class="training-card-img" style="background:linear-gradient(135deg,{{ $c[0] }},{{ $c[1] }})">
-        @if($t->cover_image)
-          <img src="{{ route('files.activity-cover', $t) }}" alt="{{ $t->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
-        @endif
-        <div class="training-card-cat" style="z-index:2;position:relative">{{ $t->area }}</div>
-        @if(!$t->cover_image)
-          <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+@foreach($trainingsByProject as $projectTrainings)
+  @php $project = $projectTrainings->first()->program; @endphp
+  <div class="card-group">
+    <div class="card-group-header">
+      <div class="card-group-title">
+        <i class="fas fa-diagram-project"></i>
+        @if($project)
+          <a href="{{ route('trainer.programs') }}?view={{ $project->id }}" style="color:inherit">{{ $project->title }}</a>
+        @else
+          No Project Assigned
         @endif
       </div>
-      <div class="training-card-body">
-        <div class="training-card-title">{{ $t->title }}</div>
-        <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($t->description ?? '', 100, '…') }}</div>
-        <div class="training-card-meta">
-          <span><i class="fas fa-calendar"></i> {{ $t->date_start?->format('Y-m-d') ?? '—' }}</span>
-          <span><i class="fas fa-users"></i> {{ (int) $t->trainees }} trainees</span>
-        </div>
-        <div class="training-card-meta" style="margin-top:-4px">
-          <span><i class="fas fa-diagram-project"></i> {{ $t->program->title ?? 'No program assigned' }}</span>
-        </div>
-        <div class="training-card-footer">
-          <span class="badge {{ $sc }}">{{ $hs }}</span>
-          <a href="{{ route('trainer.trainings') }}?view={{ $t->id }}" class="btn btn-sm btn-primary">View Details</a>
-        </div>
-      </div>
+      @if($project)<span class="badge badge-{{ strtolower($project->status) }}">{{ $project->status }}</span>@endif
+      <span class="card-group-count">{{ $projectTrainings->count() }} {{ \Illuminate\Support\Str::plural('activity', $projectTrainings->count()) }}</span>
     </div>
-  @endforeach
-</div>
+    <div class="home-grid home-grid-grouped">
+      @foreach($projectTrainings as $t)
+        @php
+          $hs = $statusMap[$t->status] ?? $t->status;
+          $sc = $statusClass[$hs] ?? 'badge-approved';
+          $icon = \App\Support\TrainingCategoryIcon::icon($t->area);
+          $c = $catColors[$t->area] ?? ['#1A56DB', '#2E6BF0'];
+        @endphp
+        <div class="training-card">
+          <div class="training-card-img" style="background:linear-gradient(135deg,{{ $c[0] }},{{ $c[1] }})">
+            @if($t->cover_image)
+              <img src="{{ route('files.activity-cover', $t) }}" alt="{{ $t->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
+            @endif
+            <div class="training-card-cat" style="z-index:2;position:relative">{{ $t->area }}</div>
+            @if(!$t->cover_image)
+              <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+            @endif
+          </div>
+          <div class="training-card-body">
+            <div class="training-card-title">{{ $t->title }}</div>
+            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($t->description ?? '', 100, '…') }}</div>
+            <div class="training-card-meta">
+              <span><i class="fas fa-calendar"></i> {{ $t->date_start?->format('Y-m-d') ?? '—' }}</span>
+              <span><i class="fas fa-users"></i> {{ (int) $t->trainees }} trainees</span>
+            </div>
+            <div class="training-card-meta" style="margin-top:-4px">
+              <span><i class="fas fa-diagram-project"></i> {{ $t->program->title ?? 'No program assigned' }}</span>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge {{ $sc }}">{{ $hs }}</span>
+              <a href="{{ route('trainer.trainings') }}?view={{ $t->id }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+          </div>
+        </div>
+      @endforeach
+    </div>
+  </div>
+@endforeach
 @endif
 @endif
 @endsection

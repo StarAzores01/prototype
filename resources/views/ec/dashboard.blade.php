@@ -11,7 +11,7 @@
     <h1>Dashboard Overview</h1>
     <p>Welcome back, {{ $userFirstName }}! Here's what's happening in CIT extension programs.</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('addTraining')"><i class="fas fa-plus"></i> Create Activity</button>
+  <button class="btn btn-primary" onclick="openModal('addProgram')"><i class="fas fa-plus"></i> Create Project</button>
 </div>
 
 <!-- Activities Table -->
@@ -28,6 +28,7 @@
       <thead>
         <tr>
           <th>Activity Name</th>
+          <th>Project</th>
           <th>Area</th>
           <th>Project Leader</th>
           <th>Schedule</th>
@@ -41,18 +42,19 @@
       @forelse($recentTrainings as $t)
         @php $col = $statusColors[$t->status] ?? '#6B7280'; @endphp
         <tr>
-          <td>
-            <strong>{{ $t->title }}</strong>
+          <td style="font-size:12px">
+            <strong style="font-size:12px">{{ $t->title }}</strong>
             @if($t->description)
             <div style="font-size:11px;color:var(--gray-400);margin-top:2px">{{ \Illuminate\Support\Str::limit($t->description, 70, '…') }}</div>
             @endif
           </td>
+          <td style="font-size:12px;color:var(--gray-700)">{{ $t->program?->title ?? '—' }}</td>
           <td style="font-size:12px;color:var(--gray-600)">{{ $t->area }}</td>
           <td style="font-size:12px;color:var(--gray-700)">{{ $t->trainer?->full_name ?? 'TBA' }}</td>
           <td style="font-size:12px;color:var(--gray-400)">{{ $t->date_start?->format('Y-m-d') ?? '—' }}</td>
-          <td><strong>{{ $t->enrolled }}</strong></td>
+          <td style="font-size:12px"><strong style="font-size:12px">{{ $t->enrolled }}</strong></td>
           <td style="font-size:12px;color:var(--gray-500)">{{ $t->target_participants }}</td>
-          <td>
+          <td style="font-size:12px">
             <form method="POST" action="{{ route('ec.trainings.store') }}" style="display:inline">
               @csrf
               <input type="hidden" name="action" value="update_status"/>
@@ -66,12 +68,12 @@
               </select>
             </form>
           </td>
-          <td>
+          <td style="font-size:12px">
             <a href="{{ route('ec.trainings') }}?view={{ $t->id }}" class="btn btn-sm btn-outline">Manage</a>
           </td>
         </tr>
       @empty
-        <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gray-400)">No activities yet. <a href="#" onclick="openModal('addTraining')">Create one.</a></td></tr>
+        <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--gray-400)">No activities yet. <a href="#" onclick="openModal('addTraining')">Create one.</a></td></tr>
       @endforelse
       </tbody>
     </table>
@@ -180,6 +182,29 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('addTraining')">Cancel</button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Activity</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: CREATE PROJECT (Program) — the dashboard's quick-create shortcut;
+     same fields/route as ec/programs.blade.php's own "Create Program" modal,
+     see ec.partials.program-create-fields. -->
+<div class="modal-overlay" id="modal-addProgram">
+  <div class="modal">
+    <div class="modal-header">
+      <h2><i class="fas fa-plus"></i> Create New Project</h2>
+      <button class="modal-close" onclick="closeModal('addProgram')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('ec.programs.store') }}">
+      @csrf
+      <input type="hidden" name="action" value="create"/>
+      <div class="modal-body">
+        @include('ec.partials.program-create-fields', ['trainers' => $trainers])
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('addProgram')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Project</button>
       </div>
     </form>
   </div>

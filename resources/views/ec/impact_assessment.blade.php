@@ -3,13 +3,16 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> Assessment <i class="fas fa-chevron-right"></i> <span>Impact Assessment</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <a href="{{ route('ec.evaluation') }}" style="color:var(--blue-primary)">Evaluation</a> <i class="fas fa-chevron-right"></i> <span>Impact Assessment</span></div>
     <h1>Impact Assessment</h1>
     <p>Manage evaluator submissions and participant survey forms</p>
   </div>
-  @if($tab === 'surveys' && !($viewForm ?? null))
-  <button class="btn btn-primary" onclick="openModal('createSurveyForm')"><i class="fas fa-plus"></i> Create Survey Form</button>
-  @endif
+  <div style="display:flex;gap:10px">
+    <a href="{{ route('ec.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+    @if($tab === 'surveys' && !($viewForm ?? null))
+    <button class="btn btn-primary" onclick="openModal('createSurveyForm')"><i class="fas fa-plus"></i> Create Survey Form</button>
+    @endif
+  </div>
 </div>
 
 @if(session('success'))
@@ -58,6 +61,7 @@
     @if($assessments->isEmpty())
     <div style="padding:40px;text-align:center;color:var(--gray-400)">No impact assessments received yet.</div>
     @else
+    <div class="table-wrap">
     <table class="data-table">
       <thead>
         <tr>
@@ -112,6 +116,7 @@
         @endforeach
       </tbody>
     </table>
+    </div>
     @endif
   </div>
 </div>
@@ -182,6 +187,7 @@
 @else
 <div class="card">
   <div class="card-body" style="padding:0">
+    <div class="table-wrap">
     <table class="data-table">
       <thead>
         <tr>
@@ -226,6 +232,7 @@
         @endforeach
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 @endif

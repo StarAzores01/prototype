@@ -58,11 +58,19 @@ class ProgramController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        // Grouped by Area for the card grid — a Program has no further
+        // parent to group by (unlike Activities, which group by Program),
+        // so Area is the next meaningful section. groupBy() preserves each
+        // group's first-occurrence order from $programs (already
+        // created_at desc), so no extra sort needed here.
+        $programsByArea = $programs->groupBy(fn ($p) => $p->area ?: 'No Area Specified');
+
         return view('ec.programs', [
-            'activePage' => 'programs',
-            'mode'       => 'list',
-            'programs'   => $programs,
-            'trainers'   => $this->activeTrainers(),
+            'activePage'     => 'programs',
+            'mode'           => 'list',
+            'programs'       => $programs,
+            'programsByArea' => $programsByArea,
+            'trainers'       => $this->activeTrainers(),
         ]);
     }
 

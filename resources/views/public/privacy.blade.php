@@ -65,8 +65,9 @@
 
   <div style="text-align:center;margin-top:24px;font-size:13px;color:var(--gray-400)">
     <a href="{{ route('terms') }}" style="color:var(--blue-primary)">Terms of Use</a> &middot;
-    <a href="javascript:history.back()" style="color:var(--blue-primary)"><i class="fas fa-arrow-left"></i> Go Back</a>
+    <a href="{{ route('home') }}" id="goBackLink" style="color:var(--blue-primary)"><i class="fas fa-arrow-left"></i> Go Back</a>
   </div>
 </div>
+@include('public.partials.smart-back-script')
 </body>
 </html>

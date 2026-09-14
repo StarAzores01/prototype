@@ -25,6 +25,13 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage ===
   @include('partials.theme-init-script')
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- Without this, mobile WebKit/Chrome auto-detect plain-text emails and
+       phone numbers and re-style them as blue underlined tap links — the
+       exact cause of the Profile page's info rows looking inconsistent
+       (e.g. email/phone styled like links, ID number/position staying
+       plain) even though the markup and CSS treat every row identically. -->
+  <meta name="format-detection" content="telephone=no, date=no, address=no, email=no"/>
+  <link rel="icon" href="{{ asset('imgs/favicon.ico') }}"/>
   <title>PAThrive – {{ $activePageTitle }}</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
@@ -45,7 +52,7 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage ===
       <i class="fas fa-bars"></i>
     </button>
     <div class="brand-logo">
-      <img src="{{ asset('imgs/logofinalpt.png') }}" alt="CIT Logo" onerror="this.style.display='none';this.parentElement.textContent='PA'"/>
+      <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT Logo" onerror="this.style.display='none';this.parentElement.textContent='PA'"/>
     </div>
     <div class="brand-text">
       <div class="brand-name">PAThrive</div>
@@ -73,7 +80,7 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage ===
         </div>
         <div style="max-height:320px;overflow-y:auto">
           @forelse($notifList as $n)
-          <a href="{{ $n->link ?? '#' }}" style="display:block;padding:12px 16px;border-bottom:1px solid var(--gray-100);text-decoration:none;background:{{ $n->is_read ? 'transparent' : 'rgba(59,130,246,.12)' }}">
+          <a href="{{ route('ec.notifications.open', $n->id) }}" style="display:block;padding:12px 16px;border-bottom:1px solid var(--gray-100);text-decoration:none;background:{{ $n->is_read ? 'transparent' : 'rgba(59,130,246,.12)' }}">
             <div style="font-size:12.5px;color:var(--gray-800);font-weight:{{ $n->is_read ? '400' : '600' }}">{{ $n->message }}</div>
             <div style="font-size:11px;color:var(--gray-400);margin-top:3px">{{ $n->created_at->format('M d, g:i A') }}</div>
           </a>

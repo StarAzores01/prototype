@@ -189,6 +189,7 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
     <h1>Evaluations &amp; Feedback</h1>
     <p>Create and send evaluation forms to Project Leaders and beneficiaries</p>
   </div>
+  <a href="{{ route('ec.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
 </div>
 
 <div class="card">

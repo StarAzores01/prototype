@@ -260,7 +260,6 @@
       <button class="modal-close" onclick="closeModal('editTraining')"><i class="fas fa-xmark"></i></button>
     </div>
     @php
-      $currentLeadId = optional($viewTraining->lead->first())->id;
       $currentMembers = $viewTraining->members->values();
     @endphp
     <form method="POST" action="{{ route('ec.trainings.store') }}">
@@ -325,28 +324,15 @@
 
         <hr style="border:none;border-top:1px solid var(--gray-100);margin:8px 0 16px">
         <div class="form-group">
-          <label class="form-label">Project Leader * <span style="font-weight:400;color:var(--gray-400)">(exactly one)</span></label>
-          <select name="lead_id" class="form-control" required>
-            <option value="">— Select Project Leader —</option>
-            @foreach($trainers as $tr)
-            <option value="{{ $tr->id }}" {{ (int) $currentLeadId === $tr->id ? 'selected' : '' }}>{{ $tr->first_name }} {{ $tr->last_name }}</option>
-            @endforeach
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Team Members <span style="font-weight:400;color:var(--gray-400)">(optional, up to 3)</span></label>
-          <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
-            @for($i = 0; $i < 3; $i++)
-            @php $cur = $currentMembers->get($i); @endphp
-            <select name="member_ids[]" class="form-control">
-              <option value="">— None —</option>
-              @foreach($trainers as $tr)
-              <option value="{{ $tr->id }}" {{ $cur && $cur->id === $tr->id ? 'selected' : '' }}>{{ $tr->first_name }} {{ $tr->last_name }}</option>
-              @endforeach
-            </select>
-            @endfor
+          <label class="form-label">Project Leader &amp; Team <span style="font-weight:400;color:var(--gray-400)">(inherited from the assigned Program)</span></label>
+          <div style="font-size:13px;color:var(--gray-700);background:var(--gray-50);border-radius:8px;padding:9px 12px">
+            <i class="fas fa-user-tie" style="color:var(--gray-400)"></i>
+            {{ $viewTraining->lead->first()?->full_name ?? 'No Project Leader assigned yet' }}
+            @if($currentMembers->isNotEmpty())
+              &middot; {{ $currentMembers->pluck('full_name')->implode(', ') }}
+            @endif
           </div>
-          <div style="font-size:11px;color:var(--gray-400);margin-top:4px">A team member can't also be the Project Leader, and can't be selected twice.</div>
+          <div class="form-hint"><i class="fas fa-circle-info"></i> Changing the Program above will re-sync this activity's Project Leader and Team to that program's, once saved.</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -447,43 +433,60 @@
 @if($trainings->isEmpty())
 <div class="empty-state"><i class="fas fa-book"></i><p>No activities found. <a href="#" onclick="openModal('addTraining')">Create one.</a></p></div>
 @else
-<div class="home-grid">
-  @foreach($trainings as $t)
-    @php
-      $hs = $statusMap[$t->status] ?? $t->status;
-      $sc = $statusClass[$hs] ?? 'badge-approved';
-      $icon = \App\Support\TrainingCategoryIcon::icon($t->area);
-      $c = $catColors[$t->area] ?? ['#1A56DB', '#2E6BF0'];
-    @endphp
-    <div class="training-card">
-      <div class="training-card-img" style="background:linear-gradient(135deg,{{ $c[0] }},{{ $c[1] }})">
-        @if($t->cover_image)
-          <img src="{{ route('files.activity-cover', $t) }}" alt="{{ $t->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
-        @endif
-        <div class="training-card-cat" style="z-index:2;position:relative">{{ $t->area }}</div>
-        @if(!$t->cover_image)
-          <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+@foreach($trainingsByProject as $projectTrainings)
+  @php $project = $projectTrainings->first()->program; @endphp
+  <div class="card-group">
+    <div class="card-group-header">
+      <div class="card-group-title">
+        <i class="fas fa-diagram-project"></i>
+        @if($project)
+          <a href="{{ route('ec.programs') }}?view={{ $project->id }}" style="color:inherit">{{ $project->title }}</a>
+        @else
+          No Project Assigned
         @endif
       </div>
-      <div class="training-card-body">
-        <div class="training-card-title">{{ $t->title }}</div>
-        <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($t->description ?? '', 100, '…') }}</div>
-        <div class="training-card-meta">
-          <span><i class="fas fa-calendar"></i> {{ $t->date_start?->format('Y-m-d') ?? '—' }}</span>
-          <span><i class="fas fa-user"></i> {{ $t->trainer->full_name ?? 'TBA' }}</span>
-          <span><i class="fas fa-users"></i> {{ (int) $t->target_participants }} pax</span>
-        </div>
-        <div class="training-card-meta" style="margin-top:-4px">
-          <span><i class="fas fa-diagram-project"></i> {{ $t->program->title ?? 'No program assigned' }}</span>
-        </div>
-        <div class="training-card-footer">
-          <span class="badge {{ $sc }}">{{ $hs }}</span>
-          <a href="{{ route('ec.trainings') }}?view={{ $t->id }}" class="btn btn-sm btn-primary">View Details</a>
-        </div>
-      </div>
+      @if($project)<span class="badge badge-{{ strtolower($project->status) }}">{{ $project->status }}</span>@endif
+      <span class="card-group-count">{{ $projectTrainings->count() }} {{ \Illuminate\Support\Str::plural('activity', $projectTrainings->count()) }}</span>
     </div>
-  @endforeach
-</div>
+    <div class="home-grid home-grid-grouped">
+      @foreach($projectTrainings as $t)
+        @php
+          $hs = $statusMap[$t->status] ?? $t->status;
+          $sc = $statusClass[$hs] ?? 'badge-approved';
+          $icon = \App\Support\TrainingCategoryIcon::icon($t->area);
+          $c = $catColors[$t->area] ?? ['#1A56DB', '#2E6BF0'];
+        @endphp
+        <div class="training-card">
+          <div class="training-card-img" style="background:linear-gradient(135deg,{{ $c[0] }},{{ $c[1] }})">
+            @if($t->cover_image)
+              <img src="{{ route('files.activity-cover', $t) }}" alt="{{ $t->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
+            @endif
+            <div class="training-card-cat" style="z-index:2;position:relative">{{ $t->area }}</div>
+            @if(!$t->cover_image)
+              <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+            @endif
+          </div>
+          <div class="training-card-body">
+            <div class="training-card-title">{{ $t->title }}</div>
+            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($t->description ?? '', 100, '…') }}</div>
+            <div class="training-card-meta">
+              <span><i class="fas fa-calendar"></i> {{ $t->date_start?->format('Y-m-d') ?? '—' }}</span>
+              <span><i class="fas fa-user"></i> {{ $t->trainer->full_name ?? 'TBA' }}</span>
+              <span><i class="fas fa-users"></i> {{ (int) $t->target_participants }} pax</span>
+            </div>
+            <div class="training-card-meta" style="margin-top:-4px">
+              <span><i class="fas fa-diagram-project"></i> {{ $t->program->title ?? 'No program assigned' }}</span>
+            </div>
+            <div class="training-card-footer">
+              <span class="badge {{ $sc }}">{{ $hs }}</span>
+              <a href="{{ route('ec.trainings') }}?view={{ $t->id }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+          </div>
+        </div>
+      @endforeach
+    </div>
+  </div>
+@endforeach
 @endif
 
 <!-- MODAL: CREATE ACTIVITY -->

@@ -3,11 +3,14 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Impact Assessment</span></div>
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <a href="{{ route('evaluator.evaluation') }}" style="color:var(--blue-primary)">Evaluation</a> <i class="fas fa-chevron-right"></i> <span>Impact Assessment</span></div>
     <h1>Impact Assessment</h1>
     <p>Submit assessment forms to the Extension Coordinator</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('submitAssessment')"><i class="fas fa-plus"></i> Submit Assessment</button>
+  <div style="display:flex;gap:10px">
+    <a href="{{ route('evaluator.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+    <button class="btn btn-primary" onclick="openModal('submitAssessment')"><i class="fas fa-plus"></i> Submit Assessment</button>
+  </div>
 </div>
 
 @if(session('success'))
@@ -38,6 +41,7 @@
       No assessments yet. Click <strong>Submit Assessment</strong> to get started.
     </div>
     @else
+    <div class="table-wrap">
     <table class="data-table">
       <thead>
         <tr>
@@ -86,6 +90,7 @@
         @endforeach
       </tbody>
     </table>
+    </div>
     @endif
   </div>
 </div>

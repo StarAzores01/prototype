@@ -11,7 +11,7 @@
 </div>
 
 <!-- Stats -->
-<div class="stats-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:28px">
+<div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin-bottom:28px">
   @foreach([
     ['fa-clipboard-list', 'Submitted', 'var(--blue-primary)', $totalSubmitted],
     ['fa-pen', 'Drafts', 'var(--amber)', $totalDraft],
@@ -41,6 +41,7 @@
     @if($recent->isEmpty())
     <div style="padding:32px;text-align:center;color:var(--gray-400)">No submissions yet. <a href="{{ route('evaluator.impact_assessment') }}" style="color:var(--blue-primary)">Submit your first assessment.</a></div>
     @else
+    <div class="table-wrap">
     <table class="data-table">
       <thead><tr><th>Title</th><th>Activity</th><th>Status</th><th>Submitted</th></tr></thead>
       <tbody>
@@ -59,6 +60,7 @@
         @endforeach
       </tbody>
     </table>
+    </div>
     @endif
   </div>
 </div>

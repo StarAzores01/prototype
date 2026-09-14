@@ -12,9 +12,13 @@
  * row here whenever you add a new one there, or the field silently won't
  * have an edit form.
  *
- * 'global' is not a real routed page — it's shared content that appears
- * identically on every public page's footer/contact info, edited once
- * instead of once per page.
+ * 'global' and 'training-categories' are not real routed pages — each is
+ * shared content edited once instead of once per page. 'global' covers
+ * the footer/contact info that appears identically on every public page;
+ * 'training-categories' covers the one photo per training area (e.g.
+ * "Computer Technology") that's reused everywhere that area's card shows
+ * up — currently the landing page's Courses Offered cards and the public
+ * Trainings page's listing cards — so EC only ever sets it in one place.
  *
  * Every section is one of:
  *   'text'       — plain/lightly-formatted copy, edited as a <textarea>
@@ -49,6 +53,24 @@ return [
             'programs_badge'      => ['label' => 'Courses Offered Badge',   'type' => 'text'],
             'programs_title'      => ['label' => 'Courses Offered Title',  'type' => 'text'],
             'programs_desc'       => ['label' => 'Courses Offered Description', 'type' => 'text'],
+        ],
+    ],
+
+    // One photo per training area, shared everywhere that area's card is
+    // shown (landing page Courses Offered + public Trainings page listing).
+    // Falls back to each card's existing plain gradient block until EC
+    // uploads one — see .lp-cc-thumb-img / .card-img-photo in the two views.
+    'training-categories' => [
+        'label' => 'Training Category Images',
+        'sections' => [
+            'culinary_image'    => ['label' => 'Culinary Technology Photo',           'type' => 'image'],
+            'computer_image'    => ['label' => 'Computer Technology Photo',           'type' => 'image'],
+            'automotive_image'  => ['label' => 'Automotive Technology Photo',         'type' => 'image'],
+            'electronics_image' => ['label' => 'Electronics Technology Photo',        'type' => 'image'],
+            'apparel_image'     => ['label' => 'Apparel & Fashion Technology Photo',  'type' => 'image'],
+            'mechanical_image'  => ['label' => 'Mechanical Technology Photo',         'type' => 'image'],
+            'printmedia_image'  => ['label' => 'Print Media Technology Photo',        'type' => 'image'],
+            'it_image'          => ['label' => 'Information Technology Photo',        'type' => 'image'],
         ],
     ],
 

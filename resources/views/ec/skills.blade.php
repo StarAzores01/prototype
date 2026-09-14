@@ -9,6 +9,8 @@
   </div>
   @if($viewForm)
   <a href="{{ route('ec.skills') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to All Forms</a>
+  @else
+  <a href="{{ route('ec.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
   @endif
 </div>
 

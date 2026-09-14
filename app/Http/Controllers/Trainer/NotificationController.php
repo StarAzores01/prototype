@@ -19,4 +19,26 @@ class NotificationController extends Controller
 
         return redirect()->route('trainer.dashboard');
     }
+
+    /**
+     * Clicking a single notification in the topbar dropdown lands here: mark
+     * just that one read, then follow through to whatever it actually points
+     * at instead of leaving it unread with nowhere to go. Same visibility
+     * rule as TrainerLayoutComposer's unread count/list.
+     */
+    public function open(int $id)
+    {
+        $userId = Auth::guard('web')->id();
+
+        $notification = Notification::where('id', $id)
+            ->where('role', 'trainer')
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($notification) {
+            $notification->update(['is_read' => true]);
+        }
+
+        return redirect($notification->link ?? route('trainer.dashboard'));
+    }
 }

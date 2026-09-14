@@ -3,7 +3,12 @@
   (ec/trainings.blade.php's "Create Activity" modal) and embedded, scoped to
   one program (ec/programs.blade.php's "Add Activity" modal).
 
-  Expects: $trainers (always).
+  No Project Leader / Team Members fields here on purpose — an activity
+  doesn't get its own team, it inherits the Program's (see
+  TrainingController::teamFromProgram(), called from create()/update()).
+  Reassign a program's team from the Program page and every activity under
+  it picks that up the next time it's created or re-pointed at a program.
+
   Optional: $scopedProgram — a Program model. When given, the Program field
   is a locked hidden input instead of a dropdown, and $programs isn't needed.
   Optional: $programs — full Program list, required when $scopedProgram isn't set.
@@ -32,6 +37,17 @@
       <i class="fas fa-diagram-project" style="color:var(--gray-400)"></i> {{ $scopedProgram->title }}
     </div>
   </div>
+  @php $scopedLead = $scopedProgram->lead->first(); $scopedMembers = $scopedProgram->members; @endphp
+  <div class="form-group">
+    <label class="form-label">Project Leader &amp; Team <span style="font-weight:400;color:var(--gray-400)">(inherited from this program)</span></label>
+    <div style="font-size:13px;color:var(--gray-700);background:var(--gray-50);border-radius:8px;padding:9px 12px">
+      <i class="fas fa-user-tie" style="color:var(--gray-400)"></i>
+      {{ $scopedLead?->full_name ?? 'No Project Leader assigned yet' }}
+      @if($scopedMembers->isNotEmpty())
+        &middot; {{ $scopedMembers->pluck('full_name')->implode(', ') }}
+      @endif
+    </div>
+  </div>
 @else
   <div class="form-group">
     <label class="form-label">Program *</label>
@@ -41,6 +57,7 @@
       <option value="{{ $prog->id }}">{{ $prog->title }}</option>
       @endforeach
     </select>
+    <div class="form-hint"><i class="fas fa-circle-info"></i> The activity's Project Leader and Team Members are inherited from whoever is assigned to this program — they're not set per activity.</div>
   </div>
 @endif
 
@@ -75,29 +92,4 @@
     <label class="form-label">No. of Participants (target)</label>
     <input type="number" name="target_participants" class="form-control" placeholder="e.g. 30" min="1"/>
   </div>
-</div>
-
-<hr style="border:none;border-top:1px solid var(--gray-100);margin:8px 0 16px">
-<div class="form-group">
-  <label class="form-label">Project Leader * <span style="font-weight:400;color:var(--gray-400)">(exactly one)</span></label>
-  <select name="lead_id" class="form-control" required>
-    <option value="">— Select Project Leader —</option>
-    @foreach($trainers as $tr)
-    <option value="{{ $tr->id }}">{{ $tr->first_name }} {{ $tr->last_name }}</option>
-    @endforeach
-  </select>
-</div>
-<div class="form-group">
-  <label class="form-label">Team Members <span style="font-weight:400;color:var(--gray-400)">(optional, up to 3)</span></label>
-  <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
-    @for($i = 0; $i < 3; $i++)
-    <select name="member_ids[]" class="form-control">
-      <option value="">— None —</option>
-      @foreach($trainers as $tr)
-      <option value="{{ $tr->id }}">{{ $tr->first_name }} {{ $tr->last_name }}</option>
-      @endforeach
-    </select>
-    @endfor
-  </div>
-  <div style="font-size:11px;color:var(--gray-400);margin-top:4px">A team member can't also be the Project Leader, and can't be selected twice.</div>
 </div>

@@ -18,7 +18,15 @@
 /* chart row */
 .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 @media(max-width:860px){ .chart-row { grid-template-columns: 1fr; } }
-.chart-card { background: var(--surface); border: 1px solid var(--gray-200); border-radius: 14px; padding: 20px; }
+/* min-width: 0 overrides the browser default of min-width: auto on grid
+   items — without it, a wide child anywhere inside one card (the Top 5
+   table, forced to min-width: 600px on mobile so it scrolls instead of
+   squeezing) stops that whole card from shrinking to fit, which drags its
+   sibling in the same row (File vs. Link Ratio, which has no wide content
+   of its own) past the viewport too. Same fix as .dash-grid/.card
+   elsewhere in the app, just needed again here since this page defines
+   its own separate chart-row/chart-card grid instead of reusing those. */
+.chart-card { background: var(--surface); border: 1px solid var(--gray-200); border-radius: 14px; padding: 20px; min-width: 0; }
 .chart-card-title { font-size: 13px; font-weight: 700; color: var(--text-heading); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 .chart-empty { text-align: center; padding: 40px 0; color: var(--gray-400); font-size: 13px; }
 
@@ -111,6 +119,7 @@
     @if(empty($topByCount))
       <div class="chart-empty">No program- or activity-scoped documents yet.</div>
     @else
+      <div class="table-wrap">
       <table class="data-table">
         <thead>
           <tr><th>#</th><th>Name</th><th>Type</th><th style="text-align:right">Documents</th></tr>
@@ -126,6 +135,7 @@
           @endforeach
         </tbody>
       </table>
+      </div>
     @endif
   </div>
 </div>

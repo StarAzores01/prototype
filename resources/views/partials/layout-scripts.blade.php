@@ -244,11 +244,6 @@ showToast(@json(session('error')), 'error');
      handles the warning in that path. */
 
 })();
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> origin/dev_v3
 
 /* ── Image upload confirmation ───────────────────────────────────────────
    Every image/banner/cover upload (profile picture, program cover image,
@@ -338,8 +333,6 @@ showToast(@json(session('error')), 'error');
     window.pathriveConfirmImageUpload(form, file, opts);
   };
 })();
-<<<<<<< HEAD
-=======
 
 /* ── Date-range pairing ──────────────────────────────────────────────────
    Every start/end date pair in the app (Program create, Activity create/
@@ -377,6 +370,4 @@ showToast(@json(session('error')), 'error');
 
   document.querySelectorAll('input[type="date"][data-range-end]').forEach(wire);
 })();
->>>>>>> Stashed changes
->>>>>>> origin/dev_v3
 </script>

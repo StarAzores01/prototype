@@ -7,6 +7,7 @@
     <h1>Evaluation</h1>
     <p>Your Impact Assessment submissions at a glance</p>
   </div>
+  <a href="{{ route('evaluator.dashboard') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
 </div>
 
 <!-- Summary -->

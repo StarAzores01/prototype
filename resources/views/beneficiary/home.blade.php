@@ -110,6 +110,13 @@
 .b-ql-ico { font-size: 26px; color: var(--blue-primary); }
 .b-ql-lbl { font-size: 12px; font-weight: 600; color: var(--text-heading); }
 
+/* ── Main two-column layout (content + notifications sidebar) ── */
+.b-main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+
+@media (max-width: 900px) {
+  .b-main-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 640px) {
   .b-hero { padding: 28px 20px; }
   .b-hero-title { font-size: 22px; }
@@ -160,7 +167,7 @@
 </div>
 
 <!-- Main grid -->
-<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+<div class="b-main-grid">
 
   <!-- Left: recent activities + quick links -->
   <div style="display:flex;flex-direction:column;gap:20px">

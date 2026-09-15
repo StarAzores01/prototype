@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Exception\PostTooLargeException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -40,4 +41,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        // Thrown when an upload exceeds PHP's own post_max_size (a request
+        // that gets this far already cleared nginx's client_max_body_size —
+        // see public/.user.ini). Without this, the user sees Laravel's bare
+        // 413 error page instead of landing back on the form with a
+        // message they can act on.
+        $exceptions->render(function (PostTooLargeException $e, Request $request) {
+            return back()->with('error', 'That upload is too large. Please choose a smaller file and try again.');
+        });
     })->create();

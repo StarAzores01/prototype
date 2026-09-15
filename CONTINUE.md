@@ -125,6 +125,33 @@ by any route and have been deleted.
 had PDF/Excel export, so neither does the port. If CHED-style export is
 wanted, it's a new feature, not a parity gap.
 
+## 6b. Deploy step required: nginx upload limit
+
+Saving a Page Content image (`ec/page-content.php/{pageKey}` — "Manage
+Public Site Content") returned a raw `413 Request Entity Too Large` from
+nginx itself, before the request ever reached PHP. Two layers cap upload
+size and both had to clear the 5 MB images this feature allows:
+
+- **PHP/Laravel side** — fixed in this repo: `public/.user.ini` sets
+  `upload_max_filesize`/`post_max_size` high enough for a 5 MB image (the
+  "Training Category Images" page can submit several image fields in one
+  POST, so `post_max_size` has headroom above a single file's limit).
+  `bootstrap/app.php` also now catches `PostTooLargeException` and sends
+  the user back to the form with a message instead of Laravel's bare 413
+  page.
+- **nginx side — not in this repo, must be done on the server itself**:
+  nginx's default `client_max_body_size` is 1 MB and rejects an oversized
+  request before PHP-FPM ever sees it — no Laravel-side fix can override
+  this. Whoever manages the Ubuntu box needs to add, in the site's server
+  block (or the `location` block that proxies to PHP-FPM), e.g.
+  `/etc/nginx/sites-available/<site>`:
+  ```
+  client_max_body_size 20M;
+  ```
+  then `sudo nginx -t && sudo systemctl reload nginx`. Until that's done
+  server-side, large-image saves on this page will keep 413'ing even
+  though the app-level limit above is already fixed.
+
 ## 7. Known gaps / decisions surfaced during security + regression review
 
 Not bugs in the Laravel port specifically — inherited from the original or

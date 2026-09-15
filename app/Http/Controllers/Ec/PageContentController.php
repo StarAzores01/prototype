@@ -16,6 +16,16 @@ use Illuminate\Support\Facades\Validator;
  * hardcoded in the Blade views; only the section list in
  * config/page_content_sections.php + PageContent rows are editable here.
  *
+ * Everything lives on one page (ec/page-content/index.blade.php): a Pages
+ * tab whose cards each open an "Edit Content" modal (some with sub-tabs)
+ * instead of navigating to a separate edit screen, and a Site Settings tab
+ * covering the 'global' page. A single modal can touch more than one
+ * page_key at once — the Contact page's modal edits its own 'contact'
+ * fields alongside the shared 'global' contact_address/email/phone shown
+ * on the same cards — so form inputs are namespaced
+ * sections[{page_key}][{section_key}] and update() loops every page_key
+ * actually present in the submission, not just one passed in the URL.
+ *
  * Image uploads for this feature go on the "public" disk (storage/app/
  * public, symlinked to public/storage) — unlike every other upload in
  * this app (avatars, program/activity covers), which deliberately live
@@ -29,85 +39,72 @@ class PageContentController extends Controller
     private array $allowedImageTypes = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
     private int   $maxImageSize      = 5 * 1024 * 1024; // 5 MB, same ceiling as program/activity cover images
 
+    /**
+     * Every page's current values, keyed [page_key][section_key] => value,
+     * so every modal on the Pages/Site Settings tabs can be pre-filled
+     * without a per-page round trip.
+     */
     public function index()
     {
-        $pages = collect(config('page_content_sections'))->map(function (array $page, string $pageKey) {
-            $sectionKeys = array_keys($page['sections']);
-            $editedCount = PageContent::query()
-                ->where('page_key', $pageKey)
-                ->whereIn('section_key', $sectionKeys)
-                ->whereNotNull('content_value')
-                ->where('content_value', '!=', '')
-                ->count();
+        $pagesConfig = config('page_content_sections');
 
-            return [
-                'page_key'      => $pageKey,
-                'label'         => $page['label'],
-                'total'         => count($sectionKeys),
-                'edited'        => $editedCount,
-            ];
-        })->values();
+        $existing = PageContent::query()
+            ->whereIn('page_key', array_keys($pagesConfig))
+            ->get()
+            ->groupBy('page_key')
+            ->map(fn ($rows) => $rows->pluck('content_value', 'section_key'));
+
+        $values = collect($pagesConfig)->mapWithKeys(function (array $page, string $pageKey) use ($existing) {
+            $rowsForPage = $existing->get($pageKey, collect());
+
+            return [$pageKey => collect($page['sections'])->mapWithKeys(fn ($meta, $sectionKey) => [
+                $sectionKey => $rowsForPage->get($sectionKey),
+            ])];
+        });
 
         return view('ec.page-content.index', [
             'activePage' => 'page-content',
-            'pages'      => $pages,
+            'pagesConfig' => $pagesConfig,
+            'values'      => $values,
         ]);
     }
 
-    public function edit(string $pageKey)
+    public function update(Request $request)
     {
-        $page = config("page_content_sections.$pageKey");
-        abort_if(! $page, 404);
-
-        $existing = PageContent::query()
-            ->where('page_key', $pageKey)
-            ->whereIn('section_key', array_keys($page['sections']))
-            ->get()
-            ->keyBy('section_key');
-
-        $sections = collect($page['sections'])->map(function (array $meta, string $sectionKey) use ($existing) {
-            return $meta + [
-                'key'   => $sectionKey,
-                'value' => $existing->get($sectionKey)?->content_value,
-            ];
-        })->values();
-
-        return view('ec.page-content.edit', [
-            'activePage' => 'page-content',
-            'pageKey'    => $pageKey,
-            'pageLabel'  => $page['label'],
-            'sections'   => $sections,
-        ]);
-    }
-
-    public function update(Request $request, string $pageKey)
-    {
-        $page = config("page_content_sections.$pageKey");
-        abort_if(! $page, 404);
-
         $userId = Auth::guard('web')->id();
+        $submitted = $request->input('sections', []);
 
-        foreach ($page['sections'] as $sectionKey => $meta) {
-            $inputName = str_replace('-', '_', $sectionKey);
-
-            if ($meta['type'] === 'image') {
-                if ($request->hasFile($inputName)) {
-                    [$ok, $result] = $this->storeImage($request, $inputName, $pageKey, $sectionKey);
-                    if (! $ok) {
-                        return back()->with('error', $result);
-                    }
-                    PageContent::put($pageKey, $sectionKey, 'image', $result, $userId);
-                } elseif ($request->boolean($inputName . '_clear')) {
-                    $this->deleteStoredImage($pageKey, $sectionKey);
-                    PageContent::put($pageKey, $sectionKey, 'image', null, $userId);
-                }
-                // No new file and no "clear" checked → leave the existing image untouched.
-                continue;
+        foreach (array_keys($submitted) as $pageKey) {
+            $page = config("page_content_sections.$pageKey");
+            if (! $page) {
+                continue; // ignore anything not in the registry rather than 404ing a whole multi-page submit
             }
 
-            // 'text' and 'video_link' both just take the submitted string as-is.
-            $value = $request->input($inputName);
-            PageContent::put($pageKey, $sectionKey, $meta['type'], $value !== '' ? $value : null, $userId);
+            foreach ($page['sections'] as $sectionKey => $meta) {
+                $inputPath = "sections.$pageKey.$sectionKey";
+
+                if ($meta['type'] === 'image') {
+                    if ($request->hasFile($inputPath)) {
+                        [$ok, $result] = $this->storeImage($request, $inputPath, $pageKey, $sectionKey);
+                        if (! $ok) {
+                            return back()->with('error', $result);
+                        }
+                        PageContent::put($pageKey, $sectionKey, 'image', $result, $userId);
+                    } elseif ($request->boolean("sections.$pageKey.{$sectionKey}_clear")) {
+                        $this->deleteStoredImage($pageKey, $sectionKey);
+                        PageContent::put($pageKey, $sectionKey, 'image', null, $userId);
+                    }
+                    // No new file and no "clear" checked → leave the existing image untouched.
+                    continue;
+                }
+
+                // 'text' and 'video_link' both just take the submitted string as-is.
+                if (! $request->has($inputPath)) {
+                    continue; // section wasn't part of this particular modal's fields
+                }
+                $value = $request->input($inputPath);
+                PageContent::put($pageKey, $sectionKey, $meta['type'], $value !== '' ? $value : null, $userId);
+            }
         }
 
         return back()->with('success', 'Page content saved.');
@@ -116,17 +113,17 @@ class PageContentController extends Controller
     /**
      * @return array{0: bool, 1: string} [success, publicUrlOrErrorMessage]
      */
-    private function storeImage(Request $request, string $inputName, string $pageKey, string $sectionKey): array
+    private function storeImage(Request $request, string $inputPath, string $pageKey, string $sectionKey): array
     {
         $validator = Validator::make($request->all(), [
-            $inputName => 'required|file|mimes:jpg,jpeg,png,webp,gif',
+            $inputPath => 'required|file|mimes:jpg,jpeg,png,webp,gif',
         ]);
 
         if ($validator->fails()) {
-            return [false, $validator->errors()->first($inputName)];
+            return [false, $validator->errors()->first($inputPath)];
         }
 
-        $file = $request->file($inputName);
+        $file = data_get($request->allFiles(), $inputPath);
         $ext  = strtolower($file->getClientOriginalExtension());
 
         if (! in_array($ext, $this->allowedImageTypes, true)) {

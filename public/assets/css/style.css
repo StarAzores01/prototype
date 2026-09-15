@@ -1074,6 +1074,11 @@ select.filter-select:focus { border-color: var(--blue-primary); }
 @media (max-width: 480px) {
   /* Narrower tables: allow text to wrap in important cols */
   td:first-child, th:first-child { white-space: normal; min-width: 100px; }
+  /* ...except narrow indicator/marker columns (e.g. the unread-dot column
+     on Contact Messages) — forcing those to min-width:100px pushed the
+     real first content column (sender name) far to the right, leaving a
+     large empty gap. */
+  td.col-indicator:first-child, th.col-indicator:first-child { white-space: nowrap; min-width: 0; width: 32px; }
   .action-btns { flex-wrap: wrap; }
   .action-btns .btn { padding: 5px 8px; font-size: 11px; }
 }

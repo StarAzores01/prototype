@@ -26,7 +26,7 @@
   <table class="data-table">
     <thead>
       <tr>
-        <th style="width:32px"></th>
+        <th class="col-indicator" style="width:32px"></th>
         <th>Name</th>
         <th>Email</th>
         <th style="padding-right:28px">Subject</th>
@@ -37,7 +37,7 @@
     <tbody>
       @foreach($messages as $msg)
       <tr style="{{ !$msg->is_read ? 'background:rgba(59,130,246,.12);font-weight:600' : '' }}">
-        <td style="text-align:center">
+        <td class="col-indicator" style="text-align:center">
           @if(!$msg->is_read)
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1A56DB"></span>
           @endif

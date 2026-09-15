@@ -22,7 +22,7 @@ $activePage = $activePage ?? 'dashboard';
        (e.g. email/phone styled like links, ID number/position staying
        plain) even though the markup and CSS treat every row identically. -->
   <meta name="format-detection" content="telephone=no, date=no, address=no, email=no"/>
-  <link rel="icon" href="{{ asset('imgs/logofinalpt.png') }}" type="image/png"/>
+  <link rel="icon" href="{{ asset('imgs/favicon.png') }}" type="image/png"/>
   <title>PAThrive – {{ ucfirst(str_replace('_', ' ', $activePage)) }} (Evaluator)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>

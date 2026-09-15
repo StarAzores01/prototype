@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PAThrive – Extension Training Management System | College of Industrial Technology</title>
-  <link rel="icon" href="{{ asset('imgs/logofinalpt.png') }}" type="image/png"/>
+  <link rel="icon" href="{{ asset('imgs/favicon.png') }}" type="image/png"/>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>

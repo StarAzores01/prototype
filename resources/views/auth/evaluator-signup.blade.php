@@ -56,7 +56,7 @@
       <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="PAThrive" onerror="this.style.display='none'"/>
     </div>
     <h1>Evaluator Sign Up</h1>
-    <p>PAThrive &nbsp;&middot;&nbsp; CIT-SLSU &nbsp;&middot;&nbsp; Impact Assessment</p>
+    <p>PAThrive &nbsp;&middot;&nbsp; College of Industrial Technology &nbsp;&middot;&nbsp; Impact Assessment</p>
   </div>
 
   <div class="auth-card-body">

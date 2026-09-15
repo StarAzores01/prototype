@@ -31,7 +31,7 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage ===
        (e.g. email/phone styled like links, ID number/position staying
        plain) even though the markup and CSS treat every row identically. -->
   <meta name="format-detection" content="telephone=no, date=no, address=no, email=no"/>
-  <link rel="icon" href="{{ asset('imgs/favicon.ico') }}"/>
+  <link rel="icon" href="{{ asset('imgs/logofinalpt.png') }}" type="image/png"/>
   <title>PAThrive – {{ $activePageTitle }}</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
@@ -56,7 +56,7 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage ===
     </div>
     <div class="brand-text">
       <div class="brand-name">PAThrive</div>
-      <div class="brand-sub">CIT · SLSU</div>
+      <div class="brand-sub">{{ \App\Models\PageContent::get('global', 'site_tagline', 'College of Industrial Technology') }}</div>
     </div>
   </div>
   <div class="topbar-center">
@@ -172,8 +172,7 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage ===
   </div>
   <div class="sidebar-footer">
     <div class="sidebar-footer-card">
-      <strong>SLSU – CIT</strong>
-      <p>College of Industrial Technology</p>
+      <strong>College of Industrial Technology</strong>
     </div>
   </div>
 </aside>
@@ -193,9 +192,9 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage ===
 
 <!-- Footer links -->
 <div style="text-align:center;padding:12px 24px;font-size:11.5px;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-left:var(--sidebar-w)">
-  <a href="{{ url('/terms.php') }}"   style="color:var(--gray-400);margin:0 8px">Terms of Use</a> ·
-  <a href="{{ url('/privacy.php') }}" style="color:var(--gray-400);margin:0 8px">Privacy Policy</a>
-  · PAThrive © {{ date('Y') }} CIT-SLSU
+  <a href="{{ route('terms') }}"   style="color:var(--gray-400);margin:0 8px">Terms of Use</a> ·
+  <a href="{{ route('privacy') }}" style="color:var(--gray-400);margin:0 8px">Privacy Policy</a>
+  · PAThrive © {{ date('Y') }} College of Industrial Technology
 </div>
 
 @include('partials.layout-scripts')

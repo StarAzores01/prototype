@@ -63,7 +63,7 @@
 <!-- Report Header -->
 <div class="card" style="margin-bottom:20px">
   <div class="card-body" style="text-align:center;padding:28px">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray-400);margin-bottom:6px">PAThrive · CIT-SLSU Extension Program</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray-400);margin-bottom:6px">PAThrive · College of Industrial Technology Extension Program</div>
     <div style="font-size:22px;font-weight:800;color:var(--text-heading);margin-bottom:4px">Activity Report</div>
     <div style="font-size:16px;font-weight:600;color:var(--blue-primary);margin-bottom:8px">{{ $training->title }}</div>
     <div style="font-size:13px;color:var(--gray-500)">

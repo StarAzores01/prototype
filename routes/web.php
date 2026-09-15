@@ -30,6 +30,7 @@ use App\Http\Controllers\Ec\ProgramController as EcProgramController;
 use App\Http\Controllers\Ec\ReportController as EcReportController;
 use App\Http\Controllers\Ec\SkillsController as EcSkillsController;
 use App\Http\Controllers\Ec\TrainerController as EcTrainerController;
+use App\Http\Controllers\Ec\TrainingCategoryController as EcTrainingCategoryController;
 use App\Http\Controllers\Ec\TrainingController as EcTrainingController;
 use App\Http\Controllers\Evaluator\DashboardController as EvaluatorDashboardController;
 use App\Http\Controllers\Evaluator\EvaluationHubController as EvaluatorEvaluationHubController;
@@ -167,8 +168,8 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
         Route::post('/evaluators.php', [EcEvaluatorController::class, 'store'])->name('evaluators.store');
 
         Route::get('/page-content.php', [EcPageContentController::class, 'index'])->name('page-content');
-        Route::get('/page-content.php/{pageKey}', [EcPageContentController::class, 'edit'])->name('page-content.edit');
-        Route::post('/page-content.php/{pageKey}', [EcPageContentController::class, 'update'])->name('page-content.update');
+        Route::post('/page-content.php', [EcPageContentController::class, 'update'])->name('page-content.update');
+        Route::post('/page-content-trainings.php', [EcTrainingCategoryController::class, 'store'])->name('page-content.trainings.store');
     });
 
 /*

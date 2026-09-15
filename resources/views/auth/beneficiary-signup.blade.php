@@ -46,7 +46,7 @@
       <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/>
     </div>
     <h1>Create Participant Account</h1>
-    <p>PAThrive &middot; CIT-SLSU</p>
+    <p>PAThrive &middot; College of Industrial Technology</p>
   </div>
 
   <div class="auth-card-body">

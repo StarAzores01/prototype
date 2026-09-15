@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PAThrive – Extension Training Management System | CIT-SLSU</title>
+  <title>PAThrive – Extension Training Management System | College of Industrial Technology</title>
+  <link rel="icon" href="{{ asset('imgs/logofinalpt.png') }}" type="image/png"/>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -654,7 +655,7 @@
     }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 960px) {
+    @media (max-width: 640px) {
       .lp-hero-inner  { grid-template-columns: 1fr; }
       .lp-hero-visual { display: none; }
       .lp-about-grid  { grid-template-columns: 1fr; }
@@ -711,7 +712,7 @@
       </div>
       <div>
         <div class="lp-brand-name">PAThrive</div>
-        <div class="lp-brand-sub">CIT &middot; SLSU</div>
+        <div class="lp-brand-sub">{{ \App\Models\PageContent::get('global', 'site_tagline', 'College of Industrial Technology') }}</div>
       </div>
     </div>
 
@@ -750,10 +751,11 @@
   <div class="lp-hero-inner" style="grid-template-columns:1fr;text-align:center;justify-items:center">
     <div style="max-width:720px">
       <div class="lp-eyebrow">
-        {!! \App\Models\PageContent::get('landing', 'hero_badge', 'Southern Luzon State University &middot; CIT') !!}
+        {!! \App\Models\PageContent::get('landing', 'hero_badge', 'College of Industrial Technology') !!}
       </div>
       <h1 class="lp-hero-h1">
-        {!! \App\Models\PageContent::get('landing', 'hero_heading', 'Empowering Communities<br>Through <span class="lp-hl">Skilled Training</span>') !!}
+        {{ \App\Models\PageContent::get('landing', 'hero_heading_text', 'Empowering Communities Through') }}
+        <span class="lp-hl">{{ \App\Models\PageContent::get('landing', 'hero_heading_highlight', 'Skills Training') }}</span>
       </h1>
       <p class="lp-hero-p" style="margin-left:auto;margin-right:auto">
         {!! \App\Models\PageContent::get('landing', 'hero_subheading', 'PAThrive is the official Extension Training Management &amp; Impact Assessment Tracking System of the College of Industrial Technology — connecting communities with quality technical-vocational programs.') !!}
@@ -893,113 +895,53 @@
       </p>
     </div>
 
+    @php
+      // Decorative fallback gradient shown behind a category's photo until
+      // EC uploads one (Manage Public Site Content → Trainings) — not
+      // EC-editable, same spirit as the gradient already used elsewhere as
+      // a placeholder (e.g. trainings-public.blade.php's $catColors).
+      $categoryGradients = [
+        'Culinary Technology'            => ['#F59E0B', '#FBBF24'],
+        'Computer Technology'            => ['#6366F1', '#818CF8'],
+        'Automotive Technology'          => ['#64748B', '#94A3B8'],
+        'Electronics Technology'         => ['#10B981', '#34D399'],
+        'Apparel and Fashion Technology' => ['#EC4899', '#F472B6'],
+        'Mechanical Technology'          => ['#1A56DB', '#3B82F6'],
+        'Print Media Technology'         => ['#7C3AED', '#A78BFA'],
+        'Information Technology'         => ['#0EA5E9', '#38BDF8'],
+      ];
+    @endphp
     <div class="lp-course-grid">
-
+      @foreach($trainingCategories as $cat)
+      @php
+        $grad = $categoryGradients[$cat->activity_name] ?? ['#1A56DB', '#2E6BF0'];
+      @endphp
       <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#F59E0B,#FBBF24)">
-          @if($img = \App\Models\PageContent::get('training-categories', 'culinary_image'))
-            <img src="{{ $img }}" alt="Culinary Technology" class="lp-cc-thumb-img"/>
+        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,{{ $grad[0] }},{{ $grad[1] }})">
+          @if($cat->image)
+            <img src="{{ $cat->image }}" alt="{{ $cat->activity_name }}" class="lp-cc-thumb-img"/>
           @endif
         </div>
         <div class="lp-cc-body">
-          <div class="lp-cc-area">Culinary Technology</div>
-          <p class="lp-cc-desc">Professional food preparation, bakery, pastry arts, and kitchen management for employment or entrepreneurship.</p>
-          <div class="lp-cc-tags"><span>Baking</span><span>Pastry Arts</span><span>Food Safety</span></div>
+          <div class="lp-cc-area">{{ $cat->activity_name }}</div>
+          <p class="lp-cc-desc">{{ $cat->description }}</p>
         </div>
       </div>
-
-      <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#6366F1,#818CF8)">
-          @if($img = \App\Models\PageContent::get('training-categories', 'computer_image'))
-            <img src="{{ $img }}" alt="Computer Technology" class="lp-cc-thumb-img"/>
-          @endif
-        </div>
-        <div class="lp-cc-body">
-          <div class="lp-cc-area">Computer Technology</div>
-          <p class="lp-cc-desc">Digital literacy, basic programming, office productivity tools, and computer hardware servicing.</p>
-          <div class="lp-cc-tags"><span>Digital Literacy</span><span>Hardware</span><span>MS Office</span></div>
-        </div>
-      </div>
-
-      <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#64748B,#94A3B8)">
-          @if($img = \App\Models\PageContent::get('training-categories', 'automotive_image'))
-            <img src="{{ $img }}" alt="Automotive Technology" class="lp-cc-thumb-img"/>
-          @endif
-        </div>
-        <div class="lp-cc-body">
-          <div class="lp-cc-area">Automotive Technology</div>
-          <p class="lp-cc-desc">Engine diagnostics, brake systems, preventive maintenance, and electrical repair for vehicles.</p>
-          <div class="lp-cc-tags"><span>Engine Repair</span><span>Brakes</span><span>Diagnostics</span></div>
-        </div>
-      </div>
-
-      <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#10B981,#34D399)">
-          @if($img = \App\Models\PageContent::get('training-categories', 'electronics_image'))
-            <img src="{{ $img }}" alt="Electronics Technology" class="lp-cc-thumb-img"/>
-          @endif
-        </div>
-        <div class="lp-cc-body">
-          <div class="lp-cc-area">Electronics Technology</div>
-          <p class="lp-cc-desc">Solar panel installation, consumer electronics repair, and electrical wiring for homes and small businesses.</p>
-          <div class="lp-cc-tags"><span>Solar Energy</span><span>Wiring</span><span>Repair</span></div>
-        </div>
-      </div>
-
-      <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#EC4899,#F472B6)">
-          @if($img = \App\Models\PageContent::get('training-categories', 'apparel_image'))
-            <img src="{{ $img }}" alt="Apparel & Fashion Technology" class="lp-cc-thumb-img"/>
-          @endif
-        </div>
-        <div class="lp-cc-body">
-          <div class="lp-cc-area">Apparel &amp; Fashion Technology</div>
-          <p class="lp-cc-desc">Dressmaking, pattern-making, garment construction, and fashion design for local industry.</p>
-          <div class="lp-cc-tags"><span>Dressmaking</span><span>Pattern-Making</span><span>Design</span></div>
-        </div>
-      </div>
-
-      <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#1A56DB,#3B82F6)">
-          @if($img = \App\Models\PageContent::get('training-categories', 'mechanical_image'))
-            <img src="{{ $img }}" alt="Mechanical Technology" class="lp-cc-thumb-img"/>
-          @endif
-        </div>
-        <div class="lp-cc-body">
-          <div class="lp-cc-area">Mechanical Technology</div>
-          <p class="lp-cc-desc">Machining, welding, metal fabrication, and mechanical systems maintenance for industrial applications.</p>
-          <div class="lp-cc-tags"><span>Welding</span><span>Machining</span><span>Fabrication</span></div>
-        </div>
-      </div>
-
-      <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)">
-          @if($img = \App\Models\PageContent::get('training-categories', 'printmedia_image'))
-            <img src="{{ $img }}" alt="Print Media Technology" class="lp-cc-thumb-img"/>
-          @endif
-        </div>
-        <div class="lp-cc-body">
-          <div class="lp-cc-area">Print Media Technology</div>
-          <p class="lp-cc-desc">Graphic design, desktop publishing, digital printing, and print production for media and business.</p>
-          <div class="lp-cc-tags"><span>Graphic Design</span><span>Publishing</span><span>Printing</span></div>
-        </div>
-      </div>
-
-      <div class="lp-course-card">
-        <div class="lp-cc-thumb" style="background:linear-gradient(135deg,#0EA5E9,#38BDF8)">
-          @if($img = \App\Models\PageContent::get('training-categories', 'it_image'))
-            <img src="{{ $img }}" alt="Information Technology" class="lp-cc-thumb-img"/>
-          @endif
-        </div>
-        <div class="lp-cc-body">
-          <div class="lp-cc-area">Information Technology</div>
-          <p class="lp-cc-desc">Web development, systems analysis, network fundamentals, and IT support for the digital economy.</p>
-          <div class="lp-cc-tags"><span>Web Dev</span><span>Networking</span><span>IT Support</span></div>
-        </div>
-      </div>
-
+      @endforeach
     </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     CALL TO ACTION
+════════════════════════════════════════ -->
+<section class="lp-section" style="padding:64px 0;text-align:center;background:rgba(37,99,235,.08)">
+  <div class="lp-container">
+    <h2 class="lp-sec-title" style="color:#fff;margin-bottom:12px">{{ \App\Models\PageContent::get('landing', 'cta_heading', 'Ready to Join a Training?') }}</h2>
+    <p class="lp-sec-desc" style="color:rgba(255,255,255,.6);margin:0 auto 24px">{{ \App\Models\PageContent::get('landing', 'cta_desc', 'Register now and start building skills for a better livelihood.') }}</p>
+    <a href="{{ route('choose-role') }}" class="lp-btn-hero-primary" style="display:inline-flex">
+      <i class="fas fa-arrow-right"></i> {{ \App\Models\PageContent::get('landing', 'cta_button_text', 'Register Now') }}
+    </a>
   </div>
 </section>
 
@@ -1017,7 +959,7 @@
           </div>
           <div class="lp-footer-logo-name">PAThrive</div>
         </div>
-        <p class="lp-footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University') }}</p>
+        <p class="lp-footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology') }}</p>
         <div class="lp-footer-contact">
           <div class="lp-footer-ci"><i class="fas fa-location-dot"></i> {{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
           <div class="lp-footer-ci"><i class="fas fa-envelope"></i> {{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
@@ -1070,7 +1012,7 @@
     <!-- Footer bottom -->
     <div class="lp-footer-bottom">
       <div class="lp-footer-copy">
-        &copy; {{ now()->year }} PAThrive – SLSU College of Industrial Technology. All rights reserved.
+        {!! \App\Models\PageContent::get('global', 'footer_copyright', '&copy; ' . now()->year . ' PAThrive – SLSU College of Industrial Technology. All rights reserved.') !!}
       </div>
       <div class="lp-footer-badges">
         <div class="lp-footer-badge">ISO/IEC 25010:2023</div>
@@ -1100,7 +1042,7 @@ window.addEventListener('scroll', () => {
   };
   btn.addEventListener('click', () => setOpen(!menu.classList.contains('lp-open')));
   menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
-  window.addEventListener('resize', () => { if (window.innerWidth > 960) setOpen(false); });
+  window.addEventListener('resize', () => { if (window.innerWidth > 640) setOpen(false); });
 })();
 
 /* ── Smooth scroll for nav links ── */

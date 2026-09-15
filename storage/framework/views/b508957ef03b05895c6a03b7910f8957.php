@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PAThrive – About</title>
+  <link rel="icon" href="<?php echo e(asset('imgs/logofinalpt.png')); ?>" type="image/png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+  <link href="<?php echo e(asset('assets/css/style.css')); ?>" rel="stylesheet"/>
+  <style>
+    body { font-family:'Poppins',sans-serif; margin:0; background:#F0F6FF; color:#334155; overflow-x:hidden; }
+    .lp-nav { position:fixed;top:0;left:0;right:0;z-index:500;height:68px;background:rgba(9,24,47,.96);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;transition:all .24s; }
+    .lp-nav.scrolled { background:rgba(9,24,47,.99);box-shadow:0 4px 24px rgba(0,0,0,.3); }
+    .lp-nav-inner { display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1200px;margin:0 auto;padding:0 28px; }
+    .lp-brand { display:flex;align-items:center;gap:12px; }
+    .lp-brand-logo { width:48px;height:48px;border-radius:10px;overflow:hidden;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+    .lp-brand-logo img { width:44px;height:44px;object-fit:contain; }
+    .lp-brand-name { font-size:18px;font-weight:800;color:#fff;letter-spacing:-.4px; }
+    .lp-brand-sub  { font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.4px; }
+    .lp-links { display:flex;align-items:center;gap:4px; }
+    .lp-link { padding:7px 14px;border-radius:8px;font-size:13.5px;font-weight:500;color:rgba(255,255,255,.7);transition:all .24s;text-decoration:none; }
+    .lp-link:hover,.lp-link.active { background:rgba(255,255,255,.08);color:#fff; }
+    .lp-nav-actions { display:flex;align-items:center;gap:10px; }
+    .lp-btn-login { padding:8px 18px;border-radius:8px;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.85);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);transition:all .24s;text-decoration:none;display:inline-flex;align-items:center;gap:7px; }
+    .lp-btn-login:hover { background:rgba(255,255,255,.15);color:#fff; }
+    .lp-btn-signup { padding:8px 20px;border-radius:8px;font-size:13.5px;font-weight:700;background:linear-gradient(135deg,#1A56DB,#2E6BF0);color:#fff;box-shadow:0 2px 10px rgba(26,86,219,.45);transition:all .24s;text-decoration:none;display:inline-flex;align-items:center;gap:7px; }
+    .lp-btn-signup:hover { transform:translateY(-1px);box-shadow:0 4px 18px rgba(26,86,219,.6); }
+    .lp-nav-collapse { display:contents; }
+    .lp-hamburger { display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);cursor:pointer;flex-shrink:0; }
+    .lp-hamburger span { display:block;width:20px;height:2px;border-radius:2px;background:#fff;transition:all .24s; }
+    .lp-hamburger.lp-open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+    .lp-hamburger.lp-open span:nth-child(2) { opacity:0; }
+    .lp-hamburger.lp-open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+    .page-hero { padding:120px 0 60px;background:linear-gradient(135deg,#09182F,#102545,#1A3A72);text-align:center; }
+    .eyebrow { display:inline-flex;align-items:center;gap:8px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.25);color:#38BDF8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;padding:5px 14px;border-radius:40px;margin-bottom:20px; }
+    .sec-badge { display:inline-flex;align-items:center;gap:8px;background:rgba(26,86,219,.08);color:#1A56DB;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;padding:5px 14px;border-radius:40px;border:1px solid rgba(26,86,219,.15);margin-bottom:14px; }
+    .feature-row { display:flex;flex-direction:column;gap:16px; }
+    .feature-item { display:flex;align-items:flex-start;gap:14px;background:#fff;border:1px solid #EEF2F7;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(9,24,47,.06); }
+    .feature-ico { width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
+    .card-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px; }
+    .info-card { background:#fff;border-radius:14px;padding:24px;border:1px solid #EEF2F7;box-shadow:0 2px 8px rgba(9,24,47,.06); }
+    /* "What is PAThrive?" and "About the College" both pair a text column
+       with card content side by side — fine at desktop width, but with no
+       override they never dropped below full desktop width, forcing this
+       whole page wider than the viewport on mobile (which is also why the
+       hero above them looked like it was overflowing/off-center). */
+    @media(max-width:860px){
+      .about-grid-2col, .about-cit-grid { grid-template-columns:1fr !important; gap:32px !important; }
+    }
+    @media(max-width:600px){
+      .about-info-cards { grid-template-columns:1fr !important; }
+    }
+    .lp-footer { background:#05101F;padding:52px 0 28px; }
+    .lp-container { max-width:1200px;margin:0 auto;padding:0 28px; }
+    .lp-footer-grid { display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px; }
+    .lp-footer-logo { display:flex;align-items:center;gap:10px;margin-bottom:14px; }
+    .lp-footer-logo-box { width:44px;height:44px;border-radius:9px;overflow:hidden;background:transparent;display:flex;align-items:center;justify-content:center; }
+    .lp-footer-logo-box img { width:40px;height:40px;object-fit:contain; }
+    .lp-footer-logo-name { font-size:18px;font-weight:800;color:#fff; }
+    .lp-footer-tagline { font-size:13px;color:rgba(255,255,255,.4);line-height:1.7;max-width:280px;margin-bottom:16px; }
+    .lp-footer-contact { display:flex;flex-direction:column;gap:8px; }
+    .lp-footer-ci { display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:rgba(255,255,255,.45); }
+    .lp-footer-ci i { font-size:11px;color:#38BDF8;margin-top:2px;flex-shrink:0;width:14px;text-align:center; }
+    .lp-footer-col-title { font-size:13px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:16px;text-transform:uppercase;letter-spacing:.6px; }
+    .lp-footer-links { display:flex;flex-direction:column;gap:9px; }
+    .lp-footer-link { font-size:13px;color:rgba(255,255,255,.4);transition:all .24s;text-decoration:none;display:block; }
+    .lp-footer-link:hover { color:rgba(255,255,255,.8); }
+    .lp-footer-bottom { padding-top:24px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px; }
+    .lp-footer-copy { font-size:12px;color:rgba(255,255,255,.3); }
+    .lp-footer-badges { display:flex;gap:8px; }
+    .lp-footer-badge { font-size:10px;font-weight:600;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:20px; }
+    @media(max-width:640px){
+      .lp-footer-grid{grid-template-columns:1fr 1fr;}
+      .lp-hamburger{display:flex;}
+      .lp-nav-collapse{display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:rgba(9,24,47,.98);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.08);padding:8px 20px 20px;max-height:0;overflow:hidden;opacity:0;visibility:hidden;transition:max-height .3s ease,opacity .25s ease;}
+      .lp-nav-collapse.lp-open{max-height:480px;opacity:1;visibility:visible;}
+      .lp-links{flex-direction:column;align-items:stretch;gap:2px;width:100%;}
+      .lp-link{padding:12px 14px;}
+      .lp-nav-actions{flex-direction:column;align-items:stretch;gap:8px;width:100%;padding-top:12px;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);}
+      .lp-btn-login,.lp-btn-signup{justify-content:center;width:100%;}
+    }
+    @media(max-width:600px){ .lp-footer-grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="lp-nav" id="lpNav">
+  <div class="lp-nav-inner">
+    <div class="lp-brand">
+      <div class="lp-brand-logo">
+        <img src="<?php echo e(\App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png'))); ?>" alt="CIT" onerror="this.style.display='none'"/>
+      </div>
+      <div>
+        <div class="lp-brand-name">PAThrive</div>
+        <div class="lp-brand-sub"><?php echo e(\App\Models\PageContent::get('global', 'site_tagline', 'College of Industrial Technology')); ?></div>
+      </div>
+    </div>
+    <div class="lp-nav-collapse" id="lpNavCollapse">
+      <div class="lp-links">
+        <a href="<?php echo e(route('home')); ?>"            class="lp-link">Home</a>
+        <a href="<?php echo e(route('about')); ?>"            class="lp-link active">About</a>
+        <a href="<?php echo e(route('trainings-public')); ?>" class="lp-link">Trainings</a>
+        <a href="<?php echo e(route('contact')); ?>"          class="lp-link">Contact</a>
+      </div>
+      <?php echo $__env->make('public.partials.nav', ['navPrefix' => 'lp-'], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    </div>
+    <button type="button" class="lp-hamburger" id="lpHamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="lpNavCollapse">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div style="max-width:700px;margin:0 auto;padding:0 24px">
+    <div class="eyebrow"><?php echo e(\App\Models\PageContent::get('about', 'hero_eyebrow', 'About PAThrive')); ?></div>
+    <h1 style="font-size:clamp(28px,4vw,44px);font-weight:800;color:#fff;margin-bottom:16px;line-height:1.2"><?php echo e(\App\Models\PageContent::get('about', 'hero_heading', 'About the System & CIT Extension Programs')); ?></h1>
+    <p style="font-size:15px;color:rgba(255,255,255,.65);line-height:1.7"><?php echo e(\App\Models\PageContent::get('about', 'hero_desc', "Learn about PAThrive and the College of Industrial Technology's commitment to community development through extension services.")); ?></p>
+  </div>
+</div>
+
+<!-- WHAT IS PATHRIVE? -->
+<section style="padding:80px 0;background:#fff">
+  <div style="max-width:1100px;margin:0 auto;padding:0 28px">
+    <div class="about-grid-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+      <!-- Left: text -->
+      <div>
+        <div class="sec-badge" style="margin-bottom:14px"><?php echo e(\App\Models\PageContent::get('about', 'system_badge', 'The System')); ?></div>
+        <h2 style="font-size:clamp(22px,3vw,32px);font-weight:800;color:#09182F;margin-bottom:20px;line-height:1.25"><?php echo e(\App\Models\PageContent::get('about', 'system_title', 'What is PAThrive?')); ?></h2>
+        <?php
+          $systemBodyDefault =
+            '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">PAThrive is a web-based Extension Training Management and Impact Assessment Tracking System developed for the College of Industrial Technology (CIT) of Southern Luzon State University – Main Campus.</p>'
+            . '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">The system centralizes the management of CIT extension training programs — from planning and scheduling to participant registration, evaluation, and post-training skills utilization tracking.</p>'
+            . '<p style="font-size:15px;color:#64748B;line-height:1.75">PAThrive enables Extension Coordinators to create and manage programs, assign Project Leaders, and generate reports — while giving participants a dedicated portal to register, attend trainings, and complete evaluations.</p>';
+        ?>
+        <div><?php echo \App\Models\PageContent::get('about', 'system_body', $systemBodyDefault); ?></div>
+      </div>
+      <!-- Right: feature cards -->
+      <div class="feature-row">
+        <?php $__currentLoopData = [
+          ['fa-book-open',     '#1A56DB', '#EFF6FF', 'Training Management',      'Create, schedule, and monitor extension training programs.'],
+          ['fa-users',         '#0891B2', '#ECFEFF', 'Beneficiary Tracking',      'Register and track participants and post-training outcomes.'],
+          ['fa-clipboard-list','#7C3AED', '#F5F3FF', 'Evaluation & Feedback',     'Collect and analyze participant evaluations.'],
+          ['fa-chart-bar',     '#059669', '#ECFDF5', 'Impact Assessment',         'Measure post-training skills utilization and community impact.'],
+        ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$ico, $color, $bg, $title, $desc]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <div class="feature-item">
+          <div class="feature-ico" style="background:<?php echo e($bg); ?>;color:<?php echo e($color); ?>">
+            <i class="fas <?php echo e($ico); ?>"></i>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#09182F;margin-bottom:4px"><?php echo e($title); ?></div>
+            <div style="font-size:13px;color:#64748B;line-height:1.55"><?php echo e($desc); ?></div>
+          </div>
+        </div>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT CIT -->
+<section style="padding:80px 0;background:#F0F6FF">
+  <div style="max-width:1100px;margin:0 auto;padding:0 28px">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="sec-badge"><?php echo e(\App\Models\PageContent::get('about', 'college_badge', 'About the College')); ?></div>
+      <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:12px"><?php echo e(\App\Models\PageContent::get('about', 'college_title', 'College of Industrial Technology (CIT)')); ?></h2>
+      <p style="font-size:15px;color:#64748B;max-width:640px;margin:0 auto;line-height:1.7">
+        <?php echo e(\App\Models\PageContent::get('about', 'college_desc', 'The College of Industrial Technology provides technical and vocational education that prepares individuals for industry, employment, and entrepreneurship.')); ?>
+
+      </p>
+    </div>
+    <div class="about-cit-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start">
+      <div>
+        <?php
+          $collegeBodyDefault = '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">The <strong>College of Industrial Technology (CIT)</strong> offers various specialization areas such as Culinary Technology, Apparel and Fashion Technology, Computer Technology, Information Technology, Electronics Technology, Automotive Technology, Mechanical Technology, and Print Media Technology.</p>'
+            . '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">CIT plays a vital role in developing skilled and competent individuals by combining theoretical knowledge with hands-on training, equipping students and community members with industry-relevant competencies.</p>'
+            . "<p style=\"font-size:15px;color:#64748B;line-height:1.75\">In addition to its academic functions, CIT actively participates in community development through extension services, contributing to the university's mission of promoting inclusive growth and sustainable development.</p>";
+        ?>
+        <?php echo \App\Models\PageContent::get('about', 'college_body', $collegeBodyDefault); ?>
+
+      </div>
+      <div class="card-grid about-info-cards" style="grid-template-columns:1fr 1fr">
+        <?php $__currentLoopData = [
+          ['fa-graduation-cap','Technical & Vocational Education','Offering 8 specialization areas aligned with industry needs.'],
+          ['fa-screwdriver-wrench','Hands-On Training','Combining theory with practical skills for workforce readiness.'],
+          ['fa-seedling','Community Development','Contributing to inclusive growth through extension service programs.'],
+          ['fa-chart-column','CHED Compliance','All programs documented and reported per CHED requirements.'],
+        ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$em, $title, $desc]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <div class="info-card">
+          <div style="font-size:28px;margin-bottom:10px"><i class="fas <?php echo e($em); ?>" style="color:#1A56DB"></i></div>
+          <div style="font-weight:700;font-size:14px;color:#09182F;margin-bottom:6px"><?php echo e($title); ?></div>
+          <div style="font-size:13px;color:#64748B;line-height:1.6"><?php echo e($desc); ?></div>
+        </div>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CIT EXTENSION PROGRAMS -->
+<section style="padding:80px 0;background:#fff">
+  <div style="max-width:1100px;margin:0 auto;padding:0 28px">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="sec-badge"><?php echo e(\App\Models\PageContent::get('about', 'programs_badge', 'Extension Programs')); ?></div>
+      <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:12px"><?php echo e(\App\Models\PageContent::get('about', 'programs_title', 'CIT Extension Programs')); ?></h2>
+      <p style="font-size:15px;color:#64748B;max-width:600px;margin:0 auto;line-height:1.7"><?php echo e(\App\Models\PageContent::get('about', 'programs_desc', "The extension programs of CIT are part of SLSU's initiatives to deliver knowledge, skills, and technical expertise to communities.")); ?></p>
+    </div>
+    <div class="card-grid">
+      <?php $__currentLoopData = [
+        ['fa-handshake','LGU & Partner Collaboration','Conducted in partnership with local government units, NGOs, and community stakeholders for broader community reach.'],
+        ['fa-users','Inclusive Beneficiary Coverage','Reaching out-of-school youth, displaced workers, solo parents, farmers, retirees, and other qualified community members.'],
+        ['fa-clipboard-list','Structured Implementation','From needs assessment and proposal preparation to Project Leader assignment, approval, and post-training evaluation — managed end to end.'],
+        ['fa-seedling','Community Development','Actively contributing to inclusive growth and sustainable development through CIT extension service programs.'],
+        ['fa-graduation-cap','Skills & Livelihood','Empowering participants to apply their learning for personal development, employment, or livelihood generation.'],
+        ['fa-chart-column','CHED Compliance','All programs are documented and reported in compliance with CHED extension service requirements and standards.'],
+      ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$em, $title, $desc]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+      <div class="info-card">
+        <div style="font-size:32px;margin-bottom:12px"><i class="fas <?php echo e($em); ?>" style="color:#1A56DB"></i></div>
+        <div style="font-weight:700;font-size:15px;color:#09182F;margin-bottom:8px"><?php echo e($title); ?></div>
+        <div style="font-size:13px;color:#64748B;line-height:1.65"><?php echo e($desc); ?></div>
+      </div>
+      <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="lp-footer">
+  <div class="lp-container">
+    <div class="lp-footer-grid">
+      <div>
+        <div class="lp-footer-logo">
+          <div class="lp-footer-logo-box"><img src="<?php echo e(\App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png'))); ?>" alt="CIT" onerror="this.style.display='none'"/></div>
+          <div class="lp-footer-logo-name">PAThrive</div>
+        </div>
+        <p class="lp-footer-tagline"><?php echo e(\App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology')); ?></p>
+        <div class="lp-footer-contact">
+          <div class="lp-footer-ci"><i class="fas fa-location-dot"></i> <?php echo e(\App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines')); ?></div>
+          <div class="lp-footer-ci"><i class="fas fa-envelope"></i> <?php echo e(\App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph')); ?></div>
+          <div class="lp-footer-ci"><i class="fas fa-phone"></i> <?php echo e(\App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX')); ?></div>
+        </div>
+      </div>
+      <div>
+        <div class="lp-footer-col-title">Quick Links</div>
+        <div class="lp-footer-links">
+          <a href="<?php echo e(route('home')); ?>"             class="lp-footer-link">Home</a>
+          <a href="<?php echo e(route('about')); ?>"             class="lp-footer-link">About PAThrive</a>
+          <a href="<?php echo e(route('trainings-public')); ?>"  class="lp-footer-link">Training Programs</a>
+          <a href="<?php echo e(route('contact')); ?>"           class="lp-footer-link">Contact Us</a>
+        </div>
+      </div>
+      <div>
+        <div class="lp-footer-col-title">Training Areas</div>
+        <div class="lp-footer-links">
+          <span class="lp-footer-link">Mechanical Technology</span>
+          <span class="lp-footer-link">Automotive Technology</span>
+          <span class="lp-footer-link">Computer Technology</span>
+          <span class="lp-footer-link">Electronics Technology</span>
+          <span class="lp-footer-link">Culinary Technology</span>
+          <span class="lp-footer-link">Apparel and Fashion Technology</span>
+          <span class="lp-footer-link">Print Media Technology</span>
+          <span class="lp-footer-link">Information Technology</span>
+        </div>
+      </div>
+      <div>
+        <div class="lp-footer-col-title">Access</div>
+        <div class="lp-footer-links">
+          <?php if($loggedIn): ?>
+            <a href="<?php echo e($dashboardUrl); ?>" class="lp-footer-link">Go to Dashboard</a>
+          <?php else: ?>
+            <a href="<?php echo e(route('login')); ?>"       class="lp-footer-link">Log In to System</a>
+            <a href="<?php echo e(route('choose-role')); ?>" class="lp-footer-link">Register as Participant</a>
+          <?php endif; ?>
+          <a href="<?php echo e(route('terms')); ?>"       class="lp-footer-link">Terms of Use</a>
+          <a href="<?php echo e(route('privacy')); ?>"     class="lp-footer-link">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+    <div class="lp-footer-bottom">
+      <div class="lp-footer-copy"><?php echo \App\Models\PageContent::get('global', 'footer_copyright', '&copy; ' . now()->year . ' PAThrive – SLSU College of Industrial Technology. All rights reserved.'); ?></div>
+      <div class="lp-footer-badges">
+        <div class="lp-footer-badge">ISO/IEC 25010:2023</div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('scroll', () => {
+  document.getElementById('lpNav').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+(function () {
+  const btn = document.getElementById('lpHamburger');
+  const menu = document.getElementById('lpNavCollapse');
+  if (!btn || !menu) return;
+  const setOpen = (open) => {
+    menu.classList.toggle('lp-open', open);
+    btn.classList.toggle('lp-open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  btn.addEventListener('click', () => setOpen(!menu.classList.contains('lp-open')));
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+  window.addEventListener('resize', () => { if (window.innerWidth > 640) setOpen(false); });
+})();
+</script>
+</body>
+</html>
+<?php /**PATH C:\Users\ELAI\OneDrive\Documents\GitHub\prototype\resources\views/public/about.blade.php ENDPATH**/ ?>

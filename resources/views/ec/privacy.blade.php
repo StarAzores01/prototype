@@ -25,12 +25,12 @@
 
     <div style="margin-bottom:24px">
       <div style="font-size:16px;font-weight:700;color:var(--text-heading);margin-bottom:8px">2. How We Use Your Information</div>
-      <p>Collected data is used solely for managing CIT-SLSU extension activities, generating reports for CHED compliance, and tracking beneficiary outcomes. Data is not shared with third parties.</p>
+      <p>Collected data is used solely for managing College of Industrial Technology extension activities, generating reports for CHED compliance, and tracking beneficiary outcomes. Data is not shared with third parties.</p>
     </div>
 
     <div style="margin-bottom:24px">
       <div style="font-size:16px;font-weight:700;color:var(--text-heading);margin-bottom:8px">3. Data Storage</div>
-      <p>All data is stored on CIT-SLSU institutional servers. Uploaded files are stored in a secure directory accessible only through the system. Passwords are hashed and never stored in plain text.</p>
+      <p>All data is stored on College of Industrial Technology institutional servers. Uploaded files are stored in a secure directory accessible only through the system. Passwords are hashed and never stored in plain text.</p>
     </div>
 
     <div style="margin-bottom:24px">

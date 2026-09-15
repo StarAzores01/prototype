@@ -22,19 +22,10 @@
   ];
 
   // Same EC-managed photo, per training area, shown on the landing page's
-  // Courses Offered cards — see config/page_content_sections.php
-  // ('training-categories'). Falls back to the colored gradient + icon
+  // Courses Offered cards — see App\Models\TrainingCategory (Manage Public
+  // Site Content → Trainings). Falls back to the colored gradient + icon
   // below until EC uploads one for that area.
-  $catImageKeys = [
-    'Culinary Technology'            => 'culinary_image',
-    'Electronics Technology'         => 'electronics_image',
-    'Computer Technology'            => 'computer_image',
-    'Apparel and Fashion Technology' => 'apparel_image',
-    'Information Technology'         => 'it_image',
-    'Automotive Technology'          => 'automotive_image',
-    'Mechanical Technology'          => 'mechanical_image',
-    'Print Media Technology'         => 'printmedia_image',
-  ];
+  $catImages = \App\Models\TrainingCategory::active()->pluck('image', 'activity_name');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -42,6 +33,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PAThrive – Training Programs</title>
+  <link rel="icon" href="{{ asset('imgs/logofinalpt.png') }}" type="image/png"/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet"/>
@@ -155,7 +147,7 @@
     .footer-badges{display:flex;gap:8px}
     .footer-badge{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);
                   border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:20px}
-    @media(max-width:960px){
+    @media(max-width:640px){
       .footer-grid{grid-template-columns:1fr 1fr}
       .hamburger{display:flex}
       .nav-collapse{display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:rgba(9,24,47,.98);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.08);padding:8px 20px 20px;max-height:0;overflow:hidden;opacity:0;visibility:hidden;transition:max-height .3s ease,opacity .25s ease}
@@ -179,7 +171,7 @@
       </div>
       <div>
         <div class="brand-name">PAThrive</div>
-        <div class="brand-sub">CIT &middot; SLSU</div>
+        <div class="brand-sub">{{ \App\Models\PageContent::get('global', 'site_tagline', 'College of Industrial Technology') }}</div>
       </div>
     </div>
     <div class="nav-collapse" id="navCollapse">
@@ -229,8 +221,7 @@
         $c = $catColors[$p['cat']] ?? ['#1A56DB','#2E6BF0'];
         $grad = "linear-gradient(135deg,{$c[0]},{$c[1]})";
         $badgeClass = 'badge-'.strtolower($p['status']);
-        $catImgKey = $catImageKeys[$p['cat']] ?? null;
-        $catImg = $catImgKey ? \App\Models\PageContent::get('training-categories', $catImgKey) : null;
+        $catImg = $catImages[$p['cat']] ?? null;
       @endphp
       <div class="card" data-status="{{ $p['status'] }}">
         <div class="card-img" style="background:{{ $grad }}">
@@ -275,7 +266,7 @@
           <div class="footer-logo-box"><img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/></div>
           <div class="footer-logo-name">PAThrive</div>
         </div>
-        <p class="footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University') }}</p>
+        <p class="footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology') }}</p>
         <div class="footer-contact">
           <div class="footer-ci"><i class="fas fa-location-dot"></i> {{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
           <div class="footer-ci"><i class="fas fa-envelope"></i> {{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
@@ -319,7 +310,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <div class="footer-copy">&copy; {{ now()->year }} PAThrive – SLSU College of Industrial Technology. All rights reserved.</div>
+      <div class="footer-copy">{!! \App\Models\PageContent::get('global', 'footer_copyright', '&copy; ' . now()->year . ' PAThrive – SLSU College of Industrial Technology. All rights reserved.') !!}</div>
       <div class="footer-badges">
         <div class="footer-badge">ISO/IEC 25010:2023</div>
       </div>
@@ -343,7 +334,7 @@ window.addEventListener('scroll', () => {
   };
   btn.addEventListener('click', () => setOpen(!menu.classList.contains('open')));
   menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
-  window.addEventListener('resize', () => { if (window.innerWidth > 960) setOpen(false); });
+  window.addEventListener('resize', () => { if (window.innerWidth > 640) setOpen(false); });
 })();
 
 function filter(el, status) {

@@ -147,7 +147,7 @@
   <!-- Print-only report header -->
   <div style="display:none" class="print-header-block">
     <div style="text-align:center;padding:8px 0 10px">
-      <div style="font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748B;margin-bottom:2px">PAThrive · CIT-SLSU Extension Program</div>
+      <div style="font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748B;margin-bottom:2px">PAThrive · College of Industrial Technology Extension Program</div>
       <div style="font-size:14pt;font-weight:800;color:#09182F;margin-bottom:2px">Attendance Sheet</div>
       <div style="font-size:11pt;font-weight:600;color:#1A56DB;margin-bottom:4px">{{ $trainingInfo->title }}</div>
       <div style="font-size:8pt;color:#64748B">

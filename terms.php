@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
-?>
+// Redirect permanently to the CMS-backed page — all edits made in the admin
+// are reflected there, not in this legacy file.
+header('Location: ' . BASE_URL . '/terms', true, 301);
+exit;
 <!DOCTYPE html>
 <html lang="en">
 <head>

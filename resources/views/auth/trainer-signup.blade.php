@@ -50,7 +50,7 @@
       <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" style="width:44px;height:44px;object-fit:contain" onerror="this.style.display='none'"/>
     </div>
     <h1>Trainer Registration</h1>
-    <p>Project Leader &middot; CIT-SLSU</p>
+    <p>Project Leader &middot; College of Industrial Technology</p>
   </div>
 
   <div class="auth-card-body">

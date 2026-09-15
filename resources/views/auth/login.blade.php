@@ -235,7 +235,7 @@
              onerror="this.style.display='none'"/>
       </div>
       <h1>Welcome Back</h1>
-      <p>Log in to PAThrive &nbsp;&middot;&nbsp; CIT-SLSU</p>
+      <p>Log in to PAThrive &nbsp;&middot;&nbsp; College of Industrial Technology</p>
     </div>
 
     <!-- Card body -->

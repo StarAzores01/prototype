@@ -28,10 +28,10 @@ trait HandlesDocumentUploads
      * for a dashboard-level "general" upload (both stay null, alongside the
      * legacy $request->training_id, unaffected by any of this).
      *
-     * Returns [true, null] on success, or [false, $errorMessage] on
-     * failure — callers redirect back with the message either way, kept
-     * consistent with how these controllers already handled errors before
-     * links existed.
+     * Returns [true, null, $document] on success, or [false, $errorMessage,
+     * null] on failure. The 3rd element (the exact Document row just
+     * created) is additive — existing callers destructuring only
+     * [$ok, $error] are unaffected.
      */
     private function storeDocumentUpload(Request $request, int $uploadedBy, array $scope = []): array
     {
@@ -53,7 +53,7 @@ trait HandlesDocumentUploads
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return [false, $validator->errors()->first()];
+            return [false, $validator->errors()->first(), null];
         }
         $data = $validator->validated();
 
@@ -78,10 +78,10 @@ trait HandlesDocumentUploads
             $ext = strtolower($file->getClientOriginalExtension());
 
             if (! in_array($ext, $this->allowedDocumentFileTypes, true)) {
-                return [false, 'File type not allowed.'];
+                return [false, 'File type not allowed.', null];
             }
             if ($file->getSize() > $this->maxDocumentFileSize) {
-                return [false, 'File exceeds 20 MB limit.'];
+                return [false, 'File exceeds 20 MB limit.', null];
             }
 
             // random_bytes instead of uniqid() — uniqid() is time-based and
@@ -96,8 +96,8 @@ trait HandlesDocumentUploads
             $attrs['file_size'] = $file->getSize();
         }
 
-        Document::create($attrs);
+        $document = Document::create($attrs);
 
-        return [true, null];
+        return [true, null, $document];
     }
 }

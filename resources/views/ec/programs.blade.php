@@ -65,7 +65,7 @@
   </div>
 </div>
 
-<!-- Documents: this Program's own general repository, scoped via program_id â€” moved up front so it's visible without scrolling -->
+<!-- Documents: this Program's own general repository, scoped via program_id  -  moved up front so it's visible without scrolling -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
     <div class="card-title">Documents</div>
@@ -197,56 +197,62 @@
       <div class="card-header">
         <div class="card-title"><i class="fas fa-clock-rotate-left"></i> Program Activity Log</div>
       </div>
+      @php
+        $logActionLabels = [
+          'uploaded_file' => 'Uploaded',
+          'added_link'    => 'Added external link',
+          'archived'      => 'Archived',
+          'restored'      => 'Restored',
+          'deleted'       => 'Deleted',
+        ];
+      @endphp
       @if($viewLogs->isEmpty())
-        <div class="empty-state" style="padding:24px"><i class="fas fa-clock-rotate-left"></i><p>No activity recorded yet.</p></div>
+        <div class="empty-state" style="padding:24px"><i class="fas fa-clock-rotate-left"></i><p>No program activity has been recorded yet.</p></div>
       @else
-      <div style="padding:8px 0">
-        @foreach($viewLogs as $log)
-        @php
-          $logIcon    = $log->eventIcon();
-          $logLabel   = $log->eventLabel();
-          $logActor   = $log->actor->full_name ?? '—';
-          $logPayload = $log->payload ?? [];
-          $logContext = '';
-          if (!empty($log->subject_label)) {
-              $logContext = $log->subject_label;
-          }
-          if (!empty($logPayload['old']) && !empty($logPayload['new'])) {
-              $logContext = ($logContext ? $logContext . ' · ' : '') . $logPayload['old'] . ' → ' . $logPayload['new'];
-          }
-          if (!empty($logPayload['remark'])) {
-              $logContext = ($logContext ? $logContext . ' · ' : '') . '"' . Str::limit($logPayload['remark'], 60) . '"';
-          }
-          if (!empty($logPayload['activity'])) {
-              $logContext = ($logContext ? $logContext . ' — ' : '') . 'in ' . $logPayload['activity'];
-          }
-          if (isset($logPayload['old_budget_used']) && isset($logPayload['new_budget_used'])) {
-              $logContext = '₱' . number_format($logPayload['old_budget_used'], 2) . ' → ₱' . number_format($logPayload['new_budget_used'], 2);
-          }
-          if (isset($logPayload['old_end_date']) && isset($logPayload['new_end_date'])) {
-              $logContext = $logPayload['old_end_date'] . ' → ' . $logPayload['new_end_date'];
-          }
-        @endphp
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 20px;border-bottom:1px solid var(--gray-100)">
-          <div style="width:30px;height:30px;border-radius:50%;background:var(--blue-soft);color:var(--blue-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;margin-top:2px">
-            <i class="fas {{ $logIcon }}"></i>
-          </div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;color:var(--gray-800)">{{ $logLabel }}</div>
-            @if($logContext)
-            <div style="font-size:12px;color:var(--gray-600);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ $logContext }}">{{ $logContext }}</div>
-            @endif
-            <div style="font-size:11px;color:var(--gray-400);margin-top:3px">{{ $logActor }} &middot; {{ $log->created_at->format('M d, Y g:i A') }}</div>
-          </div>
-        </div>
-        @endforeach
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date &amp; Time</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Item</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody>
+          @foreach($viewLogs as $log)
+            <tr>
+              <td style="white-space:nowrap;color:var(--gray-500)">{{ $log->created_at->format('M d, Y g:i A') }}</td>
+              <td>
+                <div style="font-weight:600">{{ $log->actor_name }}</div>
+                <div style="font-size:11px;color:var(--gray-400)">{{ $log->actor_role }}</div>
+              </td>
+              <td>{{ $logActionLabels[$log->action] ?? ucfirst($log->action) }}</td>
+              <td>
+                <div>{{ $log->item_name ?? '—' }}</div>
+                @if($log->item_type)
+                <div style="font-size:11px;color:var(--gray-400)">{{ strtoupper($log->item_type) }}</div>
+                @endif
+              </td>
+              <td>
+                @if($log->training_id)
+                  Activity: {{ $log->location_name }}
+                @else
+                  {{ $log->location_name }}
+                @endif
+              </td>
+            </tr>
+          @endforeach
+          </tbody>
+        </table>
       </div>
       @endif
     </div>
   </div>
 
   <div class="dash-side">
-    <!-- Program Details (read-only â€” budget and the original timeline are permanently fixed at creation, see Extend Timeline above) -->
+    <!-- Program Details (read-only  -  budget and the original timeline are permanently fixed at creation, see Extend Timeline above) -->
     <div class="card">
       <div class="card-header">
         <div class="card-title">Program Details</div>
@@ -254,17 +260,17 @@
       <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
         @php
           $effectiveEnd = $viewProgram->effective_end_date;
-          $timelineEndVal = e($effectiveEnd?->format('Y-m-d') ?? 'â€”');
+          $timelineEndVal = e($effectiveEnd?->format('Y-m-d') ?? ' - ');
           if ($viewProgram->extended_end_date) {
             $timelineEndVal .= ' <span style="color:var(--gray-400);font-weight:400">(originally '.e($viewProgram->timeline_end->format('M d, Y')).')</span>';
           }
           $details = [
-            ['Area / Specialization', e($viewProgram->area ?? 'â€”')],
-            ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? 'â€”')],
+            ['Area / Specialization', e($viewProgram->area ?? ' - ')],
+            ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? ' - ')],
             ['Timeline End', $timelineEndVal],
             ['Budget Allocated', 'â‚±'.number_format((float) $viewProgram->budget_allocated, 2)],
-            ['Created By', e($viewProgram->creator->full_name ?? 'â€”')],
-            ['Created', e($viewProgram->created_at?->format('M d, Y') ?? 'â€”')],
+            ['Created By', e($viewProgram->creator->full_name ?? ' - ')],
+            ['Created', e($viewProgram->created_at?->format('M d, Y') ?? ' - ')],
           ];
         @endphp
         @foreach($details as [$label, $val])
@@ -318,11 +324,11 @@
       <input type="hidden" name="program_id" value="{{ $viewProgram->id }}"/>
       <div class="modal-body">
         <div class="alert alert-info" style="margin-bottom:16px;font-size:13px">
-          <i class="fas fa-circle-info"></i> The program's original timeline and budget are permanently fixed. This only pushes the effective end date further out â€” it never edits or replaces the original.
+          <i class="fas fa-circle-info"></i> The program's original timeline and budget are permanently fixed. This only pushes the effective end date further out  -  it never edits or replaces the original.
         </div>
         <div class="form-group">
           <label class="form-label">Current Effective End Date</label>
-          <div style="padding:9px 12px;border-radius:var(--radius-sm);background:var(--gray-50);font-size:13px;font-weight:600;color:var(--gray-700)">{{ $effectiveEnd?->format('M d, Y') ?? 'â€”' }}</div>
+          <div style="padding:9px 12px;border-radius:var(--radius-sm);background:var(--gray-50);font-size:13px;font-weight:600;color:var(--gray-700)">{{ $effectiveEnd?->format('M d, Y') ?? ' - ' }}</div>
         </div>
         <div class="form-group">
           <label class="form-label">New End Date *</label>
@@ -331,7 +337,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Remark (required) *</label>
-          <textarea name="remark" class="form-control" rows="3" placeholder="Explain why this extension is neededâ€¦" required></textarea>
+          <textarea name="remark" class="form-control" rows="3" placeholder="Explain why this extension is needed..." required></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -359,12 +365,12 @@
       <input type="hidden" name="program_id" value="{{ $viewProgram->id }}"/>
       <div class="modal-body">
         <div class="alert alert-info" style="margin-bottom:16px;font-size:13px">
-          <i class="fas fa-circle-info"></i> This replaces the program's current team. It is not a protected field â€” no remark needed, no amendment logged.
+          <i class="fas fa-circle-info"></i> This replaces the program's current team. It is not a protected field  -  no remark needed, no amendment logged.
         </div>
         <div class="form-group">
           <label class="form-label">Project Lead * <span style="font-weight:400;color:var(--gray-400)">(exactly one, from Project Leaders)</span></label>
           <select name="lead_id" class="form-control" required>
-            <option value="">â€” Select Project Lead â€”</option>
+            <option value=""> -  Select Project Lead  - </option>
             @foreach($trainers as $tr)
             <option value="{{ $tr->id }}" {{ (int) $currentLeadId === $tr->id ? 'selected' : '' }}>{{ $tr->first_name }} {{ $tr->last_name }}</option>
             @endforeach
@@ -376,7 +382,7 @@
             @for($i = 0; $i < 3; $i++)
             @php $cur = $currentMembers->get($i); @endphp
             <select name="member_ids[]" class="form-control">
-              <option value="">â€” None â€”</option>
+              <option value=""> -  None  - </option>
               @foreach($trainers as $tr)
               <option value="{{ $tr->id }}" {{ $cur && $cur->id === $tr->id ? 'selected' : '' }}>{{ $tr->first_name }} {{ $tr->last_name }}</option>
               @endforeach
@@ -448,7 +454,7 @@
         <div class="form-group">
           <label class="form-label">Cover Image <span style="color:var(--red)">*</span></label>
           <input type="file" name="cover_image" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" required/>
-          <div class="form-hint">JPG, PNG, GIF, or WEBP â€” max 5 MB</div>
+          <div class="form-hint">JPG, PNG, GIF, or WEBP  -  max 5 MB</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -497,7 +503,7 @@
           </div>
           <div class="training-card-body">
             <div class="training-card-title">{{ $p->title }}</div>
-            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, 'â€¦') }}</div>
+            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, '...') }}</div>
             <div class="training-card-meta">
               <span><i class="fas fa-user-tie"></i> {{ optional($p->lead->first())->full_name ?? 'No lead' }}</span>
               <span><i class="fas fa-book"></i> {{ $pr['completed'] }}/{{ $pr['total'] }} done</span>

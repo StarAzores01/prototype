@@ -14,6 +14,56 @@
   @endif
 </div>
 
+@if(!$viewForm)
+{{-- ═══════════════ BENEFICIARY PROGRESS MONITORING ═══════════════ --}}
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header">
+    <div>
+      <div class="card-title"><i class="fas fa-chart-line"></i> Beneficiary Progress Entries</div>
+      <div class="card-subtitle">Read-only — how beneficiaries are applying their skills over time</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;color:var(--gray-400)">Total Recorded Earnings</div>
+      <div style="font-size:18px;font-weight:800;color:var(--green)">&#8369;{{ number_format((float) $totalRecordedEarnings, 2) }}</div>
+    </div>
+  </div>
+
+  @if($progressEntries->isEmpty())
+  <div class="empty-state" style="padding:32px 24px;text-align:center">
+    <i class="fas fa-chart-line" style="font-size:24px;color:var(--gray-300)"></i>
+    <p style="margin-top:8px;color:var(--gray-400)">No beneficiary progress entries recorded yet.</p>
+  </div>
+  @else
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Beneficiary</th>
+          <th>Activity / Skill Applied</th>
+          <th>Date</th>
+          <th>Progress / Outcome</th>
+          <th>Service Fee / Earnings</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($progressEntries as $e)
+        <tr>
+          <td>{{ $e->beneficiary->full_name ?? '—' }}</td>
+          <td><strong>{{ $e->activity_name }}</strong></td>
+          <td style="white-space:nowrap">{{ $e->activity_date->format('M d, Y') }}</td>
+          <td><span class="badge badge-active">{{ $e->outcome_type }}</span></td>
+          <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $e->service_fee, 2) }}</td>
+          <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $e->remarks ?: '—' }}</td>
+        </tr>
+        @endforeach
+      </tbody>
+    </table>
+  </div>
+  @endif
+</div>
+@endif
+
 @if($viewForm)
 {{-- ═══════════════ RESPONSES VIEW ═══════════════ --}}
 @php

@@ -67,21 +67,15 @@ class ProgramLogService
         string $action,
         ?array $details = null
     ): void {
-        // Resolve program_id from the document itself — never from input.
-        $programId = static::resolveProgramId($document);
+        // Resolve program_id / activity scope from the document itself —
+        // never from input. Priority: program_id, then activity_id, then
+        // the legacy training_id. Dashboard/general documents (none of the
+        // three set) have no program context — per spec, do NOT log those.
+        [$programId, $trainingId, $locationName] = static::resolveScope($document);
 
-        // Dashboard / general documents have no program context.
-        // Per spec: do NOT create a log entry for these.
         if ($programId === null) {
             return;
         }
-
-        // Resolve the activity (Training) this document belongs to, if any.
-        $trainingId = $document->activity_id ?? null;
-
-        // location_name: the activity title if activity-scoped,
-        // or "Program Repository" for program-level documents.
-        $locationName = static::resolveLocation($document, $trainingId);
 
         // Derive actor from the authenticated web-guard user — never from input.
         $actor     = Auth::guard('web')->user();
@@ -115,44 +109,38 @@ class ProgramLogService
     }
 
     /**
-     * Resolves the owning Program ID for a document.
+     * Resolves the owning Program, the Activity (if any), and the
+     * human-readable location for a document, in priority order:
      *
-     * A document "belongs" to a program either:
-     *   1. Directly — program_id is set on the document itself.
-     *   2. Indirectly — activity_id is set, and that Training has a program_id.
+     *   1. document.program_id set       → [program_id, null, "Program Repository"]
+     *   2. document.activity_id set      → load Training(activity_id), use its
+     *                                       program_id, location = activity title
+     *   3. document.training_id set      → same, via the legacy training_id column
+     *   4. none of the above             → [null, null, ''] (general document,
+     *                                       caller must not log this)
      *
-     * Returns null if neither path resolves (dashboard/general document).
+     * @return array{0: ?int, 1: ?int, 2: string}
      */
-    private static function resolveProgramId(Document $document): ?int
+    private static function resolveScope(Document $document): array
     {
         if ($document->program_id) {
-            return (int) $document->program_id;
+            return [(int) $document->program_id, null, 'Program Repository'];
         }
 
-        if ($document->activity_id) {
-            // Load only what we need — avoid a full eager-load here.
-            $programId = Training::where('id', $document->activity_id)
-                ->value('program_id');
-            return $programId ? (int) $programId : null;
+        $activityId = $document->activity_id ?: $document->training_id;
+
+        if ($activityId) {
+            $activity = Training::where('id', $activityId)->first(['program_id', 'title']);
+
+            if ($activity && $activity->program_id) {
+                return [
+                    (int) $activity->program_id,
+                    (int) $activityId,
+                    $activity->title ?? 'Unknown Activity',
+                ];
+            }
         }
 
-        return null;
-    }
-
-    /**
-     * Resolves the human-readable location for the log entry.
-     *
-     * Activity-scoped → the Activity's title (fetched fresh from DB,
-     *   since the Training model may not be loaded on $document yet).
-     * Program-scoped  → "Program Repository".
-     */
-    private static function resolveLocation(Document $document, ?int $trainingId): string
-    {
-        if ($trainingId) {
-            $title = Training::where('id', $trainingId)->value('title');
-            return $title ?? 'Unknown Activity';
-        }
-
-        return 'Program Repository';
+        return [null, null, ''];
     }
 }

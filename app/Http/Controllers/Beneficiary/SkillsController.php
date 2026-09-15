@@ -3,38 +3,40 @@
 namespace App\Http\Controllers\Beneficiary;
 
 use App\Http\Controllers\Controller;
-use App\Models\Notification;
-use App\Models\SkillsForm;
-use App\Models\SkillsResponse;
+use App\Models\Participant;
+use App\Models\SkillProgressEntry;
+use App\Models\Training;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Beneficiary Skills Utilization — a repeated progress journal, not a
+ * one-time survey. The old Google-Forms-style skills_forms/skills_responses
+ * workflow is left entirely intact in the database (see Ec\SkillsController
+ * and Trainer\SkillsController, which still read/write it); this controller
+ * only replaces what the beneficiary sees at /beneficiary/skills.
+ */
 class SkillsController extends Controller
 {
     public function index(Request $request)
     {
         $beneficiaryId = Auth::guard('beneficiary')->id();
 
-        $forms = SkillsForm::with('training')
-            ->whereHas('training.participants', fn ($q) => $q->where('beneficiary_id', $beneficiaryId))
-            ->whereNotNull('sent_at')
-            ->orderByDesc('sent_at')
+        $entries = SkillProgressEntry::where('beneficiary_id', $beneficiaryId)
+            ->orderByDesc('activity_date')
+            ->orderByDesc('id')
             ->get();
 
-        foreach ($forms as $form) {
-            $form->myResponse = SkillsResponse::where('form_id', $form->id)
-                ->where('beneficiary_id', $beneficiaryId)
-                ->first();
-        }
-
-        $viewFormId = (int) $request->query('form', 0);
-        $viewForm = $viewFormId ? $forms->firstWhere('id', $viewFormId) : null;
+        $myTrainings = Training::whereHas('participants', fn ($q) => $q->where('beneficiary_id', $beneficiaryId))
+            ->orderByDesc('date_start')
+            ->get(['id', 'title']);
 
         return view('beneficiary.skills', [
-            'activePage' => 'skills',
-            'forms'      => $forms,
-            'viewForm'   => $viewForm,
+            'activePage'   => 'skills',
+            'entries'      => $entries,
+            'myTrainings'  => $myTrainings,
+            'outcomeTypes' => SkillProgressEntry::OUTCOME_TYPES,
         ]);
     }
 
@@ -43,43 +45,105 @@ class SkillsController extends Controller
         $action = $request->input('action');
 
         return match ($action) {
-            'submit' => $this->submit($request),
+            'create' => $this->createEntry($request),
+            'update' => $this->updateEntry($request),
+            'delete' => $this->deleteEntry($request),
             default  => back(),
         };
     }
 
-    private function submit(Request $request)
+    private function rules(): array
+    {
+        return [
+            'activity_name' => 'required|string|max:255',
+            'description'   => 'nullable|string',
+            'activity_date' => 'required|date|before_or_equal:today',
+            'outcome_type'  => ['required', \Illuminate\Validation\Rule::in(SkillProgressEntry::OUTCOME_TYPES)],
+            'service_fee'   => 'nullable|numeric|min:0|max:9999999999.99',
+            'remarks'       => 'nullable|string',
+            'training_id'   => 'nullable|integer|exists:trainings,id',
+        ];
+    }
+
+    private function createEntry(Request $request)
     {
         $beneficiaryId = Auth::guard('beneficiary')->id();
 
-        $data = Validator::make($request->all(), [
-            'form_id'     => 'required|integer|exists:skills_forms,id',
-            'training_id' => 'required|integer|exists:trainings,id',
-        ])->validate();
+        $data = Validator::make($request->all(), $this->rules())->validate();
 
-        $formId = $data['form_id'];
-        $trainingId = $data['training_id'];
-        $answers = $request->input('answer', []);
+        // A training_id is only honored if it's actually one of this
+        // beneficiary's own trainings — never trust it blindly.
+        $trainingId = $this->ownTrainingId($beneficiaryId, $data['training_id'] ?? null);
 
-        $already = SkillsResponse::where('form_id', $formId)->where('beneficiary_id', $beneficiaryId)->exists();
-
-        if ($already) {
-            return redirect()->route('beneficiary.skills')
-                ->with('error', 'You have already submitted this survey and it can no longer be edited.');
-        }
-
-        SkillsResponse::create([
-            'form_id'       => $formId,
-            'training_id'   => $trainingId,
+        SkillProgressEntry::create([
             'beneficiary_id' => $beneficiaryId,
-            'responses'     => $answers,
+            'training_id'    => $trainingId,
+            'activity_name'  => $data['activity_name'],
+            'description'    => $data['description'] ?? null,
+            'activity_date'  => $data['activity_date'],
+            'outcome_type'   => $data['outcome_type'],
+            'service_fee'    => $data['service_fee'] ?? 0,
+            'remarks'        => $data['remarks'] ?? null,
         ]);
 
-        Notification::where('user_id', $beneficiaryId)
-            ->where('training_id', $trainingId)
-            ->where('role', 'beneficiary')
-            ->update(['is_read' => true]);
+        return redirect()->route('beneficiary.skills')->with('success', 'Progress entry added.');
+    }
 
-        return redirect()->route('beneficiary.skills')->with('success', 'Skills survey submitted. Thank you!');
+    private function updateEntry(Request $request)
+    {
+        $beneficiaryId = Auth::guard('beneficiary')->id();
+
+        $data = Validator::make($request->all(), array_merge($this->rules(), [
+            'entry_id' => 'required|integer',
+        ]))->validate();
+
+        // Ownership check: only ever load a row that belongs to THIS
+        // beneficiary — the id in the request never bypasses that.
+        $entry = SkillProgressEntry::where('id', $data['entry_id'])
+            ->where('beneficiary_id', $beneficiaryId)
+            ->first();
+
+        if (! $entry) {
+            return redirect()->route('beneficiary.skills')->with('error', 'Entry not found.');
+        }
+
+        $trainingId = $this->ownTrainingId($beneficiaryId, $data['training_id'] ?? null);
+
+        $entry->update([
+            'training_id'   => $trainingId,
+            'activity_name' => $data['activity_name'],
+            'description'   => $data['description'] ?? null,
+            'activity_date' => $data['activity_date'],
+            'outcome_type'  => $data['outcome_type'],
+            'service_fee'   => $data['service_fee'] ?? 0,
+            'remarks'       => $data['remarks'] ?? null,
+        ]);
+
+        return redirect()->route('beneficiary.skills')->with('success', 'Progress entry updated.');
+    }
+
+    private function deleteEntry(Request $request)
+    {
+        $beneficiaryId = Auth::guard('beneficiary')->id();
+
+        SkillProgressEntry::where('id', (int) $request->input('entry_id'))
+            ->where('beneficiary_id', $beneficiaryId)
+            ->delete();
+
+        return redirect()->route('beneficiary.skills')->with('success', 'Progress entry deleted.');
+    }
+
+    /** Only accept a training_id that's actually one of this beneficiary's own. */
+    private function ownTrainingId(int $beneficiaryId, ?int $trainingId): ?int
+    {
+        if (! $trainingId) {
+            return null;
+        }
+
+        $owns = Participant::where('training_id', $trainingId)
+            ->where('beneficiary_id', $beneficiaryId)
+            ->exists();
+
+        return $owns ? $trainingId : null;
     }
 }

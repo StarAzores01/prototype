@@ -72,7 +72,7 @@ class TrainingController extends Controller
 
         $trainings = $query->orderByDesc('date_start')->get();
 
-        // Grouped by the linked Program ("Project") for the card grid â€” same
+        // Grouped by the linked Program ("Project") for the card grid  -  same
         // treatment as Ec\TrainingController::listView(), kept consistent
         // across roles. Unassigned activities (program_id null) group under
         // key 0.
@@ -95,7 +95,7 @@ class TrainingController extends Controller
             ->orderBy('full_name')
             ->get();
 
-        // Scoped by activity_id (the new FK) as well as the legacy training_id â€”
+        // Scoped by activity_id (the new FK) as well as the legacy training_id  -
         // matches Ec\TrainingController::detailView() exactly; this Trainer-role
         // view was missing the activity_id half until now (see uploadDocument()
         // below, which is what actually writes activity_id).
@@ -118,7 +118,7 @@ class TrainingController extends Controller
     }
 
     /**
-     * Budget percentage and the derived "health" pill â€” same formula as the
+     * Budget percentage and the derived "health" pill  -  same formula as the
      * EC module's training detail view. This used to also track a timeline
      * percentage; the Activity-level "Timeline Progress" monitoring it fed
      * has been removed entirely, so health is budget-only from here on.
@@ -147,7 +147,7 @@ class TrainingController extends Controller
         return compact('budgetAlloc', 'budgetUsed', 'budgetPct', 'healthLabel', 'healthHex');
     }
 
-    /** Only budget_used is writable here â€” budget_allocated is locked for good after creation. */
+    /** Only budget_used is writable here  -  budget_allocated is locked for good after creation. */
     private function updateBudget(Request $request)
     {
         $data = Validator::make($request->all(), [
@@ -171,7 +171,7 @@ class TrainingController extends Controller
         return redirect()->route('trainer.trainings', ['view' => $tid]);
     }
 
-    /** Restricted to this activity's team lead â€” a mere member can't change it. */
+    /** Restricted to this activity's team lead  -  a mere member can't change it. */
     private function uploadCover(Request $request)
     {
         $tid = (int) $request->input('training_id');
@@ -194,12 +194,12 @@ class TrainingController extends Controller
 
     /**
      * A trainer can add a new Activity, but only under a Program they
-     * already belong to (lead OR member â€” this is the collaborative case,
+     * already belong to (lead OR member  -  this is the collaborative case,
      * unlike Trainer\ProgramController's lead-only amendment actions).
      * program_id is validated against Program::visibleToTrainer() so a
      * tampered form can't sneak in an arbitrary program the trainer isn't
      * on. lead_id/member_ids for the Activity's own team come from the
-     * full trainer pool, same as Ec\TrainingController::create() â€” this
+     * full trainer pool, same as Ec\TrainingController::create()  -  this
      * team is independent of the Program's team.
      */
     private function create(Request $request)
@@ -259,7 +259,7 @@ class TrainingController extends Controller
         return redirect()->route('trainer.trainings', ['view' => $training->id])->with('success', 'Activity created.');
     }
 
-    /** Same wholesale-replace behavior as Ec\TrainingController::syncTeam() â€” kept identical on purpose. */
+    /** Same wholesale-replace behavior as Ec\TrainingController::syncTeam()  -  kept identical on purpose. */
     private function syncTeam(Training $training, int $leadId, array $memberIds): void
     {
         $training->teamMembers()->detach();
@@ -281,7 +281,7 @@ class TrainingController extends Controller
 
     /**
      * This Activity's own document repository (activity_id, not the legacy
-     * training_id) â€” the counterpart to Ec\TrainingController::uploadDocument()
+     * training_id)  -  the counterpart to Ec\TrainingController::uploadDocument()
      * that this role was missing. Lead or member may both upload, same
      * floor as viewing the activity at all.
      */
@@ -294,13 +294,18 @@ class TrainingController extends Controller
             return back()->with('error', 'You are not on this activity\'s team.');
         }
 
-        [$ok, $error] = $this->storeDocumentUpload($request, $trainerId, [
+        [$ok, $error, $document] = $this->storeDocumentUpload($request, $trainerId, [
             'activity_id' => $activityId,
         ]);
 
         if (! $ok) {
             return back()->with('error', $error);
         }
+
+        ProgramLogService::recordDocument(
+            $document,
+            $document->isLink() ? ProgramLogService::ACTION_ADDED_LINK : ProgramLogService::ACTION_UPLOADED_FILE
+        );
 
         return redirect()->route('trainer.trainings', ['view' => $activityId])->with('success', 'Document added to activity.');
     }

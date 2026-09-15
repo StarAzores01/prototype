@@ -14,8 +14,9 @@ use Illuminate\Support\Facades\Schema;
  *
  * Column notes
  * ────────────
- * program_id     The owning Program.  cascadeOnDelete so orphan rows do
- *                not accumulate when a program is hard-deleted.
+ * program_id     The owning Program.  Nullable + nullOnDelete so the log
+ *                history survives a hard-deleted program instead of being
+ *                wiped with it.
  *
  * training_id    The Activity the document belongs to, when applicable.
  *                Nullable; nullOnDelete so the log entry survives if the
@@ -65,8 +66,9 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('program_id')
+                ->nullable()
                 ->constrained('programs')
-                ->cascadeOnDelete();
+                ->nullOnDelete();
 
             $table->foreignId('training_id')
                 ->nullable()

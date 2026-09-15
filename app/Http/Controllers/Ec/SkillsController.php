@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Ec;
 
 use App\Http\Controllers\Controller;
 use App\Models\Participant;
+use App\Models\SkillProgressEntry;
 use App\Models\SkillsForm;
 use App\Models\SkillsResponse;
 use Illuminate\Http\Request;
@@ -34,11 +35,22 @@ class SkillsController extends Controller
             }
         }
 
+        // Read-only monitoring of the beneficiary progress journal —
+        // staff can view, never edit/delete a beneficiary's own entries.
+        $progressEntries = SkillProgressEntry::with('beneficiary:id,first_name,last_name')
+            ->orderByDesc('activity_date')
+            ->orderByDesc('id')
+            ->get();
+
+        $totalRecordedEarnings = $progressEntries->sum('service_fee');
+
         return view('ec.skills', [
-            'activePage' => 'skills',
-            'forms'      => $forms,
-            'viewForm'   => $viewForm,
-            'responses'  => $responses,
+            'activePage'            => 'skills',
+            'forms'                 => $forms,
+            'viewForm'              => $viewForm,
+            'responses'             => $responses,
+            'progressEntries'       => $progressEntries,
+            'totalRecordedEarnings' => $totalRecordedEarnings,
         ]);
     }
 

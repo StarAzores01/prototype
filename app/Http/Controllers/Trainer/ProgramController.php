@@ -18,22 +18,22 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator as ValidatorContract;
 
 /**
- * Trainer-role Programs â€” a SCOPED version of Ec\ProgramController, not full
+ * Trainer-role Programs  -  a SCOPED version of Ec\ProgramController, not full
  * parity. A trainer only ever sees programs they're on the team of (lead or
- * member â€” Program::scopeVisibleToTrainer()), and several actions that are
+ * member  -  Program::scopeVisibleToTrainer()), and several actions that are
  * unrestricted for EC are lead-only here:
  *
  *  - updateTeam(): lead only, members get 403. There is no trainer-side
- *    timeline/extension action at all â€” only EC can extend a program's
+ *    timeline/extension action at all  -  only EC can extend a program's
  *    effective end date (Ec\ProgramController::extendTimeline()); a Project
  *    Lead is fully read-only on the timeline, same as any other member.
  *  - updateStatus(): also lead only (see the method doc for why this one
  *    was an inference call, not something the spec stated outright).
- *  - create(): the creating trainer is auto-attached as lead â€” there's no
+ *  - create(): the creating trainer is auto-attached as lead  -  there's no
  *    lead_id field on this role's create form at all.
  *
  * Adding an Activity under a program you belong to (lead OR member) stays
- * collaborative â€” that lives in Trainer\TrainingController::create(), not
+ * collaborative  -  that lives in Trainer\TrainingController::create(), not
  * here, same split as the Ec versions.
  */
 class ProgramController extends Controller
@@ -49,14 +49,14 @@ class ProgramController extends Controller
             $program = Program::with(['creator', 'lead', 'members'])->find($viewId);
 
             if ($program) {
-                // Exists, but not this trainer's to see â€” 403, not a silent
+                // Exists, but not this trainer's to see  -  403, not a silent
                 // fall-through to the list (that would just hide the link,
                 // not actually stop a guessed URL).
                 abort_unless($program->isVisibleTo($this->trainerId()), 403);
 
                 return $this->detailView($program);
             }
-            // Genuinely doesn't exist: same as Ec/Trainings â€” fall through to the list view.
+            // Genuinely doesn't exist: same as Ec/Trainings  -  fall through to the list view.
         }
 
         return $this->listView();
@@ -82,7 +82,7 @@ class ProgramController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        // Grouped by Area for the card grid â€” same treatment as
+        // Grouped by Area for the card grid  -  same treatment as
         // Ec\ProgramController::listView(), kept consistent across roles.
         $programsByArea = $programs->groupBy(fn ($p) => $p->area ?: 'No Area Specified');
 
@@ -124,7 +124,7 @@ class ProgramController extends Controller
         ]);
     }
 
-    /** Same rollup shape as Ec\ProgramController::rollup() â€” kept identical so the view partials/markup match 1:1. */
+    /** Same rollup shape as Ec\ProgramController::rollup()  -  kept identical so the view partials/markup match 1:1. */
     private function withRollup($query)
     {
         return $query
@@ -136,7 +136,7 @@ class ProgramController extends Controller
             ->with(['lead', 'members']);
     }
 
-    /** Identical formula to Ec\ProgramController::rollup() â€” same static method name so the shared markup calling it doesn't care which role rendered the page. */
+    /** Identical formula to Ec\ProgramController::rollup()  -  same static method name so the shared markup calling it doesn't care which role rendered the page. */
     public static function rollup(Program $program): array
     {
         $total = (int) ($program->activities_total_count ?? 0);
@@ -158,7 +158,7 @@ class ProgramController extends Controller
     }
 
     /**
-     * The creating trainer is automatically the lead â€” there's no lead_id
+     * The creating trainer is automatically the lead  -  there's no lead_id
      * input on this role's create form, so it's never read from the
      * request at all (unlike Ec\ProgramController::create()).
      */
@@ -180,7 +180,7 @@ class ProgramController extends Controller
             'member_ids.max' => 'You can assign at most 3 team members.',
         ])->after(function (ValidatorContract $validator) use ($request, $trainerId) {
             // The creating trainer is the lead for this check too, even though
-            // there's no lead_id field â€” this still catches "picked myself as
+            // there's no lead_id field  -  this still catches "picked myself as
             // a member as well", same rule EC's version enforces.
             $this->validateTeamRoles($validator, $trainerId, (array) $request->input('member_ids', []));
         })->validate();
@@ -210,7 +210,7 @@ class ProgramController extends Controller
 
     /**
      * Lead only. The spec didn't say this one outright the way it did for
-     * updateTeam ("lead can freely change status, same as EC's version") â€”
+     * updateTeam ("lead can freely change status, same as EC's version")  -
      * I'm reading "lead" there as the acting role, not just an example, and
      * gating it the same way as the other authority action rather than
      * opening it to members. Flagged to the user as an inference call, not
@@ -233,7 +233,7 @@ class ProgramController extends Controller
 
     /**
      * Lead only, and the lead role itself cannot be handed to someone else
-     * through this action â€” only EC can transfer lead. The trainer-facing
+     * through this action  -  only EC can transfer lead. The trainer-facing
      * form doesn't even render a lead_id field (it's a read-only display +
      * a hidden input carrying the current lead's id), but a tampered
      * request supplying a different lead_id is still explicitly rejected
@@ -261,12 +261,12 @@ class ProgramController extends Controller
         $currentLeadId = optional($program->lead->first())->id;
         if ((int) $data['lead_id'] !== (int) $currentLeadId) {
             return back()->withErrors([
-                'lead_id' => 'Only EC can transfer the Project Lead to someone else â€” a Project Lead can\'t hand off their own role here.',
+                'lead_id' => 'Only EC can transfer the Project Lead to someone else  -  a Project Lead can\'t hand off their own role here.',
             ])->withInput();
         }
 
         DB::transaction(function () use ($program, $data, $currentLeadId) {
-            // Detach members only â€” the lead pivot row is left untouched (re-detaching
+            // Detach members only  -  the lead pivot row is left untouched (re-detaching
             // and re-attaching the same lead_id would be a no-op anyway, but this
             // makes the "lead can't be reassigned here" guarantee explicit in code).
             $program->teamMembers()->wherePivot('member_role', 'member')->detach();
@@ -279,7 +279,7 @@ class ProgramController extends Controller
         return redirect()->route('trainer.programs', ['view' => $program->id])->with('success', 'Program team updated.');
     }
 
-    /** Program's own document repository â€” lead or member may both upload, same as viewing. */
+    /** Program's own document repository  -  lead or member may both upload, same as viewing. */
     private function uploadDocument(Request $request)
     {
         $programId = (int) $request->input('program_id');
@@ -289,7 +289,7 @@ class ProgramController extends Controller
             return back()->with('error', 'You are not on this program\'s team.');
         }
 
-        [$ok, $error] = $this->storeDocumentUpload($request, Auth::guard('web')->id(), [
+        [$ok, $error, $document] = $this->storeDocumentUpload($request, Auth::guard('web')->id(), [
             'program_id' => $programId,
         ]);
 
@@ -297,15 +297,20 @@ class ProgramController extends Controller
             return back()->with('error', $error);
         }
 
+        ProgramLogService::recordDocument(
+            $document,
+            $document->isLink() ? ProgramLogService::ACTION_ADDED_LINK : ProgramLogService::ACTION_UPLOADED_FILE
+        );
+
         return redirect()->route('trainer.programs', ['view' => $programId])->with('success', 'Document added to program.');
     }
 
     /**
-     * Program's own cover image â€” lead or member may both change it, same as
+     * Program's own cover image  -  lead or member may both change it, same as
      * viewing and the document repository (uploadDocument() above). This is
      * the exact same `cover_image` column Ec\ProgramController::uploadCover()
      * writes to, so whichever role changes it, the same picture is what every
-     * role sees everywhere the program's card is shown â€” there's only ever
+     * role sees everywhere the program's card is shown  -  there's only ever
      * one column, never a separate image per role.
      */
     private function uploadCover(Request $request)

@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\HandlesDocumentUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Training;
+use App\Services\ProgramLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -92,13 +93,18 @@ class DocumentController extends Controller
      */
     private function upload(Request $request)
     {
-        [$ok, $error] = $this->storeDocumentUpload($request, Auth::guard('web')->id(), [
+        [$ok, $error, $document] = $this->storeDocumentUpload($request, Auth::guard('web')->id(), [
             'training_id' => $request->input('training_id') ?: null,
         ]);
 
         if (! $ok) {
             return redirect()->route('trainer.documents')->with('error', $error);
         }
+
+        ProgramLogService::recordDocument(
+            $document,
+            $document->isLink() ? ProgramLogService::ACTION_ADDED_LINK : ProgramLogService::ACTION_UPLOADED_FILE
+        );
 
         return redirect()->route('trainer.documents')->with('success', 'Document uploaded.');
     }
@@ -124,6 +130,11 @@ class DocumentController extends Controller
         $doc = Document::where('id', (int) $request->input('doc_id'))->where('uploaded_by', $trainerId)->first();
 
         if ($doc) {
+            // Snapshot + log BEFORE deleting — the log row stores its own
+            // copy of name/type/location, so it stays readable after the
+            // Document row (and, if it's a file, the stored file) are gone.
+            ProgramLogService::recordDocument($doc, ProgramLogService::ACTION_DELETED);
+
             if ($doc->file_name) {
                 Storage::disk('local')->delete('uploads/'.$doc->file_name);
             }
@@ -151,6 +162,8 @@ class DocumentController extends Controller
         if ($doc) {
             $doc->update(['archived_at' => now(), 'archived_by' => $trainerId]);
 
+            ProgramLogService::recordDocument($doc, ProgramLogService::ACTION_ARCHIVED);
+
             return redirect()->route('trainer.documents')->with('success', 'Document archived.');
         }
 
@@ -164,6 +177,8 @@ class DocumentController extends Controller
 
         if ($doc) {
             $doc->update(['archived_at' => null, 'archived_by' => null]);
+
+            ProgramLogService::recordDocument($doc, ProgramLogService::ACTION_RESTORED);
 
             return redirect()->route('trainer.documents')->with('success', 'Document restored.');
         }

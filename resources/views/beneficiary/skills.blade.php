@@ -4,147 +4,192 @@
 <div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Skills Utilization</span></div>
-    <h1>Skills Utilization</h1>
-    <p>Answer skills surveys sent by your trainer</p>
+    <h1>Skills Utilization Progress</h1>
+    <p>Record how you are applying the skills you learned and track your progress over time.</p>
   </div>
-  @if($viewForm)
-  <a href="{{ route('beneficiary.skills') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+  <button type="button" class="btn btn-primary" onclick="openAddEntry()">
+    <i class="fas fa-plus"></i> Add Progress Entry
+  </button>
+</div>
+
+@if(session('success'))
+  <div class="alert alert-success" style="margin-bottom:16px"><i class="fas fa-circle-check"></i> {{ session('success') }}</div>
+@endif
+@if(session('error'))
+  <div class="alert alert-danger" style="margin-bottom:16px"><i class="fas fa-circle-exclamation"></i> {{ session('error') }}</div>
+@endif
+@if($errors->any())
+  <div class="alert alert-danger" style="margin-bottom:16px"><i class="fas fa-circle-exclamation"></i> {{ $errors->first() }}</div>
+@endif
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-chart-line"></i> Progress Entries</div>
+  </div>
+
+  @if($entries->isEmpty())
+  <div class="empty-state" style="padding:48px 24px;text-align:center">
+    <i class="fas fa-chart-line" style="font-size:28px;color:var(--gray-300)"></i>
+    <p style="margin-top:10px;color:var(--gray-400)">No progress entries yet. Add your first entry to start tracking how you're applying your skills.</p>
+  </div>
   @else
-  <a href="{{ route('beneficiary.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Activity / Skill Applied</th>
+          <th>Description</th>
+          <th>Date</th>
+          <th>Progress / Outcome</th>
+          <th>Service Fee / Earnings</th>
+          <th>Remarks</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($entries as $e)
+        <tr>
+          <td><strong>{{ $e->activity_name }}</strong></td>
+          <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $e->description ?: '—' }}</td>
+          <td style="white-space:nowrap">{{ $e->activity_date->format('M d, Y') }}</td>
+          <td><span class="badge badge-active">{{ $e->outcome_type }}</span></td>
+          <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $e->service_fee, 2) }}</td>
+          <td style="max-width:200px;white-space:normal;color:var(--gray-600)">{{ $e->remarks ?: '—' }}</td>
+          <td>
+            <div class="action-btns">
+              <button type="button" class="btn btn-sm btn-outline" onclick='openEditEntry(@json($e))'>
+                <i class="fas fa-pen"></i> Edit
+              </button>
+              <form method="POST" action="{{ route('beneficiary.skills.store') }}" style="display:inline"
+                    onsubmit="return confirm('Delete this progress entry? This cannot be undone.')">
+                @csrf
+                <input type="hidden" name="action" value="delete"/>
+                <input type="hidden" name="entry_id" value="{{ $e->id }}"/>
+                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        @endforeach
+      </tbody>
+    </table>
+  </div>
   @endif
 </div>
 
-@if($viewForm)
-{{-- ═══════════════ FORM ANSWER VIEW ═══════════════ --}}
-<div class="card">
-  <div class="card-header">
-    <div>
-      <div class="card-title">{{ $viewForm->title }}</div>
-      <div class="card-subtitle">{{ $viewForm->training->title }} &middot; {{ $viewForm->training->date_start?->format('Y-m-d') }}</div>
-    </div>
-    @if($viewForm->myResponse)
-    <span class="badge badge-completed"><i class="fas fa-square-check"></i> Submitted</span>
-    @endif
-  </div>
-  <div class="card-body">
-    @if($viewForm->myResponse)
-    <!-- ── READ-ONLY VIEW after submission ── -->
-    <div style="background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:13px;color:#166534">
-      <i class="fas fa-square-check"></i> <strong>You have already submitted this survey.</strong> Responses can no longer be edited.
-    </div>
-    @php
-      $fields = $viewForm->fields ?? [];
-      $existing = $viewForm->myResponse->responses ?? [];
-    @endphp
-    @foreach($fields as $fi => $field)
-      @php $val = $existing[$fi] ?? ''; @endphp
-    <div class="form-group" style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--gray-100)">
-      <label class="form-label" style="font-size:14px;font-weight:700;color:var(--text-heading)">
-        {{ $fi + 1 }}. {{ $field['label'] }}
-      </label>
-      <div style="margin-top:8px;padding:10px 13px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:9px;font-size:13.5px;color:var(--gray-800);min-height:40px">
-        @if($val !== '')
-          {{ is_array($val) ? implode(', ', $val) : $val }}
-        @else
-          <span style="color:var(--gray-400)">—</span>
-        @endif
-      </div>
-    </div>
-    @endforeach
-    <div style="display:flex;justify-content:flex-end;margin-top:8px">
-      <a href="{{ route('beneficiary.skills') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to List</a>
+{{-- ═══════════════ MODAL — ADD / EDIT PROGRESS ENTRY ═══════════════ --}}
+<div class="modal-overlay" id="modal-progressEntry">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="progressEntryTitle"><i class="fas fa-plus"></i> Add Progress Entry</h2>
+      <button type="button" class="modal-close" onclick="closeModal('progressEntry')"><i class="fas fa-xmark"></i></button>
     </div>
 
-    @else
-    <!-- ── ANSWER FORM (not yet submitted) ── -->
-    <form method="POST" action="{{ route('beneficiary.skills.store') }}">
+    <form method="POST" action="{{ route('beneficiary.skills.store') }}" id="progressEntryForm">
       @csrf
-      <input type="hidden" name="action" value="submit"/>
-      <input type="hidden" name="form_id" value="{{ $viewForm->id }}"/>
-      <input type="hidden" name="training_id" value="{{ $viewForm->training_id }}"/>
+      <input type="hidden" name="action" id="pe_action" value="create"/>
+      <input type="hidden" name="entry_id" id="pe_entry_id" value=""/>
 
-      @php $fields = $viewForm->fields ?? []; @endphp
-      @foreach($fields as $fi => $field)
-      <div class="form-group" style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--gray-100)">
-        <label class="form-label" style="font-size:14px;font-weight:700;color:var(--text-heading)">
-          {{ $fi + 1 }}. {{ $field['label'] }}
-          @if(!empty($field['required']))<span style="color:var(--red)"> *</span>@endif
-        </label>
-
-        @if($field['type'] === 'textarea')
-        <textarea name="answer[{{ $fi }}]" class="form-control" rows="3"
-                  {{ !empty($field['required']) ? 'required' : '' }}></textarea>
-
-        @elseif($field['type'] === 'radio')
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-          @foreach($field['options'] as $opt)
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px">
-            <input type="radio" name="answer[{{ $fi }}]" value="{{ $opt }}"
-                   {{ !empty($field['required']) ? 'required' : '' }}
-                   style="width:16px;height:16px;accent-color:var(--blue-primary)"/>
-            {{ $opt }}
-          </label>
-          @endforeach
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Activity / Skill Applied *</label>
+          <input type="text" name="activity_name" id="pe_activity_name" class="form-control" placeholder="e.g. Logo Design" maxlength="255" required/>
         </div>
 
-        @elseif($field['type'] === 'select')
-        <select name="answer[{{ $fi }}]" class="form-control" {{ !empty($field['required']) ? 'required' : '' }}>
-          <option value="">— Select —</option>
-          @foreach($field['options'] as $opt)
-          <option value="{{ $opt }}">{{ $opt }}</option>
-          @endforeach
-        </select>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="description" id="pe_description" class="form-control" rows="2" placeholder="e.g. Designed a logo for a small local business"></textarea>
+        </div>
 
-        @else
-        <input type="text" name="answer[{{ $fi }}]" class="form-control"
-               {{ !empty($field['required']) ? 'required' : '' }}/>
-        @endif
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date *</label>
+            <input type="date" name="activity_date" id="pe_activity_date" class="form-control" max="{{ now()->format('Y-m-d') }}" required/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Progress / Outcome Type *</label>
+            <select name="outcome_type" id="pe_outcome_type" class="form-control" required>
+              <option value="">— Select —</option>
+              @foreach($outcomeTypes as $type)
+                <option value="{{ $type }}">{{ $type }}</option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Service Fee / Earnings (&#8369;)</label>
+            <input type="number" name="service_fee" id="pe_service_fee" class="form-control" step="0.01" min="0" placeholder="0.00"/>
+          </div>
+
+          @if($myTrainings->isNotEmpty())
+          <div class="form-group">
+            <label class="form-label">Related Activity (optional)</label>
+            <select name="training_id" id="pe_training_id" class="form-control">
+              <option value="">— None —</option>
+              @foreach($myTrainings as $t)
+                <option value="{{ $t->id }}">{{ $t->title }}</option>
+              @endforeach
+            </select>
+          </div>
+          @endif
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Remarks</label>
+          <textarea name="remarks" id="pe_remarks" class="form-control" rows="2" placeholder="e.g. First paid client"></textarea>
+        </div>
       </div>
-      @endforeach
 
-      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
-        <a href="{{ route('beneficiary.skills') }}" class="btn btn-outline">Cancel</a>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Submit Survey</button>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('progressEntry')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Entry</button>
       </div>
     </form>
-    @endif
   </div>
 </div>
 
-@else
-{{-- ═══════════════ FORMS LIST ═══════════════ --}}
-@if($forms->isEmpty())
-<div class="card">
-  <div class="card-body" style="text-align:center;padding:60px 24px">
-    <i class="fas fa-chart-line"></i>
-    <div style="font-size:15px;font-weight:700;color:var(--text-heading);margin:12px 0 6px">No skills surveys yet</div>
-    <p style="font-size:13px;color:var(--gray-400)">Your trainer will send a skills utilization survey after your activity.</p>
-  </div>
-</div>
-@else
-<div style="display:flex;flex-direction:column;gap:14px">
-  @foreach($forms as $f)
-  <div class="card" style="border-left:4px solid {{ $f->myResponse ? 'var(--green)' : 'var(--blue-primary)' }}">
-    <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-      <div>
-        <div style="font-size:15px;font-weight:700;color:var(--text-heading)">{{ $f->title }}</div>
-        <div style="font-size:12px;color:var(--gray-400);margin-top:3px">
-          <i class="fas fa-book"></i> {{ $f->training->title }}
-          @if($f->training->date_start) &middot; <i class="fas fa-calendar"></i> {{ $f->training->date_start->format('Y-m-d') }}@endif
-        </div>
-        @if($f->myResponse)
-        <div style="font-size:11px;color:var(--green);margin-top:4px"><i class="fas fa-square-check"></i> Submitted {{ $f->myResponse->submitted_at->format('M d, Y') }}</div>
-        @endif
-      </div>
-      @if($f->myResponse)
-      <a href="?form={{ $f->id }}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i> View Response</a>
-      @else
-      <a href="?form={{ $f->id }}" class="btn btn-primary btn-sm"><i class="fas fa-file-lines"></i> Answer Survey</a>
-      @endif
-    </div>
-  </div>
-  @endforeach
-</div>
+<script>
+function openAddEntry() {
+  document.getElementById('progressEntryTitle').innerHTML = '<i class="fas fa-plus"></i> Add Progress Entry';
+  document.getElementById('pe_action').value = 'create';
+  document.getElementById('pe_entry_id').value = '';
+  document.getElementById('progressEntryForm').reset();
+  openModal('progressEntry');
+}
+
+function openEditEntry(entry) {
+  document.getElementById('progressEntryTitle').innerHTML = '<i class="fas fa-pen"></i> Edit Progress Entry';
+  document.getElementById('pe_action').value = 'update';
+  document.getElementById('pe_entry_id').value = entry.id;
+  document.getElementById('pe_activity_name').value = entry.activity_name || '';
+  document.getElementById('pe_description').value = entry.description || '';
+  document.getElementById('pe_activity_date').value = entry.activity_date ? String(entry.activity_date).substring(0, 10) : '';
+  document.getElementById('pe_outcome_type').value = entry.outcome_type || '';
+  document.getElementById('pe_service_fee').value = entry.service_fee || 0;
+  document.getElementById('pe_remarks').value = entry.remarks || '';
+  var trainingSelect = document.getElementById('pe_training_id');
+  if (trainingSelect) trainingSelect.value = entry.training_id || '';
+  openModal('progressEntry');
+}
+
+@if($errors->any() && old('action') === 'create')
+document.addEventListener('DOMContentLoaded', function () { openAddEntry(); });
+@elseif($errors->any() && old('action') === 'update')
+document.addEventListener('DOMContentLoaded', function () {
+  openEditEntry({
+    id: '{{ old('entry_id') }}',
+    activity_name: @json(old('activity_name')),
+    description: @json(old('description')),
+    activity_date: @json(old('activity_date')),
+    outcome_type: @json(old('outcome_type')),
+    service_fee: @json(old('service_fee')),
+    remarks: @json(old('remarks')),
+    training_id: @json(old('training_id')),
+  });
+});
 @endif
-@endif
+</script>
 @endsection

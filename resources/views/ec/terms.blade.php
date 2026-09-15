@@ -14,12 +14,12 @@
 
     <div style="margin-bottom:24px">
       <div style="font-size:16px;font-weight:700;color:var(--text-heading);margin-bottom:8px">1. Acceptance of Terms</div>
-      <p>By accessing and using PAThrive, you agree to be bound by these Terms of Use. This system is intended exclusively for authorized personnel of the College of Industrial Technology (CIT), Southern Luzon State University (SLSU).</p>
+      <p>By accessing and using PAThrive, you agree to be bound by these Terms of Use. This system is intended exclusively for authorized personnel of the College of Industrial Technology.</p>
     </div>
 
     <div style="margin-bottom:24px">
       <div style="font-size:16px;font-weight:700;color:var(--text-heading);margin-bottom:8px">2. Authorized Use</div>
-      <p>PAThrive is a web-based extension training management system. Access is granted only to Extension Coordinators and Faculty Project Leaders of CIT-SLSU. Unauthorized access or sharing of credentials is strictly prohibited.</p>
+      <p>PAThrive is a web-based extension training management system. Access is granted only to Extension Coordinators and Faculty Project Leaders of the College of Industrial Technology. Unauthorized access or sharing of credentials is strictly prohibited.</p>
     </div>
 
     <div style="margin-bottom:24px">
@@ -34,7 +34,7 @@
 
     <div style="margin-bottom:24px">
       <div style="font-size:16px;font-weight:700;color:var(--text-heading);margin-bottom:8px">5. System Availability</div>
-      <p>CIT-SLSU does not guarantee uninterrupted access to PAThrive. Scheduled maintenance or technical issues may temporarily affect availability.</p>
+      <p>The College of Industrial Technology does not guarantee uninterrupted access to PAThrive. Scheduled maintenance or technical issues may temporarily affect availability.</p>
     </div>
 
     <div style="margin-bottom:24px">

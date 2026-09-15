@@ -31,6 +31,7 @@ use App\Http\Controllers\Ec\ProgramController as EcProgramController;
 use App\Http\Controllers\Ec\ReportController as EcReportController;
 use App\Http\Controllers\Ec\SkillsController as EcSkillsController;
 use App\Http\Controllers\Ec\TrainerController as EcTrainerController;
+use App\Http\Controllers\Ec\TrainingCategoryController as EcTrainingCategoryController;
 use App\Http\Controllers\Ec\TrainingController as EcTrainingController;
 use App\Http\Controllers\Evaluator\DashboardController as EvaluatorDashboardController;
 use App\Http\Controllers\Evaluator\EvaluationHubController as EvaluatorEvaluationHubController;
@@ -191,8 +192,8 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
         Route::post('/evaluators', [EcEvaluatorController::class, 'store'])->name('evaluators.store');
 
         Route::get('/page-content', [EcPageContentController::class, 'index'])->name('page-content');
-        Route::get('/page-content/{pageKey}', [EcPageContentController::class, 'edit'])->name('page-content.edit');
-        Route::post('/page-content/{pageKey}', [EcPageContentController::class, 'update'])->name('page-content.update');
+        Route::post('/page-content', [EcPageContentController::class, 'update'])->name('page-content.update');
+        Route::post('/page-content/trainings', [EcTrainingCategoryController::class, 'store'])->name('page-content.trainings.store');
     });
 
 // Legacy .php URL redirects (kept for old bookmarks and any links already
@@ -232,7 +233,6 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
             '/trainers.php'             => '/ec/trainers',
             '/evaluators.php'           => '/ec/evaluators',
             '/page-content.php'         => '/ec/page-content',
-            '/page-content.php/{pageKey}' => '/ec/page-content/{pageKey}',
         ] as $old => $new) {
             Route::get($old, \Illuminate\Routing\RedirectController::class)
                 ->defaults('destination', $new)

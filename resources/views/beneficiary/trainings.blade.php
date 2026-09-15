@@ -121,7 +121,7 @@
   <div class="page-header-left">
     <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Activities</span></div>
     <h1>Activities</h1>
-    <p>Browse all extension activities offered by CIT-SLSU</p>
+    <p>Browse all extension activities offered by the College of Industrial Technology</p>
   </div>
 </div>
 

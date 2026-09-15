@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PAThrive – Terms of Use</title>
+  <link rel="icon" href="{{ asset('imgs/logofinalpt.png') }}" type="image/png"/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet"/>
@@ -17,7 +18,7 @@
       <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" style="width:52px;height:52px;object-fit:contain" onerror="this.style.display='none'"/>
     </div>
     <h1 style="font-size:26px;font-weight:800;color:var(--navy)">{{ \App\Models\PageContent::get('terms', 'page_heading', 'Terms of Use') }}</h1>
-    <p style="color:var(--gray-400);font-size:13px;margin-top:4px">PAThrive &middot; CIT-SLSU &middot; Last updated: {{ now()->format('F Y') }}</p>
+    <p style="color:var(--gray-400);font-size:13px;margin-top:4px">PAThrive &middot; College of Industrial Technology &middot; Last updated: {{ now()->format('F Y') }}</p>
   </div>
 
   <div class="card">
@@ -26,11 +27,11 @@
         $termsBodyDefault = <<<'HTML'
           <div>
             <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px">1. Acceptance of Terms</div>
-            <p>By accessing and using PAThrive, you agree to be bound by these Terms of Use. This system is intended exclusively for authorized personnel of the College of Industrial Technology (CIT), Southern Luzon State University (SLSU).</p>
+            <p>By accessing and using PAThrive, you agree to be bound by these Terms of Use. This system is intended exclusively for authorized personnel of the College of Industrial Technology.</p>
           </div>
           <div>
             <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px">2. Authorized Use</div>
-            <p>PAThrive is a web-based extension training management system. Access is granted only to Extension Coordinators and Faculty Trainers of CIT-SLSU. Unauthorized access or sharing of credentials is strictly prohibited.</p>
+            <p>PAThrive is a web-based extension training management system. Access is granted only to Extension Coordinators and Faculty Trainers of the College of Industrial Technology. Unauthorized access or sharing of credentials is strictly prohibited.</p>
           </div>
           <div>
             <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px">3. Data Accuracy</div>
@@ -42,7 +43,7 @@
           </div>
           <div>
             <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px">5. System Availability</div>
-            <p>CIT-SLSU does not guarantee uninterrupted access to PAThrive. Scheduled maintenance or technical issues may temporarily affect availability.</p>
+            <p>The College of Industrial Technology does not guarantee uninterrupted access to PAThrive. Scheduled maintenance or technical issues may temporarily affect availability.</p>
           </div>
           <div>
             <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px">6. Modifications</div>

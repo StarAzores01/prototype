@@ -5,6 +5,7 @@ namespace App\Http\Controllers\PublicSite;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\PublicSite\Concerns\ResolvesPublicNavData;
 use App\Models\HomepageVideo;
+use App\Models\TrainingCategory;
 
 class LandingController extends Controller
 {
@@ -21,6 +22,7 @@ class LandingController extends Controller
     {
         return view('public.landing', $this->publicNavData() + [
             'homepageVideo' => HomepageVideo::current(),
+            'trainingCategories' => TrainingCategory::active()->orderBy('id')->get(),
         ]);
     }
 }

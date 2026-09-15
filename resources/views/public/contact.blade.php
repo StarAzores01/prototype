@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PAThrive – Contact Us</title>
+  <link rel="icon" href="{{ asset('imgs/logofinalpt.png') }}" type="image/png"/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet"/>
@@ -326,7 +327,7 @@
     }
     .form-alert.success { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
     .form-alert.error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
-    @media (max-width: 960px) {
+    @media (max-width: 640px) {
       .footer-grid { grid-template-columns: 1fr 1fr; }
       .hamburger { display: flex; }
       .nav-collapse {
@@ -364,7 +365,7 @@
       </div>
       <div>
         <div class="brand-name">PAThrive</div>
-        <div class="brand-sub">CIT &middot; SLSU</div>
+        <div class="brand-sub">{{ \App\Models\PageContent::get('global', 'site_tagline', 'College of Industrial Technology') }}</div>
       </div>
     </div>
     <div class="nav-collapse" id="navCollapse">
@@ -418,7 +419,7 @@
     <!-- Contact Cards -->
     <div class="contact-grid">
       @foreach ([
-        ['<i class="fas fa-location-dot"></i>', 'Address',      \App\Models\PageContent::get('global', 'contact_address', 'College of Industrial Technology, Southern Luzon State University – Main Campus, Lucban, Quezon'), 'small', 'blue',   'ico-bg-blue'],
+        ['<i class="fas fa-location-dot"></i>', 'Address',      \App\Models\PageContent::get('global', 'contact_address', 'College of Industrial Technology – Main Campus, Lucban, Quezon'), 'small', 'blue',   'ico-bg-blue'],
         ['<i class="fas fa-envelope"></i>',   'Email',        \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph'),  '',      'sky',    'ico-bg-sky'],
         ['<i class="fas fa-phone"></i>', 'Phone',        \App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX'),             '',      'green',  'ico-bg-green'],
         ['<i class="fas fa-clock"></i>', 'Office Hours', \App\Models\PageContent::get('contact', 'office_hours', 'Monday – Friday, 8:00 AM – 5:00 PM'), '', 'orange', 'ico-bg-orange'],
@@ -493,7 +494,7 @@
           <div class="footer-logo-box"><img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/></div>
           <div class="footer-logo-name">PAThrive</div>
         </div>
-        <p class="footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University') }}</p>
+        <p class="footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology') }}</p>
         <div class="footer-contact">
           <div class="footer-ci"><i class="fas fa-location-dot"></i> {{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
           <div class="footer-ci"><i class="fas fa-envelope"></i> {{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
@@ -537,7 +538,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <div class="footer-copy">&copy; {{ now()->year }} PAThrive – SLSU College of Industrial Technology. All rights reserved.</div>
+      <div class="footer-copy">{!! \App\Models\PageContent::get('global', 'footer_copyright', '&copy; ' . now()->year . ' PAThrive – SLSU College of Industrial Technology. All rights reserved.') !!}</div>
       <div class="footer-badges">
         <div class="footer-badge">ISO/IEC 25010:2023</div>
       </div>
@@ -561,7 +562,7 @@ window.addEventListener('scroll', () => {
   };
   btn.addEventListener('click', () => setOpen(!menu.classList.contains('open')));
   menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
-  window.addEventListener('resize', () => { if (window.innerWidth > 960) setOpen(false); });
+  window.addEventListener('resize', () => { if (window.innerWidth > 640) setOpen(false); });
 })();
 </script>
 </body>

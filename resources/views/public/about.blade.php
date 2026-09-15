@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PAThrive – About</title>
+  <link rel="icon" href="{{ asset('imgs/logofinalpt.png') }}" type="image/png"/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet"/>
@@ -69,7 +70,7 @@
     .lp-footer-copy { font-size:12px;color:rgba(255,255,255,.3); }
     .lp-footer-badges { display:flex;gap:8px; }
     .lp-footer-badge { font-size:10px;font-weight:600;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:20px; }
-    @media(max-width:960px){
+    @media(max-width:640px){
       .lp-footer-grid{grid-template-columns:1fr 1fr;}
       .lp-hamburger{display:flex;}
       .lp-nav-collapse{display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:rgba(9,24,47,.98);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.08);padding:8px 20px 20px;max-height:0;overflow:hidden;opacity:0;visibility:hidden;transition:max-height .3s ease,opacity .25s ease;}
@@ -93,7 +94,7 @@
       </div>
       <div>
         <div class="lp-brand-name">PAThrive</div>
-        <div class="lp-brand-sub">CIT &middot; SLSU</div>
+        <div class="lp-brand-sub">{{ \App\Models\PageContent::get('global', 'site_tagline', 'College of Industrial Technology') }}</div>
       </div>
     </div>
     <div class="lp-nav-collapse" id="lpNavCollapse">
@@ -120,35 +121,41 @@
   </div>
 </div>
 
-<!-- WHAT IS PATHRIVE -->
+<!-- WHAT IS PATHRIVE? -->
 <section style="padding:80px 0;background:#fff">
-  <div class="about-grid-2col" style="max-width:1100px;margin:0 auto;padding:0 28px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
-    <div>
-      <div class="sec-badge">{{ \App\Models\PageContent::get('about', 'system_badge', 'The System') }}</div>
-      <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:16px;line-height:1.2">{{ \App\Models\PageContent::get('about', 'system_title', 'What is PAThrive?') }}</h2>
-      @php
-        $systemBodyDefault = '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px"><strong>PAThrive</strong> is a web-based Extension Training Management and Impact Assessment Tracking System developed for the College of Industrial Technology (CIT) of Southern Luzon State University – Main Campus.</p>'
-          . '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">The system centralizes the management of CIT extension training programs — from planning and scheduling to participant registration, evaluation, and post-training skills utilization tracking.</p>'
-          . '<p style="font-size:15px;color:#64748B;line-height:1.75">PAThrive supports CHED compliance reporting and enables the Extension Coordinator, Project Leaders, and beneficiaries to collaborate efficiently within a single platform.</p>';
-      @endphp
-      {!! \App\Models\PageContent::get('about', 'system_body', $systemBodyDefault) !!}
-    </div>
-    <div class="feature-row">
-      @foreach ([
-        ['<i class="fas fa-book"></i>','Training Management','Create, schedule, and monitor extension training programs across all CIT specializations.'],
-        ['<i class="fas fa-users"></i>','Beneficiary Tracking','Register and track participants, attendance, and post-training outcomes in one place.'],
-        ['<i class="fas fa-square-check"></i>','Evaluation & Feedback','Collect and analyze participant evaluations to continuously improve training quality.'],
-        ['<i class="fas fa-chart-line"></i>','Skills Utilization','Track how beneficiaries apply their skills — personal use, income generation, and employment.'],
-        ['<i class="fas fa-file"></i>','Automated Reports','Generate CHED-compliant accomplishment reports and training summaries with ease.'],
-      ] as [$icon, $title, $desc])
-      <div class="feature-item">
-        <div class="feature-ico" style="background:rgba(26,86,219,.08);color:#1A56DB;font-size:20px">{!! $icon !!}</div>
-        <div>
-          <div style="font-weight:700;font-size:14px;color:#09182F;margin-bottom:4px">{{ $title }}</div>
-          <div style="font-size:13px;color:#64748B;line-height:1.6">{{ $desc }}</div>
-        </div>
+  <div style="max-width:1100px;margin:0 auto;padding:0 28px">
+    <div class="about-grid-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+      <!-- Left: text -->
+      <div>
+        <div class="sec-badge" style="margin-bottom:14px">{{ \App\Models\PageContent::get('about', 'system_badge', 'The System') }}</div>
+        <h2 style="font-size:clamp(22px,3vw,32px);font-weight:800;color:#09182F;margin-bottom:20px;line-height:1.25">{{ \App\Models\PageContent::get('about', 'system_title', 'What is PAThrive?') }}</h2>
+        @php
+          $systemBodyDefault =
+            '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">PAThrive is a web-based Extension Training Management and Impact Assessment Tracking System developed for the College of Industrial Technology (CIT) of Southern Luzon State University – Main Campus.</p>'
+            . '<p style="font-size:15px;color:#64748B;line-height:1.75;margin-bottom:14px">The system centralizes the management of CIT extension training programs — from planning and scheduling to participant registration, evaluation, and post-training skills utilization tracking.</p>'
+            . '<p style="font-size:15px;color:#64748B;line-height:1.75">PAThrive enables Extension Coordinators to create and manage programs, assign Project Leaders, and generate reports — while giving participants a dedicated portal to register, attend trainings, and complete evaluations.</p>';
+        @endphp
+        <div>{!! \App\Models\PageContent::get('about', 'system_body', $systemBodyDefault) !!}</div>
       </div>
-      @endforeach
+      <!-- Right: feature cards -->
+      <div class="feature-row">
+        @foreach ([
+          ['fa-book-open',     '#1A56DB', '#EFF6FF', 'Training Management',      'Create, schedule, and monitor extension training programs.'],
+          ['fa-users',         '#0891B2', '#ECFEFF', 'Beneficiary Tracking',      'Register and track participants and post-training outcomes.'],
+          ['fa-clipboard-list','#7C3AED', '#F5F3FF', 'Evaluation & Feedback',     'Collect and analyze participant evaluations.'],
+          ['fa-chart-bar',     '#059669', '#ECFDF5', 'Impact Assessment',         'Measure post-training skills utilization and community impact.'],
+        ] as [$ico, $color, $bg, $title, $desc])
+        <div class="feature-item">
+          <div class="feature-ico" style="background:{{ $bg }};color:{{ $color }}">
+            <i class="fas {{ $ico }}"></i>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#09182F;margin-bottom:4px">{{ $title }}</div>
+            <div style="font-size:13px;color:#64748B;line-height:1.55">{{ $desc }}</div>
+          </div>
+        </div>
+        @endforeach
+      </div>
     </div>
   </div>
 </section>
@@ -160,7 +167,7 @@
       <div class="sec-badge">{{ \App\Models\PageContent::get('about', 'college_badge', 'About the College') }}</div>
       <h2 style="font-size:clamp(22px,3vw,34px);font-weight:800;color:#09182F;margin-bottom:12px">{{ \App\Models\PageContent::get('about', 'college_title', 'College of Industrial Technology (CIT)') }}</h2>
       <p style="font-size:15px;color:#64748B;max-width:640px;margin:0 auto;line-height:1.7">
-        {{ \App\Models\PageContent::get('about', 'college_desc', 'The CIT of Southern Luzon State University provides technical and vocational education that prepares individuals for industry, employment, and entrepreneurship.') }}
+        {{ \App\Models\PageContent::get('about', 'college_desc', 'The College of Industrial Technology provides technical and vocational education that prepares individuals for industry, employment, and entrepreneurship.') }}
       </p>
     </div>
     <div class="about-cit-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start">
@@ -226,7 +233,7 @@
           <div class="lp-footer-logo-box"><img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" onerror="this.style.display='none'"/></div>
           <div class="lp-footer-logo-name">PAThrive</div>
         </div>
-        <p class="lp-footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology, Southern Luzon State University') }}</p>
+        <p class="lp-footer-tagline">{{ \App\Models\PageContent::get('global', 'footer_tagline', 'Extension Training Management & Impact Assessment Tracking System — College of Industrial Technology') }}</p>
         <div class="lp-footer-contact">
           <div class="lp-footer-ci"><i class="fas fa-location-dot"></i> {{ \App\Models\PageContent::get('global', 'contact_address', 'SLSU Main Campus, Lucban, Quezon, Philippines') }}</div>
           <div class="lp-footer-ci"><i class="fas fa-envelope"></i> {{ \App\Models\PageContent::get('global', 'contact_email', 'cit.extension@slsu.edu.ph') }}</div>
@@ -270,7 +277,7 @@
       </div>
     </div>
     <div class="lp-footer-bottom">
-      <div class="lp-footer-copy">&copy; {{ now()->year }} PAThrive – SLSU College of Industrial Technology. All rights reserved.</div>
+      <div class="lp-footer-copy">{!! \App\Models\PageContent::get('global', 'footer_copyright', '&copy; ' . now()->year . ' PAThrive – SLSU College of Industrial Technology. All rights reserved.') !!}</div>
       <div class="lp-footer-badges">
         <div class="lp-footer-badge">ISO/IEC 25010:2023</div>
       </div>
@@ -294,7 +301,7 @@ window.addEventListener('scroll', () => {
   };
   btn.addEventListener('click', () => setOpen(!menu.classList.contains('lp-open')));
   menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
-  window.addEventListener('resize', () => { if (window.innerWidth > 960) setOpen(false); });
+  window.addEventListener('resize', () => { if (window.innerWidth > 640) setOpen(false); });
 })();
 </script>
 </body>

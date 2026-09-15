@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PAThrive – Create Account</title>
+  <link rel="icon" href="{{ asset('imgs/logofinalpt.png') }}" type="image/png"/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet"/>
@@ -59,7 +60,7 @@
     <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" style="width:44px;height:44px;object-fit:contain" onerror="this.style.display='none'"/>
     <div>
       <div class="brand-name">PAThrive</div>
-      <div class="brand-sub">CIT &middot; SLSU</div>
+      <div class="brand-sub">{{ \App\Models\PageContent::get('global', 'site_tagline', 'College of Industrial Technology') }}</div>
     </div>
   </div>
 

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Ec;
 
 use App\Http\Controllers\Controller;
+use App\Models\HomepageVideo;
 use App\Models\PageContent;
+use App\Models\TrainingCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -66,6 +68,8 @@ class PageContentController extends Controller
             'activePage' => 'page-content',
             'pagesConfig' => $pagesConfig,
             'values'      => $values,
+            'categories'  => TrainingCategory::orderBy('id')->get(),
+            'homepageVideo' => HomepageVideo::current(),
         ]);
     }
 

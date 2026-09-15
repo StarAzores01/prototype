@@ -132,6 +132,7 @@ if (isLoggedIn() && ($_SESSION['user_role'] ?? '') === 'extension_coordinator') 
     }
 
     .lp-nav-actions { display: flex; align-items: center; gap: 10px; }
+
     .lp-btn-login {
       padding: 8px 18px; border-radius: var(--lp-rs);
       font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,.85);
@@ -731,7 +732,8 @@ if (isLoggedIn() && ($_SESSION['user_role'] ?? '') === 'extension_coordinator') 
       .lp-about-visual { display: none; }
       .lp-footer-grid { grid-template-columns: 1fr 1fr; }
       .lp-sdg-grid    { grid-template-columns: 1fr; max-width: 360px; }
-      .lp-links       { display: none; }
+      .lp-link        { padding: 6px 10px; font-size: 12.5px; }
+      .lp-btn-login, .lp-btn-signup { padding: 7px 12px; font-size: 12px; }
       .lp-vid-layout  { grid-template-columns: 1fr; }
       .lp-vid-playlist {
         max-height: none;
@@ -741,6 +743,11 @@ if (isLoggedIn() && ($_SESSION['user_role'] ?? '') === 'extension_coordinator') 
       }
     }
     @media (max-width: 600px) {
+      .lp-nav-inner   { padding: 0 12px; }
+      .lp-brand-sub   { display: none; }
+      .lp-link        { padding: 5px 7px; font-size: 11.5px; }
+      .lp-btn-login   { display: none; }
+      .lp-btn-signup  { padding: 7px 12px; font-size: 12px; }
       .lp-train-grid  { grid-template-columns: 1fr; }
       .lp-feat-grid   { grid-template-columns: 1fr; }
       .lp-footer-grid { grid-template-columns: 1fr; }
@@ -1289,6 +1296,7 @@ function lpFilter(el, status) {
     card.style.display = (!status || cardStatus === status) ? '' : 'none';
   });
 }
+
 </script>
 
 </body>

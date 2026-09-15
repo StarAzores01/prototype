@@ -338,6 +338,17 @@ select.filter-select:focus { border-color: var(--blue-primary); }
 .profile-info-row i { width: 16px; flex-shrink: 0; text-align: center; color: var(--blue-primary); }
 .profile-info-row a { color: inherit; text-decoration: none; font: inherit; }
 
+.divider { border: none; border-top: 1px solid var(--gray-100); margin: 18px 0; }
+
+/* ===== INNER TABS (Manage Public Site Content: Pages / Trainings / Site Settings) ===== */
+.inner-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--gray-200); margin-bottom: 22px; flex-wrap: wrap; }
+.inner-tab { display: flex; align-items: center; gap: 7px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: var(--gray-500); border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; transition: var(--transition); }
+.inner-tab:hover { color: var(--text-heading); }
+.inner-tab.active { color: var(--blue-primary); border-bottom-color: var(--blue-primary); }
+.inner-tab-panel { display: none; }
+.inner-tab-panel.active { display: block; }
+[data-theme="dark"] .inner-tabs { border-color: var(--gray-200); }
+
 /* ===== TRAINING CARDS (Home) ===== */
 /* auto-fit (not auto-fill): auto-fill reserves a same-width empty track for
    every column that *could* fit even when there's no card left to put in
@@ -1200,7 +1211,6 @@ select.filter-select:focus { border-color: var(--blue-primary); }
 
 /* Ensure no content is ever cut off horizontally */
 body { overflow-x: hidden; }
-.page-content { overflow-x: hidden; }
 
 /* ===== RESPONSIVE TRAINING CARDS ===== */
 @media (max-width: 600px) {

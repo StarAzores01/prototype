@@ -98,7 +98,7 @@
       <img src="{{ \App\Models\PageContent::get('global', 'site_logo', asset('imgs/logofinalpt.png')) }}" alt="CIT" style="width:44px;height:44px;object-fit:contain" onerror="this.style.display='none';this.parentElement.textContent='PA'"/>
     </div>
     <h1>Create Your Account</h1>
-    <p>Extension Coordinator &middot; CIT-SLSU</p>
+    <p>Extension Coordinator &middot; College of Industrial Technology</p>
   </div>
 
   <div class="auth-card-body">

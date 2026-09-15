@@ -25,13 +25,13 @@ class Program extends Model
 
     /**
      * budget_allocated, timeline_start and timeline_end are all fixed for
-     * good at creation — no amendment path, no EC override, nothing. This
+     * good at creation â€” no amendment path, no EC override, nothing. This
      * guard is the last line of defense: even a raw ->update([...]) or a
      * tinker session can't move any of them once the row exists, regardless
      * of what any future controller change might accidentally allow through
      * validation. The only sanctioned way to move a program's effective end
      * date is extended_end_date (see effective_end_date below), set via the
-     * EC-only "Extend Timeline" action — it's a separate column precisely so
+     * EC-only "Extend Timeline" action â€” it's a separate column precisely so
      * it can change without ever touching the original timeline.
      */
     protected static function booted(): void
@@ -43,7 +43,7 @@ class Program extends Model
         });
     }
 
-    /** What every "end date"/"deadline" display should read app-wide — the extension if one exists, else the original timeline_end. */
+    /** What every "end date"/"deadline" display should read app-wide â€” the extension if one exists, else the original timeline_end. */
     public function getEffectiveEndDateAttribute()
     {
         return $this->extended_end_date ?? $this->timeline_end;
@@ -54,7 +54,7 @@ class Program extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /** Activities under this program (the trainings table — see class-level note in Training). */
+    /** Activities under this program (the trainings table â€” see class-level note in Training). */
     public function trainings()
     {
         return $this->hasMany(Training::class);
@@ -87,7 +87,7 @@ class Program extends Model
 
     /**
      * Every Trainer-role query that lists/gates a trainer's own programs
-     * should use this — matches Training::scopeVisibleToTrainer()'s idea,
+     * should use this â€” matches Training::scopeVisibleToTrainer()'s idea,
      * but a Program has no trainer_id shortcut column, so it's team-pivot
      * only. True for lead and member alike; use isLeadUser() to tell them
      * apart where the distinction matters (team actions).
@@ -103,9 +103,16 @@ class Program extends Model
         return $this->lead()->where('users.id', $userId)->exists();
     }
 
-    /** True if the given user is lead OR member — the membership check behind Trainer\ProgramController's detail-page 403. */
+    /** Every Activity Log entry for this program. */
+    public function logs()
+    {
+        return $this->hasMany(ProgramLog::class);
+    }
+
+    /** True if the given user is lead OR member â€” the membership check behind Trainer\ProgramController's detail-page 403. */
     public function isVisibleTo(int $userId): bool
     {
         return $this->teamMembers()->where('users.id', $userId)->exists();
     }
 }
+

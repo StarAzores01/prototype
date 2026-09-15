@@ -1,18 +1,18 @@
-@extends('layouts.trainer')
+﻿@extends('layouts.trainer')
 
 {{--
-  Trainer-role Programs — a SCOPED version of ec/programs.blade.php, not a
+  Trainer-role Programs â€” a SCOPED version of ec/programs.blade.php, not a
   shared partial: the layout (@extends), every route() call, and the
   lead-only gating around Request Unlock / Manage Team all differ enough
   that reusing the EC blade directly wasn't practical (see the task note on
-  this). The shared bits that don't need any of that — the "Add Activity"
-  field set and the generic document-upload form — are still @include'd
+  this). The shared bits that don't need any of that â€” the "Add Activity"
+  field set and the generic document-upload form â€” are still @include'd
   from their existing locations rather than duplicated here.
 --}}
 
 @section('content')
 @if($mode === 'detail')
-{{-- ═══════════════════════════════════════════════════════ DETAIL VIEW ═══ --}}
+{{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DETAIL VIEW â•â•â• --}}
 @php $r = \App\Http\Controllers\Trainer\ProgramController::rollup($viewProgram); @endphp
 <div class="page-header">
   <div class="page-header-left">
@@ -33,11 +33,11 @@
 
 @if(! $isLead)
 <div class="alert alert-info" style="margin-bottom:20px">
-  <i class="fas fa-circle-info"></i> You're a team member on this program, not the Project Lead — you can view everything here and add activities/documents, but only the Project Lead can change status or manage the team.
+  <i class="fas fa-circle-info"></i> You're a team member on this program, not the Project Lead â€” you can view everything here and add activities/documents, but only the Project Lead can change status or manage the team.
 </div>
 @endif
 
-<!-- Program Cover Image — lead or member may both change it; same
+<!-- Program Cover Image â€” lead or member may both change it; same
      cover_image column EC's own "Change Cover" writes to, so whoever
      uploads it, it's the one picture shown everywhere this program's
      card appears. -->
@@ -91,7 +91,7 @@
   </div>
 </div>
 
-<!-- Documents: this Program's own repository, scoped via program_id — lead or member may both upload; moved up front so it's visible without scrolling -->
+<!-- Documents: this Program's own repository, scoped via program_id â€” lead or member may both upload; moved up front so it's visible without scrolling -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
     <div class="card-title">Documents</div>
@@ -218,33 +218,61 @@
       </div>
     </div>
 
-    <!-- Extension History -->
+    <!-- Program Activity Log -->
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="fas fa-clock-rotate-left"></i> Extension History</div></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Date</th><th>Field</th><th>Old Value</th><th>New Value</th><th>Remark</th><th>By</th></tr></thead>
-          <tbody>
-          @forelse($viewAmendments as $am)
-            <tr>
-              <td style="font-size:12px;color:var(--gray-500)">{{ $am->created_at->format('M d, Y g:i A') }}</td>
-              <td><span class="badge badge-approved">{{ ucfirst($am->field_changed) }}</span></td>
-              <td style="font-size:12px">{{ $am->old_value }}</td>
-              <td style="font-size:12px;font-weight:600">{{ $am->new_value }}</td>
-              <td style="font-size:12px;color:var(--gray-600)">{{ $am->remark }}</td>
-              <td style="font-size:12px">{{ $am->amendedBy->full_name ?? '—' }}</td>
-            </tr>
-          @empty
-            <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray-400)">No amendments have been made to this program.</td></tr>
-          @endforelse
-          </tbody>
-        </table>
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-clock-rotate-left"></i> Program Activity Log</div>
       </div>
+      @if($viewLogs->isEmpty())
+        <div class="empty-state" style="padding:24px"><i class="fas fa-clock-rotate-left"></i><p>No activity recorded yet.</p></div>
+      @else
+      <div style="padding:8px 0">
+        @foreach($viewLogs as $log)
+        @php
+          $logIcon    = $log->eventIcon();
+          $logLabel   = $log->eventLabel();
+          $logActor   = $log->actor->full_name ?? '—';
+          $logPayload = $log->payload ?? [];
+          $logContext = '';
+          if (!empty($log->subject_label)) {
+              $logContext = $log->subject_label;
+          }
+          if (!empty($logPayload['old']) && !empty($logPayload['new'])) {
+              $logContext = ($logContext ? $logContext . ' · ' : '') . $logPayload['old'] . ' → ' . $logPayload['new'];
+          }
+          if (!empty($logPayload['remark'])) {
+              $logContext = ($logContext ? $logContext . ' · ' : '') . '"' . Str::limit($logPayload['remark'], 60) . '"';
+          }
+          if (!empty($logPayload['activity'])) {
+              $logContext = ($logContext ? $logContext . ' — ' : '') . 'in ' . $logPayload['activity'];
+          }
+          if (isset($logPayload['old_budget_used']) && isset($logPayload['new_budget_used'])) {
+              $logContext = '₱' . number_format($logPayload['old_budget_used'], 2) . ' → ₱' . number_format($logPayload['new_budget_used'], 2);
+          }
+          if (isset($logPayload['old_end_date']) && isset($logPayload['new_end_date'])) {
+              $logContext = $logPayload['old_end_date'] . ' → ' . $logPayload['new_end_date'];
+          }
+        @endphp
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 20px;border-bottom:1px solid var(--gray-100)">
+          <div style="width:30px;height:30px;border-radius:50%;background:var(--blue-soft);color:var(--blue-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;margin-top:2px">
+            <i class="fas {{ $logIcon }}"></i>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--gray-800)">{{ $logLabel }}</div>
+            @if($logContext)
+            <div style="font-size:12px;color:var(--gray-600);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ $logContext }}">{{ $logContext }}</div>
+            @endif
+            <div style="font-size:11px;color:var(--gray-400);margin-top:3px">{{ $logActor }} &middot; {{ $log->created_at->format('M d, Y g:i A') }}</div>
+          </div>
+        </div>
+        @endforeach
+      </div>
+      @endif
     </div>
   </div>
 
   <div class="dash-side">
-    <!-- Program Details (read-only — budget and the original timeline are permanently fixed at creation; only EC can extend the effective end date) -->
+    <!-- Program Details (read-only â€” budget and the original timeline are permanently fixed at creation; only EC can extend the effective end date) -->
     <div class="card">
       <div class="card-header">
         <div class="card-title">Program Details</div>
@@ -252,17 +280,17 @@
       <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
         @php
           $effectiveEnd = $viewProgram->effective_end_date;
-          $timelineEndVal = e($effectiveEnd?->format('Y-m-d') ?? '—');
+          $timelineEndVal = e($effectiveEnd?->format('Y-m-d') ?? 'â€”');
           if ($viewProgram->extended_end_date) {
             $timelineEndVal .= ' <span style="color:var(--gray-400);font-weight:400">(originally '.e($viewProgram->timeline_end->format('M d, Y')).')</span>';
           }
           $details = [
-            ['Area / Specialization', e($viewProgram->area ?? '—')],
-            ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? '—')],
+            ['Area / Specialization', e($viewProgram->area ?? 'â€”')],
+            ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? 'â€”')],
             ['Timeline End', $timelineEndVal],
-            ['Budget Allocated', '₱'.number_format((float) $viewProgram->budget_allocated, 2)],
-            ['Created By', e($viewProgram->creator->full_name ?? '—')],
-            ['Created', e($viewProgram->created_at?->format('M d, Y') ?? '—')],
+            ['Budget Allocated', 'â‚±'.number_format((float) $viewProgram->budget_allocated, 2)],
+            ['Created By', e($viewProgram->creator->full_name ?? 'â€”')],
+            ['Created', e($viewProgram->created_at?->format('M d, Y') ?? 'â€”')],
           ];
         @endphp
         @foreach($details as [$label, $val])
@@ -303,7 +331,7 @@
 </div>
 
 @if($isLead)
-<!-- MODAL: MANAGE TEAM — lead_id is fixed (read-only); only member_ids are editable here.
+<!-- MODAL: MANAGE TEAM â€” lead_id is fixed (read-only); only member_ids are editable here.
      Only EC can transfer the Project Lead to someone else. -->
 @php $currentMembers = $viewProgram->members->values(); @endphp
 <div class="modal-overlay" id="modal-manageTeam">
@@ -319,7 +347,7 @@
       <input type="hidden" name="lead_id" value="{{ auth('web')->id() }}"/>
       <div class="modal-body">
         <div class="alert alert-info" style="margin-bottom:16px;font-size:13px">
-          <i class="fas fa-circle-info"></i> You can add or remove team members here. The Project Lead can't be reassigned this way — only EC can transfer lead to someone else.
+          <i class="fas fa-circle-info"></i> You can add or remove team members here. The Project Lead can't be reassigned this way â€” only EC can transfer lead to someone else.
         </div>
         <div class="form-group">
           <label class="form-label">Project Lead</label>
@@ -333,7 +361,7 @@
             @for($i = 0; $i < 3; $i++)
             @php $cur = $currentMembers->get($i); @endphp
             <select name="member_ids[]" class="form-control">
-              <option value="">— None —</option>
+              <option value="">â€” None â€”</option>
               @foreach($trainers as $tr)
               @continue($tr->id === auth('web')->id())
               <option value="{{ $tr->id }}" {{ $cur && $cur->id === $tr->id ? 'selected' : '' }}>{{ $tr->first_name }} {{ $tr->last_name }}</option>
@@ -407,7 +435,7 @@
         <div class="form-group">
           <label class="form-label">Cover Image <span style="color:var(--red)">*</span></label>
           <input type="file" name="cover_image" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" required/>
-          <div class="form-hint">JPG, PNG, GIF, or WEBP — max 5 MB</div>
+          <div class="form-hint">JPG, PNG, GIF, or WEBP â€” max 5 MB</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -419,7 +447,7 @@
 </div>
 
 @else
-{{-- ═══════════════════════════════════════════════════════ CARD GRID VIEW ════ --}}
+{{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CARD GRID VIEW â•â•â•â• --}}
 <div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Programs</span></div>
@@ -456,7 +484,7 @@
           </div>
           <div class="training-card-body">
             <div class="training-card-title">{{ $p->title }}</div>
-            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, '…') }}</div>
+            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, 'â€¦') }}</div>
             <div class="training-card-meta">
               <span><i class="fas fa-user-tie"></i> {{ optional($p->lead->first())->full_name ?? 'No lead' }}</span>
               <span><i class="fas fa-book"></i> {{ $pr['completed'] }}/{{ $pr['total'] }} done</span>
@@ -480,7 +508,7 @@
 @endforeach
 @endif
 
-<!-- MODAL: CREATE PROGRAM — no lead_id field: the creating trainer is
+<!-- MODAL: CREATE PROGRAM â€” no lead_id field: the creating trainer is
      automatically the Project Lead, so only member_ids are selectable. -->
 <div class="modal-overlay" id="modal-addProgram">
   <div class="modal">
@@ -507,7 +535,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Description (optional)</label>
-          <textarea name="description" class="form-control" rows="3" placeholder="Briefly describe the program…"></textarea>
+          <textarea name="description" class="form-control" rows="3" placeholder="Briefly describe the programâ€¦"></textarea>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -520,9 +548,9 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Budget Allocated (₱) *</label>
+          <label class="form-label">Budget Allocated (â‚±) *</label>
           <input type="number" name="budget_allocated" class="form-control" placeholder="e.g. 200000" min="0" step="0.01" required/>
-          <div style="font-size:11px;color:var(--gray-400);margin-top:4px">Fixed once saved — this can never be changed afterward, by anyone.</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:4px">Fixed once saved â€” this can never be changed afterward, by anyone.</div>
         </div>
 
         <hr style="border:none;border-top:1px solid var(--gray-100);margin:8px 0 16px">
@@ -531,7 +559,7 @@
           <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
             @for($i = 0; $i < 3; $i++)
             <select name="member_ids[]" class="form-control">
-              <option value="">— None —</option>
+              <option value="">â€” None â€”</option>
               @foreach($trainers as $tr)
               @continue($tr->id === auth('web')->id())
               <option value="{{ $tr->id }}">{{ $tr->first_name }} {{ $tr->last_name }}</option>
@@ -551,3 +579,4 @@
 </div>
 @endif
 @endsection
+

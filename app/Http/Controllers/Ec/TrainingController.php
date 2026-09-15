@@ -10,6 +10,7 @@ use App\Models\Participant;
 use App\Models\Program;
 use App\Models\Training;
 use App\Models\User;
+use App\Services\ProgramLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +70,7 @@ class TrainingController extends Controller
         if ($area) {
             $query->where('area', $area);
         }
-        // "Upcoming" is a display-only merge of Proposed+Approved — the
+        // "Upcoming" is a display-only merge of Proposed+Approved â€” the
         // original filtered the raw status column against this label
         // directly, which could never match anything. Map it properly.
         if ($status === 'Upcoming') {
@@ -80,7 +81,7 @@ class TrainingController extends Controller
 
         $trainings = $query->orderByDesc('date_start')->get();
 
-        // Grouped by the linked Program ("Project") for the card grid —
+        // Grouped by the linked Program ("Project") for the card grid â€”
         // grouping by id (not title) so two programs that happen to share a
         // title never get merged into one section. Unassigned activities
         // (program_id null) land in their own group, key 0. groupBy()
@@ -136,7 +137,7 @@ class TrainingController extends Controller
     /**
      * Budget percentage and the derived "health" pill shown on the detail
      * view's Project Progress card. This used to also track a timeline
-     * percentage (days elapsed vs. total) — the Activity-level "Timeline
+     * percentage (days elapsed vs. total) â€” the Activity-level "Timeline
      * Progress" monitoring it fed has been removed entirely (per-Activity
      * timeline monitoring is retired; Program-level timeline/extension
      * handling is untouched), so health is budget-only from here on.
@@ -182,7 +183,7 @@ class TrainingController extends Controller
     }
 
     /**
-     * budget_allocated is only ever settable at creation — $includeBudgetAllocated
+     * budget_allocated is only ever settable at creation â€” $includeBudgetAllocated
      * is false for update(), so a submitted value there is simply not validated
      * (and so never reaches the write array). See "LOCK BUDGET COMPLETELY".
      */
@@ -208,7 +209,7 @@ class TrainingController extends Controller
 
     /**
      * An activity doesn't have its own Project Leader / Team Members
-     * anymore — it inherits whoever is assigned to its Program. Returns
+     * anymore â€” it inherits whoever is assigned to its Program. Returns
      * null lead_id (and no members) when the program has no lead yet, so
      * callers can skip syncTeam() rather than attach a nonexistent user id.
      *
@@ -261,7 +262,7 @@ class TrainingController extends Controller
 
     private function update(Request $request)
     {
-        // trainingRules(false): budget_allocated is not accepted here at all —
+        // trainingRules(false): budget_allocated is not accepted here at all â€”
         // it's permanently fixed at creation, no path to change it afterward.
         $data = Validator::make($request->all(), $this->trainingRules(false) + [
             'training_id' => 'required|integer|exists:trainings,id',
@@ -284,10 +285,10 @@ class TrainingController extends Controller
                 'target_participants'  => $data['target_participants'] ?? 0,
                 'budget_used'          => $data['budget_used'] ?? 0,
                 'program_id'           => $data['program_id'] ?? null,
-                // budget_allocated deliberately absent — see trainingRules(false) above.
+                // budget_allocated deliberately absent â€” see trainingRules(false) above.
             ]);
 
-            // Re-sync the inherited team whenever a program is assigned —
+            // Re-sync the inherited team whenever a program is assigned â€”
             // covers both "picked a program for the first time" and
             // "switched to a different program". No program (still) assigned
             // means nothing to inherit from, so the existing team (if any,
@@ -307,7 +308,7 @@ class TrainingController extends Controller
     /**
      * Wholesale-replaces this activity's team (activity_team_members) and
      * keeps trainer_id in sync with the lead. trainer_id is no longer
-     * directly user-editable — every EC/Trainer controller that still reads
+     * directly user-editable â€” every EC/Trainer controller that still reads
      * that column (EC's evaluation notifications, skills form display, etc.)
      * keeps working unchanged. A trainer added only as a 'member' is picked
      * up separately by Training::visibleToTrainer(), used throughout the
@@ -344,7 +345,7 @@ class TrainingController extends Controller
         return back()->with('success', 'Activity status updated.');
     }
 
-    /** Only budget_used is writable here — budget_allocated is locked for good after creation. */
+    /** Only budget_used is writable here â€” budget_allocated is locked for good after creation. */
     private function updateBudget(Request $request)
     {
         $data = Validator::make($request->all(), [
@@ -359,7 +360,7 @@ class TrainingController extends Controller
         return redirect()->route('ec.trainings', ['view' => $data['training_id']])->with('success', 'Budget usage updated successfully.');
     }
 
-    /** This activity's own document repository — file or link, stamped with activity_id (not the legacy training_id). */
+    /** This activity's own document repository â€” file or link, stamped with activity_id (not the legacy training_id). */
     private function uploadDocument(Request $request)
     {
         $activityId = (int) $request->input('activity_id');
@@ -375,7 +376,7 @@ class TrainingController extends Controller
         return redirect()->route('ec.trainings', ['view' => $activityId])->with('success', 'Document added to activity.');
     }
 
-    /** EC can always change an activity's cover picture — no ownership check needed here. */
+    /** EC can always change an activity's cover picture â€” no ownership check needed here. */
     private function uploadCover(Request $request)
     {
         $trainingId = (int) $request->input('training_id');
@@ -390,3 +391,4 @@ class TrainingController extends Controller
         return redirect()->route('ec.trainings', ['view' => $trainingId])->with('success', 'Display picture updated.');
     }
 }
+

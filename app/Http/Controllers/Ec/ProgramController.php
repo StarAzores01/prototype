@@ -9,6 +9,7 @@ use App\Models\Document;
 use App\Models\Program;
 use App\Models\ProgramAmendment;
 use App\Models\User;
+use App\Services\ProgramLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,7 @@ class ProgramController extends Controller
             if ($program) {
                 return $this->detailView($program);
             }
-            // No match: mirrors Trainings — fall through to the list view instead of a 404.
+            // No match: mirrors Trainings â€” fall through to the list view instead of a 404.
         }
 
         return $this->listView();
@@ -58,7 +59,7 @@ class ProgramController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        // Grouped by Area for the card grid — a Program has no further
+        // Grouped by Area for the card grid â€” a Program has no further
         // parent to group by (unlike Activities, which group by Program),
         // so Area is the next meaningful section. groupBy() preserves each
         // group's first-occurrence order from $programs (already
@@ -80,7 +81,7 @@ class ProgramController extends Controller
 
         $activities = $program->trainings()->orderByDesc('date_start')->get();
 
-        $amendments = ProgramAmendment::with('amendedBy')
+        $logs = \App\Models\ProgramLog::with('actor')
             ->where('program_id', $program->id)
             ->orderByDesc('created_at')
             ->get();
@@ -95,7 +96,7 @@ class ProgramController extends Controller
             'mode'            => 'detail',
             'viewProgram'     => $program,
             'viewActivities'  => $activities,
-            'viewAmendments'  => $amendments,
+            'viewLogs'        => $logs,
             'viewDocuments'   => $documents,
             'trainers'        => $this->activeTrainers(),
         ]);
@@ -145,7 +146,7 @@ class ProgramController extends Controller
         $data = Validator::make($request->all(), [
             'title'             => 'required|string|max:200',
             'description'       => 'nullable|string',
-            // Free text — no fixed area list anymore (was Rule::in(self::AREAS)).
+            // Free text â€” no fixed area list anymore (was Rule::in(self::AREAS)).
             'area'              => 'required|string|max:120',
             'timeline_start'    => 'required|date',
             'timeline_end'      => 'required|date|after_or_equal:timeline_start',
@@ -185,16 +186,16 @@ class ProgramController extends Controller
     /**
      * The only way a program's effective end date can ever move once it
      * exists. timeline_start/timeline_end are permanently fixed (see
-     * Program::booted()) — this never touches them. Instead it sets
+     * Program::booted()) â€” this never touches them. Instead it sets
      * extended_end_date (Program::effective_end_date reads extended_end_date
      * ?? timeline_end), so the original stays intact for documentation while
      * every display of "the program's end date" picks up the extension.
      * Must move forward of the CURRENT effective end date, not the original
-     * — so a second extension only ever pushes further out, never backward.
-     * EC only (route middleware: role:extension_coordinator) — there is no
+     * â€” so a second extension only ever pushes further out, never backward.
+     * EC only (route middleware: role:extension_coordinator) â€” there is no
      * trainer-side equivalent, even for a Project Lead.
      *
-     * budget_allocated is NOT amendable — it's permanently fixed at
+     * budget_allocated is NOT amendable â€” it's permanently fixed at
      * creation, full stop, not even through this path. 'budget' used to be
      * a valid field_changed value here; it's been removed entirely (see
      * the "LOCK BUDGET COMPLETELY" requirement). The only thing that can
@@ -230,7 +231,7 @@ class ProgramController extends Controller
     }
 
     /**
-     * Status is not one of the two protected fields (budget/timeline) — EC
+     * Status is not one of the two protected fields (budget/timeline) â€” EC
      * can move it freely, no remark, no program_amendments row.
      */
     private function updateStatus(Request $request)
@@ -247,7 +248,7 @@ class ProgramController extends Controller
 
     /**
      * Reassigns the lead and/or members after creation. Re-runs the exact
-     * same validateTeamRoles() check as create() — lead must be a trainer,
+     * same validateTeamRoles() check as create() â€” lead must be a trainer,
      * members must be trainers, no duplicates, max 3 members. Team
      * composition isn't a protected field either: this replaces the
      * program_team_members rows directly, no program_amendments entry.
@@ -270,7 +271,7 @@ class ProgramController extends Controller
         $program = Program::findOrFail($data['program_id']);
 
         DB::transaction(function () use ($program, $data) {
-            $program->teamMembers()->detach(); // wholesale replace — not amendment-tracked.
+            $program->teamMembers()->detach(); // wholesale replace â€” not amendment-tracked.
 
             $program->teamMembers()->attach((int) $data['lead_id'], ['member_role' => 'lead']);
             foreach (array_unique($data['member_ids'] ?? []) as $memberId) {
@@ -281,7 +282,7 @@ class ProgramController extends Controller
         return redirect()->route('ec.programs', ['view' => $program->id])->with('success', 'Program team updated.');
     }
 
-    /** Program's own general repository — file or link, stamped with this program's id. */
+    /** Program's own general repository â€” file or link, stamped with this program's id. */
     private function uploadDocument(Request $request)
     {
         $programId = (int) $request->input('program_id');
@@ -299,7 +300,7 @@ class ProgramController extends Controller
 
     /**
      * Upload / replace a Program's cover image.
-     * EC only — enforced by the route middleware (role:extension_coordinator).
+     * EC only â€” enforced by the route middleware (role:extension_coordinator).
      */
     private function uploadCover(Request $request)
     {
@@ -334,3 +335,5 @@ class ProgramController extends Controller
             ->with('success', 'Program cover image updated.');
     }
 }
+
+

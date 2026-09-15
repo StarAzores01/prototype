@@ -423,7 +423,7 @@
         ['<i class="fas fa-phone"></i>', 'Phone',        \App\Models\PageContent::get('global', 'contact_phone', '(042) 540-XXXX'),             '',      'green',  'ico-bg-green'],
         ['<i class="fas fa-clock"></i>', 'Office Hours', \App\Models\PageContent::get('contact', 'office_hours', 'Monday – Friday, 8:00 AM – 5:00 PM'), '', 'orange', 'ico-bg-orange'],
         ['<i class="fas fa-globe"></i>', 'Website',      \App\Models\PageContent::get('contact', 'website', 'www.slsu.edu.ph'),            '',      'purple', 'ico-bg-purple'],
-        ['<i class="fas fa-mobile-screen"></i>', 'Facebook',     \App\Models\PageContent::get('contact', 'facebook', 'facebook.com/slsu.official'), '',      'pink',   'ico-bg-pink'],
+        ['<i class="fa-brands fa-facebook"></i>', 'Facebook',     \App\Models\PageContent::get('contact', 'facebook', 'facebook.com/slsu.official'), '',      'pink',   'ico-bg-pink'],
       ] as [$icon, $label, $val, $valClass, $color, $icoClass])
       <div class="contact-card {{ $color }}">
         <div class="contact-card-top">

@@ -250,7 +250,7 @@
           </div>
           <div class="card-foot">
             <span class="badge {{ $badgeClass }}">{{ $p['status'] }}</span>
-            <a href="{{ route('choose-role') }}" class="card-link"></a>
+            <a href="{{ route('choose-role') }}" class="card-link">Learn More <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>

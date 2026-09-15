@@ -135,14 +135,14 @@
     </div>
     <div class="feature-row">
       @foreach ([
-        ['<i class="fas fa-book"></i>','Training Management','Create, schedule, and monitor extension training programs across all CIT specializations.','rgba(26,86,219,.08)','#1A56DB'],
-        ['<i class="fas fa-users"></i>','Beneficiary Tracking','Register and track participants, attendance, and post-training outcomes in one place.','rgba(16,185,129,.08)','#10B981'],
-        ['<i class="fas fa-square-check"></i>','Evaluation & Feedback','Collect and analyze participant evaluations to continuously improve training quality.','rgba(245,158,11,.08)','#F59E0B'],
-        ['<i class="fas fa-chart-line"></i>','Skills Utilization','Track how beneficiaries apply their skills — personal use, income generation, and employment.','rgba(99,102,241,.08)','#6366F1'],
-        ['<i class="fas fa-file"></i>','Automated Reports','Generate CHED-compliant accomplishment reports and training summaries with ease.','rgba(239,68,68,.08)','#EF4444'],
-      ] as [$icon, $title, $desc, $bg, $color])
+        ['<i class="fas fa-book"></i>','Training Management','Create, schedule, and monitor extension training programs across all CIT specializations.'],
+        ['<i class="fas fa-users"></i>','Beneficiary Tracking','Register and track participants, attendance, and post-training outcomes in one place.'],
+        ['<i class="fas fa-square-check"></i>','Evaluation & Feedback','Collect and analyze participant evaluations to continuously improve training quality.'],
+        ['<i class="fas fa-chart-line"></i>','Skills Utilization','Track how beneficiaries apply their skills — personal use, income generation, and employment.'],
+        ['<i class="fas fa-file"></i>','Automated Reports','Generate CHED-compliant accomplishment reports and training summaries with ease.'],
+      ] as [$icon, $title, $desc])
       <div class="feature-item">
-        <div class="feature-ico" style="background:{{ $bg }};color:{{ $color }};font-size:20px">{!! $icon !!}</div>
+        <div class="feature-ico" style="background:rgba(26,86,219,.08);color:#1A56DB;font-size:20px">{!! $icon !!}</div>
         <div>
           <div style="font-weight:700;font-size:14px;color:#09182F;margin-bottom:4px">{{ $title }}</div>
           <div style="font-size:13px;color:#64748B;line-height:1.6">{{ $desc }}</div>

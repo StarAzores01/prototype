@@ -6,7 +6,6 @@ use App\Models\ContactMessage;
 use App\Models\Document;
 use App\Models\EvaluatorWhitelist;
 use App\Models\Notification;
-use App\Models\SkillsUtilization;
 use App\Models\TrainerWhitelist;
 use App\Models\Training;
 use App\Models\User;
@@ -100,14 +99,6 @@ class DatabaseSeeder extends Seeder
             'budget_allocated'     => 50000,
             'budget_used'          => 0,
             'created_by'           => $ec->id,
-        ]);
-
-        SkillsUtilization::create([
-            'training_id'       => $training->id,
-            'personal_use_pct'  => 72,
-            'income_gen_pct'    => 55,
-            'employment_pct'    => 38,
-            'nc2_cert_pct'      => 20,
         ]);
 
         Document::create([

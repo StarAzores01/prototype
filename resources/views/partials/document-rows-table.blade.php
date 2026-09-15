@@ -42,14 +42,25 @@
   $linkIcon = ['gdrive' => 'fa-brands fa-google-drive', 'youtube' => 'fa-brands fa-youtube', 'external' => 'fa-solid fa-arrow-up-right-from-square'];
 
   $today     = now()->startOfDay();
-  $yesterday = now()->subDay()->startOfDay();
-  $dateGrouped = $documents->groupBy(function ($d) use ($today, $yesterday) {
-    $ts = $d->created_at;
-    if (! $ts) return 'Unknown Date';
-    if ($ts->startOfDay()->eq($today))     return 'Today';
-    if ($ts->startOfDay()->eq($yesterday)) return 'Yesterday';
-    return $ts->format('F j, Y');
-  });
+  $yesterday = $today->copy()->subDay();
+  $dateGrouped = $documents
+    ->groupBy(function ($d) use ($today, $yesterday) {
+      $ts = $d->created_at;
+      if (! $ts) return 'Unknown Date';
+      // ->copy() first — Carbon's startOfDay() mutates in place, and $ts
+      // is the same object as $d->created_at; without the copy, grouping
+      // silently zeroed every document's stored upload time to midnight,
+      // which then showed as "12:00 AM" in the Time column below.
+      $day = $ts->copy()->startOfDay();
+      if ($day->eq($today))     return 'Today';
+      if ($day->eq($yesterday)) return 'Yesterday';
+      return $ts->format('F j, Y');
+    })
+    // Order the date groups themselves newest-first, by each group's most
+    // recent document — guarantees Today, then Yesterday, then older dates
+    // regardless of the order $documents arrived in, rather than relying
+    // on it already being pre-sorted by the caller.
+    ->sortByDesc(fn ($group) => optional($group->max('created_at'))->timestamp ?? 0);
 @endphp
 
 @foreach($dateGrouped as $dateLabel => $dateGroup)

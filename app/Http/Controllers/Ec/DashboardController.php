@@ -27,9 +27,9 @@ class DashboardController extends Controller
             ->get();
 
         $skills = [
-            'personal'   => round((float) (SkillsUtilization::avg('personal_use_pct') ?? 72), 1),
-            'income'     => round((float) (SkillsUtilization::avg('income_gen_pct') ?? 55), 1),
-            'employment' => round((float) (SkillsUtilization::avg('employment_pct') ?? 38), 1),
+            'personal'   => round((float) (SkillsUtilization::avg('personal_use_pct') ?? 0), 1),
+            'income'     => round((float) (SkillsUtilization::avg('income_gen_pct') ?? 0), 1),
+            'employment' => round((float) (SkillsUtilization::avg('employment_pct') ?? 0), 1),
         ];
 
         // Trainers + Programs listed in the "Create Activity" modal (shared partial).

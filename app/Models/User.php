@@ -31,6 +31,12 @@ class User extends Authenticatable
         ];
     }
 
+    /** Used by Laravel's rehash-on-login; the default ('password') does not exist here. */
+    public function getAuthPasswordName(): string
+    {
+        return 'password_hash';
+    }
+
     /** Legacy column name compatibility: password_hash instead of password. */
     public function getAuthPassword()
     {

@@ -23,6 +23,12 @@ class Beneficiary extends Authenticatable
         return ['is_active' => 'boolean', 'created_at' => 'datetime'];
     }
 
+    /** Used by Laravel's rehash-on-login; the default ('password') does not exist here. */
+    public function getAuthPasswordName(): string
+    {
+        return 'password_hash';
+    }
+
     public function getAuthPassword()
     {
         return $this->password_hash;

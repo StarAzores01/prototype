@@ -1,8 +1,8 @@
-﻿@extends('layouts.ec')
+@extends('layouts.ec')
 
 @section('content')
 @if($mode === 'detail')
-{{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DETAIL VIEW â•â•â• --}}
+{{-- ═══════════════════════════════════════════════════════ DETAIL VIEW ═══ --}}
 @php $r = \App\Http\Controllers\Ec\ProgramController::rollup($viewProgram); @endphp
 <div class="page-header">
   <div class="page-header-left">
@@ -230,7 +230,7 @@
               </td>
               <td>{{ $logActionLabels[$log->action] ?? ucfirst($log->action) }}</td>
               <td>
-                <div>{{ $log->item_name ?? '—' }}</div>
+                <div>{{ $log->item_name ?? '�' }}</div>
                 @if($log->item_type)
                 <div style="font-size:11px;color:var(--gray-400)">{{ strtoupper($log->item_type) }}</div>
                 @endif
@@ -268,7 +268,7 @@
             ['Area / Specialization', e($viewProgram->area ?? ' - ')],
             ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? ' - ')],
             ['Timeline End', $timelineEndVal],
-            ['Budget Allocated', 'â‚±'.number_format((float) $viewProgram->budget_allocated, 2)],
+            ['Budget Allocated', '₱'.number_format((float) $viewProgram->budget_allocated, 2)],
             ['Created By', e($viewProgram->creator->full_name ?? ' - ')],
             ['Created', e($viewProgram->created_at?->format('M d, Y') ?? ' - ')],
           ];
@@ -466,7 +466,7 @@
 </div>
 
 @else
-{{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CARD GRID VIEW â•â•â•â• --}}
+{{-- ═══════════════════════════════════════════════════════ CARD GRID VIEW ════ --}}
 <div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Programs</span></div>

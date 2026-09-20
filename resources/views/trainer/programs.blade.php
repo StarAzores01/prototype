@@ -1,4 +1,4 @@
-﻿@extends('layouts.trainer')
+@extends('layouts.trainer')
 
 {{--
   Trainer-role Programs  -  a SCOPED version of ec/programs.blade.php, not a
@@ -12,7 +12,7 @@
 
 @section('content')
 @if($mode === 'detail')
-{{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DETAIL VIEW â•â•â• --}}
+{{-- ═══════════════════════════════════════════════════════ DETAIL VIEW ═══ --}}
 @php $r = \App\Http\Controllers\Trainer\ProgramController::rollup($viewProgram); @endphp
 <div class="page-header">
   <div class="page-header-left">
@@ -256,7 +256,7 @@
               </td>
               <td>{{ $logActionLabels[$log->action] ?? ucfirst($log->action) }}</td>
               <td>
-                <div>{{ $log->item_name ?? '—' }}</div>
+                <div>{{ $log->item_name ?? '�' }}</div>
                 @if($log->item_type)
                 <div style="font-size:11px;color:var(--gray-400)">{{ strtoupper($log->item_type) }}</div>
                 @endif
@@ -294,7 +294,7 @@
             ['Area / Specialization', e($viewProgram->area ?? ' - ')],
             ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? ' - ')],
             ['Timeline End', $timelineEndVal],
-            ['Budget Allocated', 'â‚±'.number_format((float) $viewProgram->budget_allocated, 2)],
+            ['Budget Allocated', '₱'.number_format((float) $viewProgram->budget_allocated, 2)],
             ['Created By', e($viewProgram->creator->full_name ?? ' - ')],
             ['Created', e($viewProgram->created_at?->format('M d, Y') ?? ' - ')],
           ];
@@ -453,7 +453,7 @@
 </div>
 
 @else
-{{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CARD GRID VIEW â•â•â•â• --}}
+{{-- ═══════════════════════════════════════════════════════ CARD GRID VIEW ════ --}}
 <div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Programs</span></div>
@@ -554,7 +554,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Budget Allocated (â‚±) *</label>
+          <label class="form-label">Budget Allocated (₱) *</label>
           <input type="number" name="budget_allocated" class="form-control" placeholder="e.g. 200000" min="0" step="0.01" required/>
           <div style="font-size:11px;color:var(--gray-400);margin-top:4px">Fixed once saved  -  this can never be changed afterward, by anyone.</div>
         </div>

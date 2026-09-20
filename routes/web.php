@@ -79,7 +79,7 @@ Route::get('/trainings-public', [TrainingsPublicController::class, 'index'])->na
 Route::view('/privacy', 'public.privacy')->name('privacy');
 Route::view('/terms', 'public.terms')->name('terms');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact')->name('contact.store');
 Route::get('/posts', [PublicPostController::class, 'index'])->name('public.posts.index');
 Route::get('/posts/{post}', [PublicPostController::class, 'show'])->name('public.posts.show');
 

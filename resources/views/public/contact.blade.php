@@ -8,7 +8,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet"/>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <style>
+    .hp-field { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Poppins', sans-serif; background: #F0F6FF; color: #334155; }
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 500; height: 68px;
@@ -480,6 +482,15 @@
         <label for="cf-message">Message</label>
         <textarea id="cf-message" name="message" rows="5" placeholder="Write your message here…" required>{{ old('message') }}</textarea>
       </div>
+      <div class="hp-field" aria-hidden="true">
+        <label for="cf-website">Leave this field empty</label>
+        <input type="text" id="cf-website" name="website" tabindex="-1" autocomplete="off" value=""/>
+      </div>
+      @if (config('services.turnstile.site_key'))
+      <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" style="margin-bottom:16px"></div>
+      @elseif (app()->isLocal())
+      <p class="form-alert error">CAPTCHA is not configured: set TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY in .env.</p>
+      @endif
       <button type="submit" class="form-submit"><i class="fas fa-envelope"></i> Send Message</button>
     </form>
 

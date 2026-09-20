@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Beneficiary;
 use App\Http\Controllers\Controller;
 use App\Models\Participant;
 use App\Models\SkillProgressEntry;
+use App\Models\SkillsUtilization;
 use App\Models\Training;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -86,6 +87,11 @@ class SkillsController extends Controller
             'remarks'        => $data['remarks'] ?? null,
         ]);
 
+        // Keep this training's skills_utilization row (the EC/Trainer
+        // dashboard's "Skills Utilization" percentages) in sync — see
+        // SkillsUtilization::recomputeForTraining().
+        SkillsUtilization::recomputeForTraining($trainingId);
+
         return redirect()->route('beneficiary.skills')->with('success', 'Progress entry added.');
     }
 
@@ -108,6 +114,7 @@ class SkillsController extends Controller
         }
 
         $trainingId = $this->ownTrainingId($beneficiaryId, $data['training_id'] ?? null);
+        $previousTrainingId = $entry->training_id;
 
         $entry->update([
             'training_id'   => $trainingId,
@@ -119,6 +126,14 @@ class SkillsController extends Controller
             'remarks'       => $data['remarks'] ?? null,
         ]);
 
+        // Recompute both trainings when the entry moved from one to
+        // another — the old one loses this entry's contribution, the new
+        // one gains it. See SkillsUtilization::recomputeForTraining().
+        SkillsUtilization::recomputeForTraining($previousTrainingId);
+        if ($trainingId !== $previousTrainingId) {
+            SkillsUtilization::recomputeForTraining($trainingId);
+        }
+
         return redirect()->route('beneficiary.skills')->with('success', 'Progress entry updated.');
     }
 
@@ -126,9 +141,15 @@ class SkillsController extends Controller
     {
         $beneficiaryId = Auth::guard('beneficiary')->id();
 
-        SkillProgressEntry::where('id', (int) $request->input('entry_id'))
+        $entry = SkillProgressEntry::where('id', (int) $request->input('entry_id'))
             ->where('beneficiary_id', $beneficiaryId)
-            ->delete();
+            ->first();
+
+        if ($entry) {
+            $trainingId = $entry->training_id;
+            $entry->delete();
+            SkillsUtilization::recomputeForTraining($trainingId);
+        }
 
         return redirect()->route('beneficiary.skills')->with('success', 'Progress entry deleted.');
     }

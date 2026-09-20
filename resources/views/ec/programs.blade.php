@@ -40,21 +40,13 @@
 
 <!-- Info Cards -->
 <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:24px">
-    <div class="stat-body">
-      <form method="POST" action="{{ route('ec.programs.store') }}" style="margin:0 0 2px">
-        @csrf
-        <input type="hidden" name="action" value="update_status"/>
-        <input type="hidden" name="program_id" value="{{ $viewProgram->id }}"/>
-        <select name="status" onchange="this.form.submit()"
-          style="font-size:16px;font-weight:700;color:var(--gray-800);border:none;background:transparent;padding:0;cursor:pointer">
-          @foreach(['Proposed', 'Approved', 'Ongoing', 'Completed'] as $s)
-          <option value="{{ $s }}" {{ $viewProgram->status === $s ? 'selected' : '' }}>{{ $s }}</option>
-          @endforeach
-        </select>
-      </form>
-      <div class="stat-label">Status</div>
+    <div class="stat-card">
+      <div class="stat-icon {{ $viewProgram->status === 'Completed' ? 'green' : ($viewProgram->status === 'Ongoing' ? 'blue' : 'yellow') }}"><i class="fas fa-circle-info"></i></div>
+      <div class="stat-body">
+        <div style="font-size:16px;font-weight:700;color:var(--gray-800)">{{ $viewProgram->status }}</div>
+        <div class="stat-label">Status</div>
+      </div>
     </div>
-  </div>
   <div class="stat-card">
     <div class="stat-icon blue"><i class="fas fa-book"></i></div>
     <div class="stat-body"><div class="stat-value">{{ $r['completed'] }} / {{ $r['total'] }}</div><div class="stat-label">Activities Completed</div></div>
@@ -166,6 +158,7 @@
           <thead><tr><th></th><th>#</th><th>Title</th><th>Status</th><th>Budget Used</th><th></th></tr></thead>
           <tbody>
           @forelse($viewActivities as $a)
+            @php $aBudgetItems = $allBudgetItems[$a->id] ?? collect(); @endphp
             <tr>
               <td>
                 <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0">
@@ -181,9 +174,51 @@
               <td style="color:var(--gray-400)">{{ $loop->iteration }}</td>
               <td><strong>{{ $a->title }}</strong></td>
               <td><span class="badge badge-{{ strtolower($a->status) }}">{{ $a->status }}</span></td>
-              <td>&#8369;{{ number_format((float) $a->budget_used, 2) }}</td>
+              <td>
+                <div style="font-weight:600">&#8369;{{ number_format((float) $a->budget_used, 2) }}</div>
+                @if($aBudgetItems->isNotEmpty())
+                  <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px;margin-top:2px"
+                    onclick="toggleBreakdown('breakdown-{{ $a->id }}')">
+                    <i class="fas fa-list-ul"></i> Breakdown
+                  </button>
+                @endif
+              </td>
               <td><a href="{{ route('ec.trainings') }}?view={{ $a->id }}" class="btn btn-sm btn-outline">View</a></td>
             </tr>
+            @if($aBudgetItems->isNotEmpty())
+            <tr id="breakdown-{{ $a->id }}" style="display:none;background:var(--gray-50)">
+              <td colspan="6" style="padding:0 16px 12px 72px">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px">
+                  <thead>
+                    <tr style="border-bottom:1px solid var(--gray-200)">
+                      <th style="padding:5px 8px;text-align:left;color:var(--gray-400);font-weight:600;font-size:11px;text-transform:uppercase">Category</th>
+                      <th style="padding:5px 8px;text-align:left;color:var(--gray-400);font-weight:600;font-size:11px;text-transform:uppercase">Description</th>
+                      <th style="padding:5px 8px;text-align:right;color:var(--gray-400);font-weight:600;font-size:11px;text-transform:uppercase">Qty</th>
+                      <th style="padding:5px 8px;text-align:right;color:var(--gray-400);font-weight:600;font-size:11px;text-transform:uppercase">Unit Cost</th>
+                      <th style="padding:5px 8px;text-align:right;color:var(--gray-400);font-weight:600;font-size:11px;text-transform:uppercase">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  @foreach($aBudgetItems as $bi)
+                    <tr style="border-bottom:1px solid var(--gray-100)">
+                      <td style="padding:5px 8px;font-weight:600;color:var(--gray-800)">{{ $bi->category }}</td>
+                      <td style="padding:5px 8px;color:var(--gray-600)">{{ $bi->description ?: '—' }}</td>
+                      <td style="padding:5px 8px;text-align:right;color:var(--gray-600)">{{ number_format((float)$bi->quantity, 2) }}</td>
+                      <td style="padding:5px 8px;text-align:right;color:var(--gray-600)">&#8369;{{ number_format((float)$bi->unit_cost, 2) }}</td>
+                      <td style="padding:5px 8px;text-align:right;font-weight:700;color:var(--gray-800)">&#8369;{{ number_format((float)$bi->total, 2) }}</td>
+                    </tr>
+                  @endforeach
+                  </tbody>
+                  <tfoot>
+                    <tr style="border-top:2px solid var(--gray-200)">
+                      <td colspan="4" style="padding:6px 8px;font-weight:700;color:var(--gray-800)">Total</td>
+                      <td style="padding:6px 8px;text-align:right;font-weight:700;color:var(--gray-800)">&#8369;{{ number_format($aBudgetItems->sum(fn($i)=>(float)$i->total), 2) }}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </td>
+            </tr>
+            @endif
           @empty
             <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray-400)">No activities assigned to this program yet.</td></tr>
           @endforelse
@@ -191,6 +226,13 @@
         </table>
       </div>
     </div>
+
+<script>
+function toggleBreakdown(id) {
+  var row = document.getElementById(id);
+  if (row) row.style.display = row.style.display === 'none' ? '' : 'none';
+}
+</script>
 
     <!-- Program Activity Log -->
     <div class="card">
@@ -230,7 +272,7 @@
               </td>
               <td>{{ $logActionLabels[$log->action] ?? ucfirst($log->action) }}</td>
               <td>
-                <div>{{ $log->item_name ?? '�' }}</div>
+                <div>{{ $log->item_name ?? '�' }}</div>
                 @if($log->item_type)
                 <div style="font-size:11px;color:var(--gray-400)">{{ strtoupper($log->item_type) }}</div>
                 @endif
@@ -268,7 +310,7 @@
             ['Area / Specialization', e($viewProgram->area ?? ' - ')],
             ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? ' - ')],
             ['Timeline End', $timelineEndVal],
-            ['Budget Allocated', '₱'.number_format((float) $viewProgram->budget_allocated, 2)],
+            ['Budget Allocated', '&#8369;'.number_format((float) $viewProgram->budget_allocated, 2)],
             ['Created By', e($viewProgram->creator->full_name ?? ' - ')],
             ['Created', e($viewProgram->created_at?->format('M d, Y') ?? ' - ')],
           ];
@@ -370,7 +412,7 @@
         <div class="form-group">
           <label class="form-label">Project Lead * <span style="font-weight:400;color:var(--gray-400)">(exactly one, from Project Leaders)</span></label>
           <select name="lead_id" class="form-control" required>
-            <option value=""> -  Select Project Lead  - </option>
+            <option value="" disabled selected> -  Select Project Lead  - </option>
             @foreach($trainers as $tr)
             <option value="{{ $tr->id }}" {{ (int) $currentLeadId === $tr->id ? 'selected' : '' }}>{{ $tr->first_name }} {{ $tr->last_name }}</option>
             @endforeach
@@ -476,56 +518,138 @@
   <button class="btn btn-primary" onclick="openModal('addProgram')"><i class="fas fa-plus"></i> Create Program</button>
 </div>
 
+{{-- Search bar --}}
+<div style="margin-bottom:20px">
+  <div style="position:relative;max-width:400px">
+    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
+    <input type="text" id="programSearch" placeholder="Search programs..." oninput="filterPrograms()"
+      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
+  </div>
+</div>
+
 @if($programs->isEmpty())
 <div class="empty-state"><i class="fas fa-diagram-project"></i><p>No programs yet. <a href="#" onclick="openModal('addProgram')">Create one.</a></p></div>
 @else
-@foreach($programsByArea as $area => $areaPrograms)
-  <div class="card-group">
-    <div class="card-group-header">
-      <div class="card-group-title"><i class="fas fa-layer-group"></i> {{ $area }}</div>
-      <span class="card-group-count">{{ $areaPrograms->count() }} {{ \Illuminate\Support\Str::plural('project', $areaPrograms->count()) }}</span>
-    </div>
-    <div class="home-grid home-grid-grouped">
-      @foreach($areaPrograms as $p)
-        @php
-          $pr = \App\Http\Controllers\Ec\ProgramController::rollup($p);
-          $icon = \App\Support\TrainingCategoryIcon::icon($p->area);
-        @endphp
-        <div class="training-card">
-          <div class="training-card-img" style="background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
-            @if($p->cover_image)
-              <img src="{{ route('files.program-cover', $p) }}" alt="{{ $p->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
-            @endif
-            <div class="training-card-cat" style="z-index:2;position:relative">{{ $p->area }}</div>
-            @if(!$p->cover_image)
-              <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
-            @endif
-          </div>
-          <div class="training-card-body">
-            <div class="training-card-title">{{ $p->title }}</div>
-            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, '...') }}</div>
-            <div class="training-card-meta">
-              <span><i class="fas fa-user-tie"></i> {{ optional($p->lead->first())->full_name ?? 'No lead' }}</span>
-              <span><i class="fas fa-book"></i> {{ $pr['completed'] }}/{{ $pr['total'] }} done</span>
-            </div>
-            <div style="background:var(--gray-100);border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px">
-              <div style="height:100%;border-radius:8px;width:{{ $pr['progressPct'] }}%;background:{{ $pr['progressPct'] >= 100 ? '#10B981' : '#1A56DB' }}"></div>
-            </div>
-            <div style="font-size:11.5px;color:var(--gray-500);margin-bottom:12px">
-              Remaining: <strong style="color:{{ $pr['budgetRemain'] < 0 ? '#EF4444' : 'var(--gray-800)' }}">&#8369;{{ number_format($pr['budgetRemain'], 2) }}</strong>
-              of &#8369;{{ number_format($pr['budgetAlloc'], 2) }}
-            </div>
-            <div class="training-card-footer">
-              <span class="badge badge-{{ strtolower($p->status) }}">{{ $p->status }}</span>
-              <a href="{{ route('ec.programs') }}?view={{ $p->id }}" class="btn btn-sm btn-primary">View Details</a>
-            </div>
+<div class="home-grid" id="programsGrid">
+  @foreach($programs as $p)
+    @php $icon = \App\Support\TrainingCategoryIcon::icon($p->area); @endphp
+    <div class="training-card program-card-item" data-title="{{ strtolower($p->title) }}">
+      <div class="training-card-img" style="background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
+        @if($p->cover_image)
+          <img src="{{ route('files.program-cover', $p) }}" alt="{{ $p->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
+        @endif
+        @if(!$p->cover_image)
+          <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+        @endif
+      </div>
+      <div class="training-card-body">
+        <div class="training-card-title">{{ $p->title }}</div>
+        <div class="training-card-footer" style="margin-top:auto;padding-top:12px">
+          <span class="badge badge-{{ strtolower($p->status) }}">{{ $p->status }}</span>
+          <div style="display:flex;gap:5px;align-items:center">
+            <button class="btn btn-outline" style="padding:7px 12px;font-size:13px;line-height:1"
+              onclick="openEditProgramModal({{ $p->id }}, '{{ addslashes($p->title) }}', '{{ addslashes($p->area) }}', '{{ addslashes($p->description ?? '') }}')">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="btn btn-danger" style="padding:7px 12px;font-size:13px;line-height:1"
+              onclick="openDeleteProgramModal({{ $p->id }}, '{{ addslashes($p->title) }}')">
+              <i class="fas fa-trash"></i>
+            </button>
+            <a href="{{ route('ec.programs') }}?view={{ $p->id }}" class="btn btn-primary" style="padding:7px 14px;font-size:13px;line-height:1">View</a>
           </div>
         </div>
-      @endforeach
+      </div>
     </div>
-  </div>
-@endforeach
+  @endforeach
+</div>
+<div id="programsEmpty" style="display:none" class="empty-state"><i class="fas fa-magnifying-glass"></i><p>No programs match your search.</p></div>
 @endif
+
+<script>
+function filterPrograms() {
+  const q = document.getElementById('programSearch').value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.program-card-item');
+  let visible = 0;
+  cards.forEach(card => {
+    const match = !q || card.dataset.title.includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  const emptyMsg = document.getElementById('programsEmpty');
+  if (emptyMsg) emptyMsg.style.display = visible === 0 ? '' : 'none';
+}
+function openEditProgramModal(id, title, area, description) {
+  document.getElementById('editProgramId').value = id;
+  document.getElementById('editProgramTitle').value = title;
+  document.getElementById('editProgramArea').value = area;
+  document.getElementById('editProgramDesc').value = description;
+  openModal('editProgram');
+}
+function openDeleteProgramModal(id, title) {
+  document.getElementById('deleteProgramId').value = id;
+  document.getElementById('deleteProgramName').textContent = title;
+  openModal('deleteProgram');
+}
+</script>
+
+<!-- MODAL: EDIT PROGRAM -->
+<div class="modal-overlay" id="modal-editProgram">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2><i class="fas fa-pen"></i> Edit Program</h2>
+      <button class="modal-close" onclick="closeModal('editProgram')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('ec.programs.store') }}">
+      @csrf
+      <input type="hidden" name="action" value="update"/>
+      <input type="hidden" name="program_id" id="editProgramId"/>
+      <div class="modal-body">
+        <div class="alert alert-info" style="margin-bottom:16px;font-size:13px">
+          <i class="fas fa-lock"></i> Budget and timeline are permanently fixed and cannot be changed here. Use <strong>Extend Timeline</strong> inside the program if you need to push the end date.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Program Title *</label>
+          <input type="text" name="title" id="editProgramTitle" class="form-control" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Area / Specialization *</label>
+          <input type="text" name="area" id="editProgramArea" class="form-control" maxlength="120" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="description" id="editProgramDesc" class="form-control" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editProgram')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: DELETE PROGRAM -->
+<div class="modal-overlay" id="modal-deleteProgram">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h2><i class="fas fa-trash"></i> Delete Program</h2>
+      <button class="modal-close" onclick="closeModal('deleteProgram')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('ec.programs.store') }}">
+      @csrf
+      <input type="hidden" name="action" value="delete"/>
+      <input type="hidden" name="program_id" id="deleteProgramId"/>
+      <div class="modal-body">
+        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteProgramName"></strong>? This cannot be undone. All activities under this program will be unlinked.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('deleteProgram')">Cancel</button>
+        <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Yes, Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- MODAL: CREATE PROGRAM -->
 <div class="modal-overlay" id="modal-addProgram">

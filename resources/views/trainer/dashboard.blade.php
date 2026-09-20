@@ -27,6 +27,45 @@
   </div>
 </div>
 
+<!-- Programs Table -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header">
+    <div><div class="card-title">Projects</div><div class="card-subtitle">Programs you lead or are a member of</div></div>
+    <a href="{{ route('trainer.programs') }}" class="btn btn-sm btn-outline">View All</a>
+  </div>
+  <div class="table-wrap">
+    <table id="programsTable">
+      <thead>
+        <tr><th>Project Name</th><th>Area</th><th>Timeline</th><th>Activities</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+      @forelse($myPrograms as $p)
+        @php $col = $statusColors[$p->status] ?? '#6B7280'; @endphp
+        <tr>
+          <td><strong>{{ $p->title }}</strong></td>
+          <td style="font-size:12px;color:var(--gray-600)">{{ $p->area }}</td>
+          <td style="font-size:12px;color:var(--gray-400)">{{ $p->timeline_start?->format('M d, Y') ?? '—' }}</td>
+          <td style="font-size:12px"><strong>{{ $p->activity_count }}</strong></td>
+          <td><span style="font-size:12px;font-weight:600;color:{{ $col }}">{{ $p->status }}</span></td>
+          <td><a href="{{ route('trainer.programs') }}?view={{ $p->id }}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> View</a></td>
+        </tr>
+      @empty
+        <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gray-400)">No programs yet.</td></tr>
+      @endforelse
+      </tbody>
+    </table>
+  </div>
+  @if($myPrograms->count() > 5)
+  <div style="padding:10px 16px;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--gray-500)">
+    <span id="programsInfo"></span>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-outline" id="programsPrev" onclick="paginate('programs',-1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="btn btn-sm btn-outline" id="programsNext" onclick="paginate('programs',1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+  @endif
+</div>
+
 <!-- Activities (read-only, expanded table) -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
@@ -34,7 +73,7 @@
     <a href="{{ route('trainer.trainings') }}" class="btn btn-sm btn-outline">View All</a>
   </div>
   <div class="table-wrap">
-    <table>
+    <table id="activitiesTable">
       <thead>
         <tr><th>Activity Name</th><th>Project</th><th>Area</th><th>Schedule</th><th>Enrolled</th><th>Target</th><th>Status</th><th>Actions</th></tr>
       </thead>
@@ -42,12 +81,7 @@
       @forelse($myTrainings as $t)
         @php $col = $statusColors[$t->status] ?? '#6B7280'; @endphp
         <tr>
-          <td>
-            <strong>{{ $t->title }}</strong>
-            @if($t->description)
-            <div style="font-size:11px;color:var(--gray-400);margin-top:2px">{{ \Illuminate\Support\Str::limit($t->description, 60, '…') }}</div>
-            @endif
-          </td>
+          <td><strong>{{ $t->title }}</strong></td>
           <td style="font-size:12px;color:var(--gray-700)">{{ $t->program?->title ?? '—' }}</td>
           <td style="font-size:12px;color:var(--gray-600)">{{ $t->area }}</td>
           <td style="font-size:12px;color:var(--gray-400)">{{ $t->date_start?->format('Y-m-d') ?? '—' }}</td>
@@ -62,7 +96,57 @@
       </tbody>
     </table>
   </div>
+  @if($myTrainings->count() > 5)
+  <div style="padding:10px 16px;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--gray-500)">
+    <span id="activitiesInfo"></span>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-outline" id="activitiesPrev" onclick="paginate('activities',-1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="btn btn-sm btn-outline" id="activitiesNext" onclick="paginate('activities',1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+  @endif
 </div>
+
+<script>
+const PAGE_SIZE = 5;
+const paginationState = {};
+
+function paginate(tableId, dir) {
+  const state = paginationState[tableId];
+  const newPage = state.page + dir;
+  if (newPage < 0 || newPage >= Math.ceil(state.rows.length / PAGE_SIZE)) return;
+  state.page = newPage;
+  renderPage(tableId);
+}
+
+function renderPage(tableId) {
+  const state = paginationState[tableId];
+  const start = state.page * PAGE_SIZE;
+  const end   = start + PAGE_SIZE;
+  state.rows.forEach((row, i) => { row.style.display = (i >= start && i < end) ? '' : 'none'; });
+  const total = state.rows.length;
+  const info  = document.getElementById(tableId + 'Info');
+  const prev  = document.getElementById(tableId + 'Prev');
+  const next  = document.getElementById(tableId + 'Next');
+  if (info) info.textContent = `Showing ${Math.min(start + 1, total)}–${Math.min(end, total)} of ${total}`;
+  if (prev) prev.disabled = state.page === 0;
+  if (next) next.disabled = end >= total;
+}
+
+function initPagination(tableId) {
+  const tbody = document.querySelector('#' + tableId + ' tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  if (rows.length <= PAGE_SIZE) return;
+  paginationState[tableId] = { rows, page: 0 };
+  renderPage(tableId);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  initPagination('programsTable');
+  initPagination('activitiesTable');
+});
+</script>
 
 <!-- Bottom panels -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">

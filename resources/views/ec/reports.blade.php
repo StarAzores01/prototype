@@ -83,6 +83,10 @@ canvas { max-height: 220px; }
 ════════════════════════════════════════════════════════════ -->
 <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:36px">
   <div class="stat-card">
+    <div class="stat-icon navy"><i class="fas fa-diagram-project"></i></div>
+    <div class="stat-body"><div class="stat-value">{{ $totalPrograms }}</div><div class="stat-label">Total Projects</div></div>
+  </div>
+  <div class="stat-card">
     <div class="stat-icon blue"><i class="fas fa-book"></i></div>
     <div class="stat-body"><div class="stat-value">{{ $totalTrainings }}</div><div class="stat-label">Total Activities</div></div>
   </div>
@@ -97,14 +101,6 @@ canvas { max-height: 220px; }
   <div class="stat-card">
     <div class="stat-icon navy"><i class="fas fa-lightbulb"></i></div>
     <div class="stat-body"><div class="stat-value">{{ $proposedCount }}</div><div class="stat-label">Proposed</div></div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon blue"><i class="fas fa-users"></i></div>
-    <div class="stat-body"><div class="stat-value">{{ $totalPart }}</div><div class="stat-label">Total Participants</div></div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon green"><i class="fas fa-user-check"></i></div>
-    <div class="stat-body"><div class="stat-value">{{ $totalBen }}</div><div class="stat-label">Registered Beneficiaries</div></div>
   </div>
 </div>
 
@@ -182,9 +178,6 @@ canvas { max-height: 220px; }
           <td style="font-size:12.5px;color:var(--gray-600)">{{ $b->address ?? '—' }}</td>
           <td>
             <strong>{{ (int) $b->enrolled_count }}</strong>
-            @if($b->trainings_list)
-            <div style="font-size:11px;color:var(--gray-400);margin-top:2px">{{ \Illuminate\Support\Str::limit($b->trainings_list, 80, '…') }}</div>
-            @endif
           </td>
           <td style="font-size:12px;color:var(--gray-400)">{{ $b->created_at->format('M d, Y') }}</td>
         </tr>
@@ -371,7 +364,7 @@ new Chart(document.getElementById('chartStatus'), {
   data: {
     labels: statusLabels,
     datasets: [{ data: statusData,
-      backgroundColor: ['#1A56DB','#10B981','#F59E0B','#8B5CF6'],
+      backgroundColor: ['#1A56DB','#F59E0B','#10B981','#8B5CF6','#EF4444','#6B7280'],
       borderWidth: 2, borderColor: '#fff' }]
   },
   options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } }, cutout: '62%' }

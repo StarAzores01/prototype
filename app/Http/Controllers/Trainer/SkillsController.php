@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Trainer;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\Participant;
+use App\Models\SkillProgressEntry;
 use App\Models\SkillsForm;
 use App\Models\SkillsResponse;
-use App\Models\SkillsUtilization;
 use App\Models\Training;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -58,34 +58,30 @@ class SkillsController extends Controller
 
     private function mainView(int $trainerId)
     {
-        $skills = SkillsUtilization::whereHas('training', fn ($t) => $t->visibleToTrainer($trainerId))
-            ->selectRaw('AVG(personal_use_pct) as personal, AVG(income_gen_pct) as income, AVG(employment_pct) as employment')
-            ->first();
+        // Read-only monitoring of this trainer's own beneficiaries' progress
+        // journal — same source SkillsUtilization::recomputeForTraining()
+        // derives its percentages from, scoped to trainings this trainer can
+        // see (see Ec\SkillsController for the EC-wide, unscoped version).
+        $progressEntries = SkillProgressEntry::with(['beneficiary:id,first_name,last_name', 'training:id,title'])
+            ->whereHas('training', fn ($t) => $t->visibleToTrainer($trainerId))
+            ->orderByDesc('activity_date')
+            ->orderByDesc('id')
+            ->get();
 
-        $overview = [
-            'personal'   => round((float) ($skills->personal ?? 0), 1),
-            'income'     => round((float) ($skills->income ?? 0), 1),
-            'employment' => round((float) ($skills->employment ?? 0), 1),
-        ];
+        $totalRecordedEarnings = $progressEntries->sum('service_fee');
 
-        $trainingSummary = Training::visibleToTrainer($trainerId)
-            ->withCount('participants as total_pax')
-            ->with(['skillsForms' => fn ($q) => $q->withCount('responses')])
-            ->orderByDesc('date_start')
-            ->get()
-            ->map(function ($t) {
-                $form = $t->skillsForms->first();
-                $t->form = $form;
-                $t->answered = $form->responses_count ?? 0;
-
-                return $t;
-            });
+        // Grouped by activity (training) — see Ec\SkillsController for the
+        // same grouping on the EC-wide version of this table.
+        $entriesByActivity = $progressEntries->groupBy(
+            fn ($e) => $e->training->title ?? $e->activity_name
+        );
 
         return view('trainer.skills', [
-            'activePage'       => 'skills',
-            'mode'             => 'list',
-            'overview'         => $overview,
-            'trainingSummary'  => $trainingSummary,
+            'activePage'            => 'skills',
+            'mode'                  => 'list',
+            'progressEntries'       => $progressEntries,
+            'entriesByActivity'     => $entriesByActivity,
+            'totalRecordedEarnings' => $totalRecordedEarnings,
         ]);
     }
 

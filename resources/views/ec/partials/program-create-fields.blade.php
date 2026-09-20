@@ -39,8 +39,8 @@
 <hr style="border:none;border-top:1px solid var(--gray-100);margin:8px 0 16px">
 <div class="form-group">
   <label class="form-label">Project Lead * <span style="font-weight:400;color:var(--gray-400)">(exactly one, from Project Leaders)</span></label>
-  <select name="lead_id" class="form-control" required>
-    <option value="">— Select Project Lead —</option>
+  <select name="lead_id" id="programLeadSelect" class="form-control" required onchange="syncMemberDropdowns()">
+    <option value="" disabled selected>— Select Project Lead —</option>
     @foreach($trainers as $tr)
     <option value="{{ $tr->id }}">{{ $tr->first_name }} {{ $tr->last_name }}</option>
     @endforeach
@@ -48,9 +48,9 @@
 </div>
 <div class="form-group">
   <label class="form-label">Team Members <span style="font-weight:400;color:var(--gray-400)">(optional, up to 3)</span></label>
-  <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
+  <div class="form-row" style="grid-template-columns:1fr 1fr 1fr" id="memberDropdownsWrap">
     @for($i = 0; $i < 3; $i++)
-    <select name="member_ids[]" class="form-control">
+    <select name="member_ids[]" class="form-control member-select">
       <option value="">— None —</option>
       @foreach($trainers as $tr)
       <option value="{{ $tr->id }}">{{ $tr->first_name }} {{ $tr->last_name }}</option>
@@ -60,3 +60,20 @@
   </div>
   <div style="font-size:11px;color:var(--gray-400);margin-top:4px">A team member can't also be the Project Lead, and can't be selected twice.</div>
 </div>
+
+<script>
+function syncMemberDropdowns() {
+  const leadId  = document.getElementById('programLeadSelect').value;
+  const selects = document.querySelectorAll('.member-select');
+  selects.forEach(function (sel) {
+    const current = sel.value;
+    Array.from(sel.options).forEach(function (opt) {
+      if (opt.value === '') return; // keep the "— None —" option
+      opt.hidden   = leadId && opt.value === leadId;
+      opt.disabled = leadId && opt.value === leadId;
+    });
+    // If the currently selected member is now the lead, reset it
+    if (current && current === leadId) sel.value = '';
+  });
+}
+</script>

@@ -18,7 +18,14 @@ class DashboardController extends Controller
     {
         $recentTrainings = Training::with(['trainer', 'program'])
             ->withCount('participants as enrolled')
-            ->orderByDesc('created_at')
+            ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
+            ->orderBy('date_start')
+            ->get();
+
+        $recentPrograms = Program::with(['lead'])
+            ->withCount('trainings as activity_count')
+            ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
+            ->orderBy('timeline_start')
             ->get();
 
         $latestDocs = Document::with('training')
@@ -27,18 +34,21 @@ class DashboardController extends Controller
             ->get();
 
         $skills = [
-            'personal'   => round((float) (SkillsUtilization::avg('personal_use_pct') ?? 0), 1),
-            'income'     => round((float) (SkillsUtilization::avg('income_gen_pct') ?? 0), 1),
-            'employment' => round((float) (SkillsUtilization::avg('employment_pct') ?? 0), 1),
+            'personal'    => round((float) (SkillsUtilization::avg('personal_use_pct') ?? 0), 1),
+            'income'      => round((float) (SkillsUtilization::avg('income_gen_pct') ?? 0), 1),
+            'employment'  => round((float) (SkillsUtilization::avg('employment_pct') ?? 0), 1),
+            'community'   => round((float) (SkillsUtilization::avg('community_service_pct') ?? 0), 1),
+            'application' => round((float) (SkillsUtilization::avg('training_application_pct') ?? 0), 1),
+            'other'       => round((float) (SkillsUtilization::avg('other_pct') ?? 0), 1),
         ];
 
-        // Trainers + Programs listed in the "Create Activity" modal (shared partial).
         $trainers = \App\Models\User::where('role', 'trainer')->where('is_active', true)->get(['id', 'first_name', 'last_name']);
         $programs = Program::orderBy('title')->get(['id', 'title']);
 
         return view('ec.dashboard', [
             'activePage'       => 'dashboard',
             'recentTrainings'  => $recentTrainings,
+            'recentPrograms'   => $recentPrograms,
             'latestDocs'       => $latestDocs,
             'skills'           => $skills,
             'trainers'         => $trainers,

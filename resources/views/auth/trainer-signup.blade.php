@@ -114,7 +114,7 @@
       <div class="form-group">
         <label class="form-label">Position *</label>
         <select name="position" class="form-control" required>
-          <option value="">Select…</option>
+          <option value="" disabled selected>Select…</option>
           @foreach (['Professor','Assistant Professor','Instructor'] as $p)
           <option value="{{ $p }}" {{ old('position') === $p ? 'selected' : '' }}>{{ $p }}</option>
           @endforeach

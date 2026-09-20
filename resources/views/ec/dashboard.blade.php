@@ -14,17 +14,68 @@
   <button class="btn btn-primary" onclick="openModal('addProgram')"><i class="fas fa-plus"></i> Create Project</button>
 </div>
 
+<!-- Projects Table -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header">
+    <div>
+      <div class="card-title">Projects</div>
+      <div class="card-subtitle">All extension programs</div>
+    </div>
+    <a href="{{ route('ec.programs') }}" class="btn btn-sm btn-outline">View All</a>
+  </div>
+  <div class="table-wrap">
+    <table id="programsTable">
+      <thead>
+        <tr>
+          <th>Project Name</th>
+          <th>Area</th>
+          <th>Project Leader</th>
+          <th>Timeline</th>
+          <th>Activities</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      @forelse($recentPrograms as $p)
+        @php $col = $statusColors[$p->status] ?? '#6B7280'; @endphp
+        <tr>
+          <td style="font-size:12px"><strong>{{ $p->title }}</strong></td>
+          <td style="font-size:12px;color:var(--gray-600)">{{ $p->area }}</td>
+          <td style="font-size:12px;color:var(--gray-700)">{{ optional($p->lead->first())->full_name ?? '—' }}</td>
+          <td style="font-size:12px;color:var(--gray-400)">{{ $p->timeline_start?->format('M d, Y') ?? '—' }}</td>
+          <td style="font-size:12px"><strong>{{ $p->activity_count }}</strong></td>
+          <td style="font-size:12px"><span style="font-weight:600;color:{{ $col }}">{{ $p->status }}</span></td>
+          <td style="font-size:12px"><a href="{{ route('ec.programs') }}?view={{ $p->id }}" class="btn btn-sm btn-outline">View</a></td>
+        </tr>
+      @empty
+        <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--gray-400)">No projects yet. <a href="#" onclick="openModal('addProgram')">Create one.</a></td></tr>
+      @endforelse
+      </tbody>
+    </table>
+  </div>
+  @if($recentPrograms->count() > 5)
+  <div style="padding:10px 16px;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--gray-500)">
+    <span id="programsInfo"></span>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-outline" id="programsPrev" onclick="paginate('programs',-1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="btn btn-sm btn-outline" id="programsNext" onclick="paginate('programs',1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+  @endif
+</div>
+
 <!-- Activities Table -->
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
     <div>
       <div class="card-title">Activities</div>
-      <div class="card-subtitle">All extension activities — change status directly in the table</div>
+      <div class="card-subtitle">All extension activities</div>
     </div>
     <a href="{{ route('ec.trainings') }}" class="btn btn-sm btn-outline">View All</a>
   </div>
   <div class="table-wrap">
-    <table>
+    <table id="activitiesTable">
       <thead>
         <tr>
           <th>Activity Name</th>
@@ -42,35 +93,15 @@
       @forelse($recentTrainings as $t)
         @php $col = $statusColors[$t->status] ?? '#6B7280'; @endphp
         <tr>
-          <td style="font-size:12px">
-            <strong style="font-size:12px">{{ $t->title }}</strong>
-            @if($t->description)
-            <div style="font-size:11px;color:var(--gray-400);margin-top:2px">{{ \Illuminate\Support\Str::limit($t->description, 70, '…') }}</div>
-            @endif
-          </td>
+          <td style="font-size:12px"><strong style="font-size:12px">{{ $t->title }}</strong></td>
           <td style="font-size:12px;color:var(--gray-700)">{{ $t->program?->title ?? '—' }}</td>
           <td style="font-size:12px;color:var(--gray-600)">{{ $t->area }}</td>
           <td style="font-size:12px;color:var(--gray-700)">{{ $t->trainer?->full_name ?? 'TBA' }}</td>
           <td style="font-size:12px;color:var(--gray-400)">{{ $t->date_start?->format('Y-m-d') ?? '—' }}</td>
           <td style="font-size:12px"><strong style="font-size:12px">{{ $t->enrolled }}</strong></td>
           <td style="font-size:12px;color:var(--gray-500)">{{ $t->target_participants }}</td>
-          <td style="font-size:12px">
-            <form method="POST" action="{{ route('ec.trainings.store') }}" style="display:inline">
-              @csrf
-              <input type="hidden" name="action" value="update_status"/>
-              <input type="hidden" name="training_id" value="{{ $t->id }}"/>
-              <select name="status" class="filter-select"
-                style="font-size:12px;padding:4px 8px;border-radius:6px;color:{{ $col }};font-weight:600;border-color:{{ $col }}"
-                onchange="this.form.submit()">
-                @foreach(['Proposed','Approved','Ongoing','Completed'] as $s)
-                <option {{ $t->status === $s ? 'selected' : '' }}>{{ $s }}</option>
-                @endforeach
-              </select>
-            </form>
-          </td>
-          <td style="font-size:12px">
-            <a href="{{ route('ec.trainings') }}?view={{ $t->id }}" class="btn btn-sm btn-outline">Manage</a>
-          </td>
+          <td style="font-size:12px"><span style="font-weight:600;color:{{ $col }}">{{ $t->status }}</span></td>
+          <td style="font-size:12px"><a href="{{ route('ec.trainings') }}?view={{ $t->id }}" class="btn btn-sm btn-outline">Manage</a></td>
         </tr>
       @empty
         <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--gray-400)">No activities yet. <a href="#" onclick="openModal('addTraining')">Create one.</a></td></tr>
@@ -78,7 +109,57 @@
       </tbody>
     </table>
   </div>
+  @if($recentTrainings->count() > 5)
+  <div style="padding:10px 16px;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--gray-500)">
+    <span id="activitiesInfo"></span>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-outline" id="activitiesPrev" onclick="paginate('activities',-1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="btn btn-sm btn-outline" id="activitiesNext" onclick="paginate('activities',1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+  @endif
 </div>
+
+<script>
+const PAGE_SIZE = 5;
+const paginationState = {};
+
+function paginate(tableId, dir) {
+  const state = paginationState[tableId];
+  const newPage = state.page + dir;
+  if (newPage < 0 || newPage >= Math.ceil(state.rows.length / PAGE_SIZE)) return;
+  state.page = newPage;
+  renderPage(tableId);
+}
+
+function renderPage(tableId) {
+  const state   = paginationState[tableId];
+  const start   = state.page * PAGE_SIZE;
+  const end     = start + PAGE_SIZE;
+  state.rows.forEach((row, i) => { row.style.display = (i >= start && i < end) ? '' : 'none'; });
+  const total   = state.rows.length;
+  const info    = document.getElementById(tableId + 'Info');
+  const prev    = document.getElementById(tableId + 'Prev');
+  const next    = document.getElementById(tableId + 'Next');
+  if (info) info.textContent = `Showing ${Math.min(start + 1, total)}–${Math.min(end, total)} of ${total}`;
+  if (prev) prev.disabled = state.page === 0;
+  if (next) next.disabled = end >= total;
+}
+
+function initPagination(tableId) {
+  const tbody = document.querySelector('#' + tableId + ' tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  if (rows.length <= PAGE_SIZE) return;
+  paginationState[tableId] = { rows, page: 0 };
+  renderPage(tableId);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  initPagination('programsTable');
+  initPagination('activitiesTable');
+});
+</script>
 
 <!-- Bottom panels -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">
@@ -109,6 +190,9 @@
         ['Personal Use', $skills['personal']],
         ['Income-Generating', $skills['income']],
         ['Employment', $skills['employment']],
+        ['Community Service', $skills['community']],
+        ['Training Application', $skills['application']],
+        ['Other', $skills['other']],
       ] as [$label, $pct])
       <div class="skills-row">
         <div class="skills-label">{{ $label }}</div>

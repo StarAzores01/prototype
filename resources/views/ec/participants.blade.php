@@ -53,9 +53,6 @@
           <td style="color:var(--gray-400)">{{ $loop->iteration }}</td>
           <td>
             <strong>{{ $p->full_name }}</strong>
-            @if($p->address)
-            <div style="font-size:11px;color:var(--gray-400)"><i class="fas fa-location-dot"></i> {{ $p->address }}</div>
-            @endif
           </td>
           <td style="font-size:12px;color:var(--gray-500)">{{ $p->id_number ?? '—' }}</td>
           <td style="font-size:12px;color:var(--gray-500)">{{ $p->phone ?? '—' }}</td>
@@ -71,9 +68,9 @@
           </td>
           <td><span class="badge {{ $evalBadge }}">{{ $evalStatus }}</span></td>
           <td>
-            <div class="action-btns">
+            <div class="action-btns" style="align-items:stretch">
               <button class="btn btn-sm btn-outline" onclick="openEditModal({{ $p->toJson() }})"><i class="fas fa-pen"></i> Edit</button>
-              <form method="POST" action="{{ route('ec.participants.store') }}" style="display:inline">
+              <form method="POST" action="{{ route('ec.participants.store') }}" style="display:inline-flex">
                 @csrf
                 <input type="hidden" name="action" value="toggle"/>
                 <input type="hidden" name="participant_id" value="{{ $p->id }}"/>
@@ -82,11 +79,11 @@
                   {!! $p->is_active ? '<i class="fas fa-ban"></i> Disable' : '<i class="fas fa-square-check"></i> Enable' !!}
                 </button>
               </form>
-              <form method="POST" action="{{ route('ec.participants.store') }}" style="display:inline" onsubmit="return confirm('Remove this participant?')">
+              <form method="POST" action="{{ route('ec.participants.store') }}" style="display:inline-flex" onsubmit="return confirm('Remove this participant?')">
                 @csrf
                 <input type="hidden" name="action" value="delete"/>
                 <input type="hidden" name="participant_id" value="{{ $p->id }}"/>
-                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                <button type="submit" class="btn btn-sm btn-danger" style="align-self:stretch;padding-left:12px;padding-right:12px"><i class="fas fa-trash"></i></button>
               </form>
             </div>
           </td>
@@ -137,7 +134,7 @@
           <div class="form-group">
             <label class="form-label">Assigned Activity *</label>
             <select name="training_id" class="form-control" required>
-              <option value="">— Select Activity —</option>
+              <option value="" disabled selected>— Select Activity —</option>
               @foreach($trainings as $t)
               <option value="{{ $t->id }}">{{ $t->title }}</option>
               @endforeach
@@ -200,7 +197,7 @@
           <div class="form-group">
             <label class="form-label">Assigned Activity *</label>
             <select name="training_id" id="edit_training" class="form-control" required>
-              <option value="">— Select Activity —</option>
+              <option value="" disabled selected>— Select Activity —</option>
               @foreach($trainings as $t)
               <option value="{{ $t->id }}">{{ $t->title }}</option>
               @endforeach

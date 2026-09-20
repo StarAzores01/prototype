@@ -476,10 +476,8 @@ select.filter-select:focus { border-color: var(--blue-primary); }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
   .dash-grid { grid-template-columns: 1fr; }
-  .brand-text { display: none; }
+  .brand-text .brand-sub { display: none; }
   .topbar-title { display: none; }
-  /* Sidebar/main-wrap mobile drawer rules live in the consolidated
-     "RESPONSIVE SIDEBAR (hamburger drawer)" block below. */
 }
 @media (max-width: 600px) {
   .page-content { padding: 16px; }
@@ -1189,7 +1187,7 @@ select.filter-select:focus { border-color: var(--blue-primary); }
   .sidebar { width: 64px; }
   .topbar-brand { width: 64px; padding: 0 10px; }
   .main-wrap { margin-left: 64px; }
-  .brand-text { display: none; }
+  .brand-text .brand-sub { display: none; }
   .topbar-title { display: none; }
   .sidebar-item span:last-child,
   .sidebar-label,
@@ -1216,7 +1214,7 @@ body { overflow-x: hidden; }
 @media (max-width: 600px) {
   .home-grid { grid-template-columns: 1fr; }
   .training-card-meta { gap: 6px; }
-  .training-card-footer { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .training-card-footer { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; }
 }
 
 /* ===== RESPONSIVE PROFILE PAGE ===== */

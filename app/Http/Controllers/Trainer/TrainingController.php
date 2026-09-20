@@ -47,6 +47,8 @@ class TrainingController extends Controller
 
         return match ($action) {
             'create'        => $this->create($request),
+            'update'        => $this->update($request),
+            'delete'        => $this->delete($request),
             'update_budget' => $this->updateBudget($request),
             'upload_cover'  => $this->uploadCover($request),
             'upload'        => $this->uploadDocument($request),
@@ -70,7 +72,9 @@ class TrainingController extends Controller
             $query->where('status', $status);
         }
 
-        $trainings = $query->orderByDesc('date_start')->get();
+        $trainings = $query->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
+            ->orderBy('date_start')
+            ->get();
 
         // Grouped by the linked Program ("Project") for the card grid  -  same
         // treatment as Ec\TrainingController::listView(), kept consistent
@@ -112,6 +116,7 @@ class TrainingController extends Controller
             'viewParticipants' => $participants,
             'viewDocs'         => $documents,
             'progress'         => $this->progress($training),
+            'budgetItems'      => $training->budgetItems()->with('loggedBy')->get(),
             // Only the activity's lead can change the display picture, not just any assigned member.
             'canChangeCover'   => $training->isLeadUser($this->trainerId()),
         ]);
@@ -147,28 +152,115 @@ class TrainingController extends Controller
         return compact('budgetAlloc', 'budgetUsed', 'budgetPct', 'healthLabel', 'healthHex');
     }
 
+    /** Lead only: edit an activity's mutable fields (budget_allocated is permanently fixed at creation). */
+    private function update(Request $request)
+    {
+        $trainerId = $this->trainerId();
+
+        $data = Validator::make($request->all(), [
+            'training_id'         => 'required|integer|exists:trainings,id',
+            'title'               => 'required|string|max:200',
+            'area'                => 'required|string|max:120',
+            'description'         => 'nullable|string',
+            'date_start'          => 'nullable|date',
+            'date_end'            => 'nullable|date|after_or_equal:date_start',
+            'target_participants' => 'nullable|integer|min:1',
+        ])->validate();
+
+        $training = Training::where('id', $data['training_id'])
+            ->visibleToTrainer($trainerId)
+            ->firstOrFail();
+
+        // Only the lead may edit (not just any member).
+        abort_unless($training->isLeadUser($trainerId), 403, 'Only this activity\'s Project Lead can edit it.');
+
+        $training->update([
+            'title'               => $data['title'],
+            'area'                => $data['area'],
+            'description'         => $data['description'] ?? null,
+            'date_start'          => $data['date_start'] ?? null,
+            'date_end'            => $data['date_end'] ?? null,
+            'target_participants' => $data['target_participants'] ?? $training->target_participants,
+        ]);
+
+        return redirect()->route('trainer.trainings')->with('success', 'Activity updated.');
+    }
+
+    /** Lead only: hard-delete an activity. */
+    private function delete(Request $request)
+    {
+        $trainerId = $this->trainerId();
+
+        $data = Validator::make($request->all(), [
+            'training_id' => 'required|integer|exists:trainings,id',
+        ])->validate();
+
+        $training = Training::where('id', $data['training_id'])
+            ->visibleToTrainer($trainerId)
+            ->firstOrFail();
+
+        abort_unless($training->isLeadUser($trainerId), 403, 'Only this activity\'s Project Lead can delete it.');
+
+        $training->delete();
+
+        return redirect()->route('trainer.trainings')->with('success', 'Activity deleted.');
+    }
+
     /** Only budget_used is writable here  -  budget_allocated is locked for good after creation. */
     private function updateBudget(Request $request)
     {
         $data = Validator::make($request->all(), [
-            'training_id' => 'required|integer|exists:trainings,id',
-            'budget_used' => 'nullable|numeric|min:0|max:9999999999.99',
+            'training_id'           => 'required|integer|exists:trainings,id',
+            'items'                 => 'required|array|min:1',
+            'items.*.category'      => 'required|string|max:100',
+            'items.*.other_specify' => 'nullable|string|max:255',
+            'items.*.description'   => 'nullable|string|max:255',
+            'items.*.quantity'      => 'required|numeric|min:0.01',
+            'items.*.unit_cost'     => 'required|numeric|min:0',
         ])->validate();
 
-        $tid = (int) $data['training_id'];
+        $tid       = (int) $data['training_id'];
+        $trainerId = $this->trainerId();
+        $training  = Training::where('id', $tid)->visibleToTrainer($trainerId)->first();
 
-        // Only allow if this training is visible to the logged-in trainer (lead or member).
-        $training = Training::where('id', $tid)->visibleToTrainer($this->trainerId())->first();
-
-        if ($training) {
-            $training->update([
-                'budget_used' => $data['budget_used'] ?? 0,
-            ]);
-
-            return redirect()->route('trainer.trainings', ['view' => $tid])->with('success', 'Budget usage updated successfully.');
+        if (! $training) {
+            return redirect()->route('trainer.trainings', ['view' => $tid]);
         }
 
-        return redirect()->route('trainer.trainings', ['view' => $tid]);
+        DB::transaction(function () use ($data, $tid, $trainerId) {
+            \App\Models\BudgetItem::where('training_id', $tid)->delete();
+
+            $total = 0;
+            foreach ($data['items'] as $item) {
+                $category = $item['category'] === 'Other'
+                    ? 'Other: '.trim($item['other_specify'] ?? '')
+                    : $item['category'];
+
+                $qty      = (float) $item['quantity'];
+                $unitCost = (float) $item['unit_cost'];
+                $total   += round($qty * $unitCost, 2);
+
+                \App\Models\BudgetItem::create([
+                    'training_id' => $tid,
+                    'category'    => $category,
+                    'description' => $item['description'] ?? null,
+                    'quantity'    => $qty,
+                    'unit_cost'   => $unitCost,
+                    'logged_by'   => $trainerId,
+                ]);
+            }
+
+            Training::where('id', $tid)->update(['budget_used' => $total]);
+        });
+
+        $training = Training::findOrFail($tid);
+        ProgramLogService::recordBudget($training, ProgramLogService::ACTION_BUDGET_LOGGED, [
+            'stage'      => 'update',
+            'budget_used' => (float) $training->budget_used,
+            'item_count' => count($data['items']),
+        ]);
+
+        return redirect()->route('trainer.trainings', ['view' => $tid, 'budget_saved' => 1])->with('success', 'Budget breakdown saved.');
     }
 
     /** Restricted to this activity's team lead  -  a mere member can't change it. */
@@ -215,7 +307,6 @@ class TrainingController extends Controller
             'date_end'            => 'nullable|date|after_or_equal:date_start',
             'budget_allocated'    => 'required|numeric|min:0|max:9999999999.99',
             'budget_used'         => 'nullable|numeric|min:0|max:9999999999.99',
-            'status'              => ['nullable', Rule::in(['Proposed', 'Approved', 'Ongoing', 'Completed'])],
             'target_participants' => 'nullable|integer|min:1',
             'lead_id'             => 'required|integer|exists:users,id',
             'member_ids'          => 'nullable|array|max:3',
@@ -243,7 +334,6 @@ class TrainingController extends Controller
                 'description'          => $data['description'] ?? null,
                 'date_start'           => $data['date_start'] ?? null,
                 'date_end'             => $data['date_end'] ?? null,
-                'status'               => $data['status'] ?? 'Proposed',
                 'target_participants'  => $data['target_participants'] ?? 0,
                 'budget_allocated'     => $data['budget_allocated'],
                 'budget_used'          => $data['budget_used'] ?? 0,
@@ -255,6 +345,12 @@ class TrainingController extends Controller
 
             return $training;
         });
+
+        ProgramLogService::recordBudget($training, ProgramLogService::ACTION_BUDGET_LOGGED, [
+            'stage'          => 'creation',
+            'budget_allocated' => (float) $training->budget_allocated,
+            'budget_used'    => (float) $training->budget_used,
+        ]);
 
         return redirect()->route('trainer.trainings', ['view' => $training->id])->with('success', 'Activity created.');
     }

@@ -40,7 +40,41 @@ class Program extends Model
             if ($program->exists && $program->isDirty(['budget_allocated', 'timeline_start', 'timeline_end'])) {
                 throw new \RuntimeException('budget_allocated, timeline_start, and timeline_end are permanently fixed at creation and cannot be modified. Use extended_end_date to extend the program\'s effective end date instead.');
             }
+            // Status is always computed from dates — overwrite whatever was passed.
+            $today = now()->startOfDay();
+            $start = $program->timeline_start?->startOfDay();
+            $end   = ($program->extended_end_date ?? $program->timeline_end)?->startOfDay();
+
+            if (! $start || $today->lt($start)) {
+                $program->status = 'Proposed';
+            } elseif (! $end || $today->lte($end)) {
+                $program->status = 'Ongoing';
+            } else {
+                $program->status = 'Completed';
+            }
         });
+    }
+
+    /**
+     * Status is fully automatic — derived from timeline_start / effective_end_date.
+     * - No dates set                           → Proposed
+     * - Today < timeline_start                 → Proposed
+     * - timeline_start ≤ today ≤ effective_end → Ongoing
+     * - Today > effective_end                  → Completed
+     */
+    public function getStatusAttribute(): string
+    {
+        $today = now()->startOfDay();
+        $start = $this->timeline_start?->startOfDay();
+        $end   = $this->effective_end_date?->startOfDay();
+
+        if (! $start || $today->lt($start)) {
+            return 'Proposed';
+        }
+        if (! $end || $today->lte($end)) {
+            return 'Ongoing';
+        }
+        return 'Completed';
     }
 
     /** What every "end date"/"deadline" display should read app-wide â€” the extension if one exists, else the original timeline_end. */

@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Beneficiary;
 use App\Models\EvalForm;
 use App\Models\Participant;
+use App\Models\Program;
 use App\Models\SkillsForm;
 use App\Models\Training;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -19,9 +21,25 @@ class ReportController extends Controller
             ->orderByDesc('cnt')
             ->get();
 
-        $byStatus = Training::selectRaw('status, count(*)::int as cnt')
-            ->groupBy('status')
+        // Training::status is a derived/virtual attribute (see Training::getStatusAttribute() /
+        // Training::booted()'s saving hook) computed from date_start/date_end at save time. The
+        // stored `status` column is therefore only a snapshot as of the last save and goes stale
+        // for any row that hasn't been re-saved since its dates rolled over — which is why a raw
+        // `groupBy('status')` on the column used to bucket almost everything under "Proposed".
+        // Recompute status the same way the model does, directly in SQL, so counts always reflect
+        // each activity's real current status.
+        $statusExpr = "CASE
+            WHEN date_start IS NULL OR CURRENT_DATE < date_start THEN 'Proposed'
+            WHEN date_end IS NULL OR CURRENT_DATE <= date_end THEN 'Ongoing'
+            ELSE 'Completed'
+        END";
+
+        $byStatus = DB::table('trainings')
+            ->selectRaw("{$statusExpr} as status, count(*)::int as cnt")
+            ->groupBy(DB::raw($statusExpr))
             ->get();
+
+        $statusCounts = $byStatus->pluck('cnt', 'status');
 
         $beneficiaries = Beneficiary::query()
             ->leftJoin('participants', 'participants.beneficiary_id', '=', 'beneficiaries.id')
@@ -56,11 +74,10 @@ class ReportController extends Controller
         return view('ec.reports', [
             'activePage'      => 'reports',
             'totalTrainings'  => Training::count(),
-            'completedCount'  => Training::where('status', 'Completed')->count(),
-            'ongoingCount'    => Training::where('status', 'Ongoing')->count(),
-            'proposedCount'   => Training::where('status', 'Proposed')->count(),
-            'totalPart'       => Participant::count(),
-            'totalBen'        => Beneficiary::count(),
+            'totalPrograms'   => Program::count(),
+            'completedCount'  => (int) ($statusCounts['Completed'] ?? 0),
+            'ongoingCount'    => (int) ($statusCounts['Ongoing'] ?? 0),
+            'proposedCount'   => (int) ($statusCounts['Proposed'] ?? 0),
             'byArea'          => $byArea,
             'byStatus'        => $byStatus,
             'beneficiaries'   => $beneficiaries,

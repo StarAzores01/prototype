@@ -50,9 +50,6 @@
           <td>{{ $r->title }}</td>
           <td>
             {{ $r->training->title ?? '—' }}
-            @if($r->training?->program)
-            <div style="font-size:11px;color:var(--gray-400)"><i class="fas fa-diagram-project"></i> {{ $r->training->program->title }}</div>
-            @endif
           </td>
           <td><span class="badge {{ $r->status === 'Reviewed' ? 'badge-success' : ($r->status === 'Submitted' ? 'badge-info' : 'badge-warning') }}">{{ $r->status }}</span></td>
           <td>{{ $r->submitted_at?->format('M d, Y') ?? '—' }}</td>

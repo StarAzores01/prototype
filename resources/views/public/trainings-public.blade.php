@@ -1,31 +1,24 @@
 @php
-  // Static sample programs, matching the original trainings-public.php exactly
-  // (this public marketing page was never wired to the real trainings table).
-  $programs = [
-    ['emoji'=>'fa-utensils','cat'=>'Culinary Technology',           'title'=>'Basic Pastry Making',          'desc'=>'Hands-on baking and pastry workshop covering bread-making, cake decoration, and basic pastry techniques for livelihood development.','date'=>'Mar 10, 2026','venue'=>'Lucban, Quezon',      'trainer'=>'Aurita A. Laguador',   'pax'=>28,'status'=>'Ongoing'],
-    ['emoji'=>'fa-plug','cat'=>'Electronics Technology',        'title'=>'Basic Electronics Servicing',  'desc'=>'Fundamentals of electronics, circuit troubleshooting, and component identification for displaced workers and out-of-school youth.','date'=>'Feb 18, 2026','venue'=>'Tayabas City',       'trainer'=>'Jose D. Sanvictores',  'pax'=>35,'status'=>'Completed'],
-    ['emoji'=>'fa-laptop','cat'=>'Computer Technology',           'title'=>'Computer Literacy Program',    'desc'=>'MS Office, internet literacy, and digital tools for solo parents and community members seeking employment opportunities.','date'=>'Mar 5, 2026', 'venue'=>'SLSU Main Campus',   'trainer'=>'Reynaldo V. Danganan', 'pax'=>40,'status'=>'Ongoing'],
-    ['emoji'=>'fa-scissors','cat'=>'Apparel and Fashion Technology','title'=>'Dressmaking & Sewing Basics',  'desc'=>'Introduction to garment construction, pattern-making, and basic sewing techniques for women beneficiaries and out-of-school youth.','date'=>'Apr 2, 2026', 'venue'=>'Candelaria, Quezon', 'trainer'=>'Maricel O. Lingatong', 'pax'=>25,'status'=>'Upcoming'],
-    ['emoji'=>'fa-desktop','cat'=>'Information Technology',       'title'=>'Web Design Fundamentals',      'desc'=>'HTML, CSS, and basic web design principles for young adults seeking digital livelihood opportunities.','date'=>'Mar 28, 2026','venue'=>'Lucena City',        'trainer'=>'Devie S. Bello',       'pax'=>50,'status'=>'Upcoming'],
-    ['emoji'=>'fa-car','cat'=>'Automotive Technology',         'title'=>'Basic Automotive Servicing',   'desc'=>'Introduction to vehicle maintenance, engine basics, and automotive safety for displaced workers and youth.','date'=>'May 10, 2026','venue'=>'Mauban, Quezon',     'trainer'=>'Angelito L. Mangubat', 'pax'=>20,'status'=>'Upcoming'],
-  ];
+  // Real featured Activities (App\Models\Training, is_featured + published
+  // via Manage Public Site Content → Trainings) — see
+  // PublicSite\TrainingsPublicController. No more static sample programs.
 
-  $catColors = [
-    'Culinary Technology'            => ['#7C3AED','#4F46E5'],
-    'Electronics Technology'         => ['#0F766E','#0891B2'],
-    'Computer Technology'            => ['#1D4ED8','#0284C7'],
-    'Apparel and Fashion Technology' => ['#BE185D','#9333EA'],
-    'Information Technology'         => ['#065F46','#059669'],
-    'Automotive Technology'          => ['#D97706','#F59E0B'],
-    'Mechanical Technology'          => ['#374151','#6B7280'],
-    'Print Media Technology'         => ['#7C2D12','#C2410C'],
+  // Areas are entirely free text (the EC types whatever specialization she
+  // wants, not a fixed list) so the card color/icon can't be keyed to
+  // specific area names. Instead it's derived deterministically from a
+  // hash of the area string, rotating through a small generic palette —
+  // any area typed in gets a consistent, pleasant color every time.
+  $palette = [
+    ['#1A56DB', '#3B82F6'],
+    ['#F59E0B', '#FBBF24'],
+    ['#10B981', '#34D399'],
+    ['#EC4899', '#F472B6'],
+    ['#7C3AED', '#A78BFA'],
+    ['#0EA5E9', '#38BDF8'],
+    ['#DC2626', '#F87171'],
+    ['#0F766E', '#2DD4BF'],
   ];
-
-  // Same EC-managed photo, per training area, shown on the landing page's
-  // Courses Offered cards — see App\Models\TrainingCategory (Manage Public
-  // Site Content → Trainings). Falls back to the colored gradient + icon
-  // below until EC uploads one for that area.
-  $catImages = \App\Models\TrainingCategory::active()->pluck('image', 'activity_name');
+  $gradFor = fn (string $area) => $palette[abs(crc32($area)) % count($palette)];
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -56,7 +49,7 @@
     .nav-link{padding:7px 14px;border-radius:8px;font-size:13.5px;font-weight:500;
               color:rgba(255,255,255,.7);transition:all .24s;text-decoration:none}
     .nav-link:hover,.nav-link.active{background:rgba(255,255,255,.08);color:#fff}
-    .nav-actions{display:flex;align-items:center;gap:10px}
+    .nav-actions{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
     .btn-login{padding:8px 18px;border-radius:8px;font-size:13.5px;font-weight:600;
                color:rgba(255,255,255,.85);background:rgba(255,255,255,.08);
                border:1px solid rgba(255,255,255,.15);transition:all .24s;
@@ -179,6 +172,7 @@
         <a href="{{ route('home') }}"            class="nav-link">Home</a>
         <a href="{{ route('about') }}"            class="nav-link">About</a>
         <a href="{{ route('trainings-public') }}" class="nav-link active">Trainings</a>
+        <a href="{{ route('public.posts.index') }}" class="nav-link">Announcements</a>
         <a href="{{ route('contact') }}"          class="nav-link">Contact</a>
       </div>
       @include('public.partials.nav')
@@ -216,39 +210,49 @@
 
     <!-- Cards -->
     <div class="grid" id="trainGrid">
-      @foreach ($programs as $p)
+      @forelse ($trainings as $t)
       @php
-        $c = $catColors[$p['cat']] ?? ['#1A56DB','#2E6BF0'];
-        $grad = "linear-gradient(135deg,{$c[0]},{$c[1]})";
-        $badgeClass = 'badge-'.strtolower($p['status']);
-        $catImg = $catImages[$p['cat']] ?? null;
+        $grad = $gradFor($t->area);
+        $gradCss = "linear-gradient(135deg,{$grad[0]},{$grad[1]})";
+        $displayStatus = $t->status === 'Proposed' ? 'Upcoming' : $t->status;
+        $badgeClass = 'badge-'.strtolower($displayStatus);
+        $img = $t->display_featured_image;
       @endphp
-      <div class="card" data-status="{{ $p['status'] }}">
-        <div class="card-img" style="background:{{ $grad }}">
-          <div class="card-cat">{{ $p['cat'] }}</div>
-          @if($catImg)
-            <img src="{{ $catImg }}" alt="{{ $p['cat'] }}" class="card-img-photo"/>
+      <div class="card" data-status="{{ $displayStatus }}">
+        <div class="card-img" style="background:{{ $gradCss }}">
+          <div class="card-cat">{{ $t->area }}</div>
+          @if($img)
+            <img src="{{ $img }}" alt="{{ $t->area }}" class="card-img-photo"/>
           @else
-            <div class="card-em"><i class="fas {{ $p['emoji'] }}" style="color:#fff"></i></div>
+            <div class="card-em"><i class="fas fa-graduation-cap" style="color:#fff"></i></div>
           @endif
         </div>
         <div class="card-body">
-          <div class="card-title">{{ $p['title'] }}</div>
-          <div class="card-desc">{{ $p['desc'] }}</div>
+          <div class="card-title">{{ $t->title }}</div>
+          <div class="card-desc">{{ $t->description }}</div>
           <div class="card-meta">
-            <div class="meta-item"><i class="fas fa-calendar"></i> {{ $p['date'] }}</div>
-            <div class="meta-item"><i class="fas fa-user"></i> {{ $p['trainer'] }}</div>
+            @if($t->date_start)
+            <div class="meta-item"><i class="fas fa-calendar"></i> {{ $t->date_start->format('M j, Y') }}</div>
+            @endif
+            @if($t->trainer)
+            <div class="meta-item"><i class="fas fa-user"></i> {{ $t->trainer->name }}</div>
+            @endif
           </div>
           <div class="card-foot">
-            <span class="badge {{ $badgeClass }}">{{ $p['status'] }}</span>
+            <span class="badge {{ $badgeClass }}">{{ $displayStatus }}</span>
             <a href="{{ route('choose-role') }}" class="card-link">Learn More <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
-      @endforeach
+      @empty
+      <div class="empty" style="grid-column:1/-1">
+        <i class="fas fa-graduation-cap"></i>
+        <p>No training programs are currently featured — check back soon.</p>
+      </div>
+      @endforelse
     </div>
 
-    <!-- Empty state (hidden by default) -->
+    <!-- Empty state (hidden by default, shown by the client-side filter when no card matches) -->
     <div class="empty" id="emptyState" style="display:none">
       <i class="fas fa-magnifying-glass"></i>
       <p>No trainings found for this filter.</p>
@@ -279,6 +283,7 @@
           <a href="{{ route('home') }}"             class="footer-link">Home</a>
           <a href="{{ route('about') }}"             class="footer-link">About PAThrive</a>
           <a href="{{ route('trainings-public') }}"  class="footer-link">Training Programs</a>
+          <a href="{{ route('public.posts.index') }}" class="footer-link">Announcements</a>
           <a href="{{ route('contact') }}"           class="footer-link">Contact Us</a>
         </div>
       </div>

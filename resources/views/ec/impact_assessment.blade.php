@@ -80,13 +80,9 @@
         <tr>
           <td>
             <div style="font-weight:600">{{ $a->title }}</div>
-            @if($a->description)
-            <div style="font-size:11.5px;color:var(--gray-400);margin-top:2px">{{ \Illuminate\Support\Str::limit($a->description, 80, '…') }}</div>
-            @endif
           </td>
           <td>
             <div style="font-weight:600">{{ $a->evaluator->first_name ?? '' }} {{ $a->evaluator->last_name ?? '' }}</div>
-            <div style="font-size:11px;color:var(--gray-400)">{{ $a->evaluator->id_number ?? '' }}</div>
           </td>
           <td>{{ $a->evaluator->position ?? '—' }}</td>
           <td>{{ $a->training->title ?? '—' }}</td>
@@ -280,7 +276,7 @@
         <div class="form-group">
           <label class="form-label">Activity <span style="color:var(--red)">*</span></label>
           <select name="training_id" class="form-control" required>
-            <option value="">— Select Activity —</option>
+            <option value="" disabled selected>— Select Activity —</option>
             @foreach($trainings ?? [] as $t)
             <option value="{{ $t->id }}">{{ $t->title }}</option>
             @endforeach

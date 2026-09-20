@@ -27,7 +27,7 @@
     .nav-link { padding: 7px 14px; border-radius: 8px; font-size: 13.5px; font-weight: 500;
                 color: rgba(255,255,255,.7); transition: all .24s; text-decoration: none; }
     .nav-link:hover, .nav-link.active { background: rgba(255,255,255,.08); color: #fff; }
-    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .nav-actions { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
     .btn-login { padding: 8px 18px; border-radius: 8px; font-size: 13.5px; font-weight: 600;
                  color: rgba(255,255,255,.85); background: rgba(255,255,255,.08);
                  border: 1px solid rgba(255,255,255,.15); transition: all .24s;
@@ -373,6 +373,7 @@
         <a href="{{ route('home') }}"            class="nav-link">Home</a>
         <a href="{{ route('about') }}"            class="nav-link">About</a>
         <a href="{{ route('trainings-public') }}" class="nav-link">Trainings</a>
+        <a href="{{ route('public.posts.index') }}" class="nav-link">Announcements</a>
         <a href="{{ route('contact') }}"          class="nav-link active">Contact</a>
       </div>
       @include('public.partials.nav')
@@ -507,6 +508,7 @@
           <a href="{{ route('home') }}"             class="footer-link">Home</a>
           <a href="{{ route('about') }}"             class="footer-link">About PAThrive</a>
           <a href="{{ route('trainings-public') }}"  class="footer-link">Training Programs</a>
+          <a href="{{ route('public.posts.index') }}" class="footer-link">Announcements</a>
           <a href="{{ route('contact') }}"           class="footer-link">Contact Us</a>
         </div>
       </div>

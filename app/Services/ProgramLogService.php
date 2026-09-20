@@ -38,6 +38,7 @@ class ProgramLogService
     const ACTION_ARCHIVED       = 'archived';
     const ACTION_RESTORED       = 'restored';
     const ACTION_DELETED        = 'deleted';
+    const ACTION_BUDGET_LOGGED  = 'budget_logged';
 
     // ── Role display labels ───────────────────────────────────────────
     private static array $roleLabels = [
@@ -104,6 +105,57 @@ class ProgramLogService
             'item_name'     => $itemName,
             'item_type'     => $itemType,
             'location_name' => $locationName,
+            'details'       => $details,
+        ]);
+    }
+
+    /**
+     * Record a budget action (set at creation, or updated later) in the
+     * Program Activity Log.
+     *
+     * IMPORTANT: Only call this after a successful operation.
+     * Derives program context directly from the $training model itself —
+     * the caller never supplies program_id or actor data. Unlike
+     * resolveScope() for Document, Training already carries its own
+     * program_id, so no further lookup is needed.
+     *
+     * @param  Training    $training  The training/activity whose budget was
+     *                                 acted on. Must be a fresh (or
+     *                                 re-fetched) model instance so
+     *                                 program_id reflects the saved state.
+     * @param  string      $action    One of the ACTION_* constants above.
+     * @param  array|null  $details   Optional safe supplementary metadata
+     *                                (e.g. total amount, category count).
+     *                                Must NOT contain passwords, tokens,
+     *                                filesystem paths, or secrets.
+     */
+    public static function recordBudget(
+        Training $training,
+        string $action,
+        ?array $details = null
+    ): void {
+        if (! $training->program_id) {
+            return;
+        }
+
+        // Derive actor from the authenticated web-guard user — never from input.
+        $actor     = Auth::guard('web')->user();
+        $userId    = $actor?->id;
+        $actorName = $actor ? trim($actor->first_name . ' ' . $actor->last_name) : 'Unknown';
+        $actorRole = static::$roleLabels[$actor?->role ?? ''] ?? ucfirst($actor?->role ?? 'Unknown');
+
+        ProgramLog::create([
+            'program_id'    => (int) $training->program_id,
+            'training_id'   => (int) $training->id,
+            'user_id'       => $userId,
+            'actor_name'    => $actorName,
+            'actor_role'    => $actorRole,
+            'action'        => $action,
+            'entity_type'   => 'Budget',
+            'entity_id'     => $training->id,
+            'item_name'     => $training->title,
+            'item_type'     => 'budget',
+            'location_name' => $training->title ?? 'Unknown Activity',
             'details'       => $details,
         ]);
     }

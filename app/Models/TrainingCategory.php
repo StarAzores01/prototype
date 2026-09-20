@@ -14,12 +14,44 @@ class TrainingCategory extends Model
 {
     protected $fillable = [
         'activity_name', 'project_name', 'description', 'image', 'status',
+        'published_activity_name', 'published_project_name', 'published_description',
+        'published_image', 'published_status',
     ];
 
-    /** Only categories EC has marked Active are shown on the public site. */
+    /**
+     * activity_name/project_name/description/image/status are the
+     * EC-editable "working draft" — always what the admin UI shows and
+     * saves. published_* holds what's actually live on the public site
+     * and only changes when Ec\PublishController@publishAll copies the
+     * draft columns across. See the
+     * add_published_snapshot_to_training_categories_table migration.
+     */
+
+    /** Only categories EC has PUBLISHED as Active are shown on the public site. */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('published_status', 'active');
+    }
+
+    /** Whether this category's draft differs from what's currently live. */
+    public function hasUnpublishedChanges(): bool
+    {
+        return (string) $this->activity_name !== (string) $this->published_activity_name
+            || (string) $this->project_name !== (string) $this->published_project_name
+            || (string) $this->description !== (string) $this->published_description
+            || (string) $this->image !== (string) $this->published_image
+            || (string) $this->status !== (string) $this->published_status;
+    }
+
+    /** Copies the working draft columns into their published_* counterparts. */
+    public function publish(): void
+    {
+        $this->published_activity_name = $this->activity_name;
+        $this->published_project_name  = $this->project_name;
+        $this->published_description   = $this->description;
+        $this->published_image         = $this->image;
+        $this->published_status        = $this->status;
+        $this->save();
     }
 
     /**

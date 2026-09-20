@@ -40,50 +40,91 @@
 
 @elseif($mode === 'builder')
 {{-- ═══════════════════ FORM BUILDER ═══════════════════ --}}
-<div class="page-header">
-  <div class="page-header-left">
-    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Evaluations</span></div>
-    <h1>Evaluations &amp; Feedback</h1>
-    <p>Create and send evaluation forms to Project Leaders and beneficiaries</p>
-  </div>
-</div>
-
 @php
   $existingFields = $editForm->fields ?? [];
   if (empty($existingFields)) {
+      // Default questions match the EC's official Evaluation Form
+      // (EvaluationForm_ExtensionProgram.docx) — 6 open-ended questions
+      // followed by a 12-item rating scale for specific aspects of the
+      // activity. The scale (5=Pinakamahusay ... 1='Di Mahusay) is reused
+      // as the option set on every rating question below.
+      $ratingScale = [
+          '5 - Pinakamahusay',
+          '4 - Mas Mahusay',
+          '3 - Mahusay',
+          '2 - Tama Lang',
+          "1 - 'Di Mahusay",
+      ];
       $existingFields = [
-          ['label' => 'Overall Rating', 'type' => 'radio', 'required' => true, 'options' => ['1 - Poor', '2 - Fair', '3 - Good', '4 - Very Good', '5 - Excellent']],
-          ['label' => 'What did you learn from this activity?', 'type' => 'textarea', 'required' => false, 'options' => []],
-          ['label' => 'Suggestions for improvement', 'type' => 'textarea', 'required' => false, 'options' => []],
+          ['label' => 'Ang aking ikinalugod/nagustuhan sa natapos na pagsasanay ay...', 'type' => 'textarea', 'required' => true, 'options' => []],
+          ['label' => "Ang aking hindi ikinalugod/'di nagustuhan sa natapos na pagsasanay ay...", 'type' => 'textarea', 'required' => true, 'options' => []],
+          ['label' => 'Ang kapakipakinabang na paksa ay...', 'type' => 'textarea', 'required' => true, 'options' => []],
+          ['label' => 'Ang hindi kapakipakinabang na paksa ay...', 'type' => 'textarea', 'required' => true, 'options' => []],
+          ['label' => 'Banggitin ang iyong suhesyon para mapabuti pa ang pagsasagawa ng gawain.', 'type' => 'textarea', 'required' => true, 'options' => []],
+          ['label' => 'Banggitin ang pagsasanay/paksa na gustong talakayin sa susunod.', 'type' => 'textarea', 'required' => true, 'options' => []],
+          ['label' => 'a. Magtuturo/Gurong nakaatas sa pagbibigay impormasyon', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'b. Nakamit ang layunin ng mga Gawain', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'c. Kaangkopan ng paksa', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'd. Mga kaparaanan o estilo na ginamit sa pagtuturo o pagtatalakay', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'e. Pantulong sa pagtuturo (presentasyon/babasahin)', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'f. Takbo ng pangangasiwa ng pagsasanay', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'g. Pakikiisa ng mga dumalo sa aktibidad', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'h. Kasapatan ng itinakdang oras para sa mga Gawain', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'i. Nagsimula at natapos ang mga Gawain sa itinakdang oras', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'j. Lugar ng pagsasanay', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
+          ['label' => 'k. Pagkain', 'type' => 'radio', 'required' => true, 'options' => $ratingScale],
       ];
   }
+  $dateMin  = max(
+      $editTraining->date_start?->format('Y-m-d') ?? now()->format('Y-m-d'),
+      now()->format('Y-m-d')
+  );
+  $dateMax  = $editTraining->date_end?->format('Y-m-d') ?? '';
+  $usedJson = json_encode($usedDates ?? []);
 @endphp
 
-<div class="card" style="margin-bottom:24px">
-  <div class="card-header">
-    <div>
-      <div class="card-title"><i class="fas fa-file-lines"></i> {{ $editForm ? 'Edit' : 'Create' }} Evaluation Form</div>
-      <div class="card-subtitle">For: <strong>{{ $editTraining->title }}</strong></div>
-    </div>
-    <a href="{{ route('ec.evaluations') }}" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Back</a>
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <a href="{{ route('ec.evaluations') }}" style="color:var(--blue-primary)">Evaluations</a> <i class="fas fa-chevron-right"></i> <span>Form Builder</span></div>
+    <h1>{{ $editForm ? 'Edit' : 'Create' }} Evaluation Form</h1>
+    <p>For: <strong>{{ $editTraining->title }}</strong> &mdash; {{ $editTraining->date_start?->format('M d') ?? '?' }} – {{ $editTraining->date_end?->format('M d, Y') ?? '?' }}</p>
   </div>
+  <a href="{{ route('ec.evaluations') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+
+<div class="card" style="margin-bottom:24px">
   <div class="card-body">
     <form method="POST" action="{{ route('ec.evaluations.store') }}" id="formBuilder">
       @csrf
       <input type="hidden" name="action" value="save_form"/>
       <input type="hidden" name="training_id" value="{{ $editTraining->id }}"/>
-      <div class="form-group" style="margin-bottom:20px">
-        <label class="form-label">Form Title</label>
-        <input type="text" name="form_title" class="form-control" value="{{ $editForm->title ?? 'Activity Evaluation Form' }}" required/>
+      @if($editForm)
+      <input type="hidden" name="form_id" value="{{ $editForm->id }}"/>
+      @endif
+
+      <div class="form-row" style="margin-bottom:20px">
+        <div class="form-group">
+          <label class="form-label">Form Title</label>
+          <input type="text" name="form_title" class="form-control" value="{{ $editForm->title ?? 'Activity Evaluation Form' }}" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Send Date <span style="color:var(--red)">*</span></label>
+          <input type="date" name="send_date" id="sendDatePicker" class="form-control"
+            value="{{ $editForm?->send_date?->format('Y-m-d') }}"
+            min="{{ $dateMin }}"
+            @if($dateMax) max="{{ $dateMax }}" @endif
+            required/>
+          <div class="form-hint">
+            <i class="fas fa-circle-info"></i>
+            Must be within the activity's dates ({{ $editTraining->date_start?->format('M d') }} – {{ $editTraining->date_end?->format('M d, Y') ?? 'no end date' }}) and not in the past. The form will be sent automatically on this date.
+          </div>
+        </div>
       </div>
 
       <div id="fieldsContainer">
         @foreach($existingFields as $fi => $field)
-          @php
-            $ftype = $field['type'] ?? 'text';
-            $fopts = implode("\n", $field['options'] ?? []);
-          @endphp
-          <div class="field-row" id="field-{{ $fi }}" style="border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--gray-50)">
+          @php $ftype = $field['type'] ?? 'text'; $fopts = implode("\n", $field['options'] ?? []); @endphp
+          <div class="field-row" style="border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--gray-50)">
             <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
               <div class="form-group" style="flex:2;min-width:200px;margin:0">
                 <label class="form-label">Question / Label</label>
@@ -119,19 +160,30 @@
 
       <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
         <button type="button" class="btn btn-outline" onclick="addField()"><i class="fas fa-plus"></i> Add Question</button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Form</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save &amp; Schedule</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-let fieldCount = {{ count($existingFields) }};
+const usedDates = {!! $usedJson !!};
+let fieldCount  = {{ count($existingFields) }};
+
+// Grey out already-used dates in the send_date picker
+document.getElementById('sendDatePicker').addEventListener('input', function () {
+  if (usedDates.includes(this.value)) {
+    this.setCustomValidity('This date is already used by another form for this activity.');
+    this.reportValidity();
+  } else {
+    this.setCustomValidity('');
+  }
+});
 
 function addField() {
   const i = fieldCount++;
   const html = `
-  <div class="field-row" id="field-${i}" style="border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--gray-50)">
+  <div class="field-row" style="border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--gray-50)">
     <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
       <div class="form-group" style="flex:2;min-width:200px;margin:0">
         <label class="form-label">Question / Label</label>
@@ -140,11 +192,8 @@ function addField() {
       <div class="form-group" style="min-width:150px;margin:0">
         <label class="form-label">Field Type</label>
         <select name="field_type[]" class="form-control field-type-sel" onchange="toggleOptions(this)">
-          <option value="text">Text</option>
-          <option value="textarea">Textarea</option>
-          <option value="radio">Radio</option>
-          <option value="select">Select</option>
-          <option value="rating">Rating</option>
+          <option value="text">Text</option><option value="textarea">Textarea</option>
+          <option value="radio">Radio</option><option value="select">Select</option><option value="rating">Rating</option>
         </select>
       </div>
       <div class="form-group" style="min-width:120px;margin:0;padding-top:22px">
@@ -165,19 +214,16 @@ function addField() {
   document.getElementById('fieldsContainer').insertAdjacentHTML('beforeend', html);
 }
 
-function removeField(btn) {
-  btn.closest('.field-row').remove();
-}
+function removeField(btn) { btn.closest('.field-row').remove(); }
 
 function toggleOptions(sel) {
-  const row = sel.closest('.field-row');
-  const optWrap = row.querySelector('.options-wrap');
+  const row      = sel.closest('.field-row');
+  const optWrap  = row.querySelector('.options-wrap');
   const hiddenOpt = row.querySelector('.hidden-opts');
   const needsOpts = ['radio','select'].includes(sel.value);
-  if (optWrap) optWrap.style.display = needsOpts ? '' : 'none';
-  if (hiddenOpt) hiddenOpt.style.display = needsOpts ? 'none' : 'none';
+  if (optWrap)   optWrap.style.display   = needsOpts ? '' : 'none';
+  if (hiddenOpt) hiddenOpt.style.display = 'none';
 }
-
 document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
 </script>
 
@@ -187,7 +233,7 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
   <div class="page-header-left">
     <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Evaluations</span></div>
     <h1>Evaluations &amp; Feedback</h1>
-    <p>Create and send evaluation forms to Project Leaders and beneficiaries</p>
+    <p>Manage evaluation forms — forms are sent automatically on the scheduled date.</p>
   </div>
   <a href="{{ route('ec.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
 </div>
@@ -198,67 +244,75 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
     <table>
       <thead>
         <tr>
-          <th>Activity Name</th>
-          <th>Date</th>
+          <th>Activity</th>
+          <th>Dates</th>
           <th>Participants</th>
-          <th>Submitted</th>
-          <th>Pending</th>
           <th>Responses</th>
-          <th>Form</th>
-          <th>Status</th>
+          <th>Forms &amp; Status</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
       @forelse($trainings as $t)
         @php
-          $form = $t->evalForms->first();
-          $allDone = $t->total_pax > 0 && $t->pending_count == 0;
-          $evalStatus = $allDone ? 'Completed' : ($t->submitted_count > 0 ? 'Ongoing' : 'Pending');
-          $badgeClass = $allDone ? 'badge-completed' : ($t->submitted_count > 0 ? 'badge-ongoing' : 'badge-pending');
-          $rc = $form?->responses_count ?? 0;
+          $totalRc = $t->evalForms->sum('responses_count');
+          $today   = now()->startOfDay();
         @endphp
         <tr>
           <td><strong>{{ $t->title }}</strong></td>
-          <td style="font-size:12px;color:var(--gray-400)">{{ $t->date_start?->format('Y-m-d') ?? '—' }}</td>
+          <td style="font-size:12px;color:var(--gray-400)">
+            {{ $t->date_start?->format('M d') ?? '—' }}@if($t->date_end) – {{ $t->date_end->format('M d, Y') }}@endif
+          </td>
           <td><strong>{{ (int) $t->total_pax }}</strong></td>
-          <td style="color:var(--green);font-weight:700">{{ (int) $t->submitted_count }}</td>
-          <td style="color:var(--yellow);font-weight:700">{{ (int) $t->pending_count }}</td>
           <td>
-            <span style="font-weight:700;color:{{ $rc > 0 ? 'var(--green)' : 'var(--gray-400)' }}">{{ $rc }}</span>
-            @if($rc > 0 && $form)
-            <a href="{{ route('ec.evaluations') }}?responses={{ $t->id }}" class="btn btn-sm btn-ghost" style="margin-left:4px"><i class="fas fa-eye"></i> View</a>
-            @endif
+            <span style="font-weight:700;color:{{ $totalRc > 0 ? 'var(--green)' : 'var(--gray-400)' }}">{{ $totalRc }}/{{ (int) $t->total_pax }}</span>
+          </td>
+          <td style="min-width:220px">
+            @forelse($t->evalForms as $ef)
+              @php
+                $rc = $ef->responses_count;
+                $pax = (int) $t->total_pax;
+                if (! $ef->sent_at && $ef->send_date && $ef->send_date->startOfDay()->lt($today)) {
+                    $fStatus = 'Expired'; $fBadge = 'badge-danger'; $fIcon = 'fa-ban';
+                } elseif (! $ef->sent_at) {
+                    $fStatus = 'Scheduled'; $fBadge = 'badge-pending'; $fIcon = 'fa-clock';
+                } elseif ($pax > 0 && $rc >= $pax) {
+                    $fStatus = 'All Responded'; $fBadge = 'badge-completed'; $fIcon = 'fa-circle-check';
+                } else {
+                    $fStatus = 'Awaiting'; $fBadge = 'badge-ongoing'; $fIcon = 'fa-hourglass-half';
+                }
+              @endphp
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:nowrap;white-space:nowrap">
+                <span style="font-size:10px;color:var(--gray-400)">{{ $ef->send_date?->format('M d') ?? '—' }}</span>
+                <span class="badge {{ $fBadge }}" style="font-size:10px;white-space:nowrap"><i class="fas {{ $fIcon }}"></i> {{ $fStatus }}</span>
+                @if($ef->sent_at)
+                  {{-- Already sent — locked. Editing now would silently change
+                       questions beneficiaries may already be answering, so
+                       the form can only be viewed, not edited. --}}
+                  <a href="{{ route('ec.evaluations') }}?responses={{ $t->id }}&rform={{ $ef->id }}" class="btn btn-sm btn-ghost" style="padding:2px 7px;font-size:11px" title="View Responses"><i class="fas fa-eye"></i></a>
+                  <span class="btn btn-sm btn-outline" style="padding:2px 7px;font-size:11px;opacity:.4;cursor:not-allowed" title="Already sent — cannot be edited"><i class="fas fa-lock"></i></span>
+                @else
+                  <a href="{{ route('ec.evaluations') }}?edit_form={{ $t->id }}&form_id={{ $ef->id }}" class="btn btn-sm btn-outline" style="padding:2px 7px;font-size:11px" title="Edit"><i class="fas fa-pen"></i></a>
+                @endif
+                <form method="POST" action="{{ route('ec.evaluations.store') }}" style="display:inline" onsubmit="return confirm('Delete this evaluation form?')">
+                  @csrf
+                  <input type="hidden" name="action" value="delete_form"/>
+                  <input type="hidden" name="form_id" value="{{ $ef->id }}"/>
+                  <button type="submit" class="btn btn-sm btn-danger" style="padding:2px 7px;font-size:11px" title="Delete"><i class="fas fa-trash"></i></button>
+                </form>
+              </div>
+            @empty
+              <span style="font-size:12px;color:var(--gray-400)">No forms yet</span>
+            @endforelse
           </td>
           <td>
-            @if($form)
-              <span class="badge badge-active" title="Form created"><i class="fas fa-file-lines"></i> Created</span>
-              @if($form->sent_at)
-                <div style="font-size:11px;color:var(--gray-400);margin-top:2px">Sent {{ $form->sent_at->format('M d') }}</div>
-              @endif
-            @else
-              <span class="badge badge-pending">No form</span>
-            @endif
-          </td>
-          <td><span class="badge {{ $badgeClass }}">{{ $evalStatus }}</span></td>
-          <td>
-            <div class="action-btns">
-              <a href="{{ route('ec.evaluations') }}?edit_form={{ $t->id }}" class="btn btn-sm btn-outline">
-                {!! $form ? '<i class="fas fa-pen"></i> Edit Form' : '<i class="fas fa-plus"></i> Create Form' !!}
-              </a>
-              @if($form)
-              <form method="POST" action="{{ route('ec.evaluations.store') }}" style="display:inline" onsubmit="return confirm('Send evaluation form to Project Leader and beneficiaries for this activity?')">
-                @csrf
-                <input type="hidden" name="action" value="send_form"/>
-                <input type="hidden" name="training_id" value="{{ $t->id }}"/>
-                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-bell"></i> Send</button>
-              </form>
-              @endif
-            </div>
+            <a href="{{ route('ec.evaluations') }}?edit_form={{ $t->id }}" class="btn btn-sm btn-outline">
+              <i class="fas fa-plus"></i> Add
+            </a>
           </td>
         </tr>
       @empty
-        <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--gray-400)">No activity data available.</td></tr>
+        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400)">No activity data available.</td></tr>
       @endforelse
       </tbody>
     </table>

@@ -68,7 +68,8 @@ class ProgramController extends Controller
 
         return match ($action) {
             'create'          => $this->create($request),
-            'update_status'   => $this->updateStatus($request),
+            'update'          => $this->update($request),
+            'delete'          => $this->delete($request),
             'update_team'     => $this->updateTeam($request),
             'upload'          => $this->uploadDocument($request),
             'upload_cover'    => $this->uploadCover($request),
@@ -79,7 +80,8 @@ class ProgramController extends Controller
     private function listView()
     {
         $programs = $this->withRollup(Program::visibleToTrainer($this->trainerId()))
-            ->orderByDesc('created_at')
+            ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
+            ->orderBy('timeline_start')
             ->get();
 
         // Grouped by Area for the card grid  -  same treatment as
@@ -193,7 +195,6 @@ class ProgramController extends Controller
                 'timeline_start'   => $data['timeline_start'],
                 'timeline_end'     => $data['timeline_end'],
                 'budget_allocated' => $data['budget_allocated'],
-                'status'           => 'Proposed',
                 'created_by'       => $trainerId,
             ]);
 
@@ -208,27 +209,42 @@ class ProgramController extends Controller
         return redirect()->route('trainer.programs', ['view' => $program->id])->with('success', 'Program created.');
     }
 
-    /**
-     * Lead only. The spec didn't say this one outright the way it did for
-     * updateTeam ("lead can freely change status, same as EC's version")  -
-     * I'm reading "lead" there as the acting role, not just an example, and
-     * gating it the same way as the other authority action rather than
-     * opening it to members. Flagged to the user as an inference call, not
-     * something stated unambiguously.
-     */
-    private function updateStatus(Request $request)
+    /** Lead only: edit a program's mutable fields (budget/timeline are permanently fixed at creation). */
+    private function update(Request $request)
     {
         $data = Validator::make($request->all(), [
-            'program_id' => 'required|integer|exists:programs,id',
-            'status'     => ['required', Rule::in(['Proposed', 'Approved', 'Ongoing', 'Completed'])],
+            'program_id'  => 'required|integer|exists:programs,id',
+            'title'       => 'required|string|max:200',
+            'description' => 'nullable|string',
+            'area'        => 'required|string|max:120',
         ])->validate();
 
         $program = Program::findOrFail($data['program_id']);
-        $this->authorizeLead($program, 'Only this program\'s Project Lead can change its status.');
+        $this->authorizeLead($program, 'Only this program\'s Project Lead can edit it.');
 
-        $program->update(['status' => $data['status']]);
+        $program->update([
+            'title'       => $data['title'],
+            'description' => $data['description'] ?? null,
+            'area'        => $data['area'],
+        ]);
 
-        return redirect()->route('trainer.programs', ['view' => $program->id])->with('success', 'Program status updated.');
+        return redirect()->route('trainer.programs')->with('success', 'Program updated.');
+    }
+
+    /** Lead only: hard-delete a program and nullify its child activities' program_id. */
+    private function delete(Request $request)
+    {
+        $data = Validator::make($request->all(), [
+            'program_id' => 'required|integer|exists:programs,id',
+        ])->validate();
+
+        $program = Program::findOrFail($data['program_id']);
+        $this->authorizeLead($program, 'Only this program\'s Project Lead can delete it.');
+
+        $program->trainings()->update(['program_id' => null]);
+        $program->delete();
+
+        return redirect()->route('trainer.programs')->with('success', 'Program deleted.');
     }
 
     /**

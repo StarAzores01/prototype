@@ -137,7 +137,7 @@
         <div class="form-group">
           <label class="form-label">Position *</label>
           <select name="position" class="form-control" required>
-            <option value="">Select position…</option>
+            <option value="" disabled selected>Select position…</option>
             @foreach ($positions as $pos)
             <option value="{{ $pos }}" {{ old('position') === $pos ? 'selected' : '' }}>{{ $pos }}</option>
             @endforeach

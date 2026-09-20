@@ -94,7 +94,7 @@
       <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;background:{{ $progress['healthHex'] }}22;color:{{ $progress['healthHex'] }};border:1px solid {{ $progress['healthHex'] }}44">
         <i class="fas fa-circle" style="font-size:6px"></i> {{ $progress['healthLabel'] }}
       </span>
-      <button class="btn btn-sm btn-outline" onclick="openModal('updateBudget')">Log Budget Usage</button>
+      <button class="btn btn-sm btn-outline" onclick="openModal('updateBudget')"><i class="fas fa-sack-dollar"></i> Budget Log</button>
     </div>
   </div>
   <div class="card-body">
@@ -207,50 +207,12 @@
 </div>
 
 <!-- MODAL: UPDATE BUDGET -->
-<div class="modal-overlay" id="modal-updateBudget">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-header">
-      <h2><i class="fas fa-sack-dollar"></i> Log Budget Usage</h2>
-      <button class="modal-close" onclick="closeModal('updateBudget')"><i class="fas fa-xmark"></i></button>
-    </div>
-    <form method="POST" action="{{ route('ec.trainings.store') }}">
-      @csrf
-      <input type="hidden" name="action" value="update_budget"/>
-      <input type="hidden" name="training_id" value="{{ $viewTraining->id }}"/>
-      <div class="modal-body">
-        <div class="alert alert-info" style="margin-bottom:16px;font-size:13px">
-          <i class="fas fa-circle-info"></i> Log how much of this activity's budget has been used so far.
-        </div>
-        <div class="form-group">
-          <label class="form-label">Budget Allocated (₱)</label>
-          <div style="font-size:13px;color:var(--gray-700);background:var(--gray-50);border-radius:8px;padding:9px 12px">
-            {{ $viewTraining->budget_allocated ? '₱'.number_format((float) $viewTraining->budget_allocated, 2) : 'Not set' }}
-          </div>
-          <div style="font-size:11px;color:var(--gray-400);margin-top:4px"><i class="fas fa-lock"></i> Fixed at creation — cannot be changed</div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Budget Used (₱)</label>
-          <input type="number" name="budget_used" class="form-control"
-            value="{{ $viewTraining->budget_used ?? 0 }}"
-            min="0" step="0.01"/>
-          <div style="font-size:11px;color:var(--gray-400);margin-top:4px">Amount spent so far</div>
-        </div>
-        @if($progress['budgetAlloc'] > 0)
-        <div style="background:var(--gray-50);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--gray-600)">
-          Current: <strong style="color:var(--gray-800)">&#8369;{{ number_format($progress['budgetUsed'], 2) }}</strong>
-          used of <strong style="color:var(--gray-800)">&#8369;{{ number_format($progress['budgetAlloc'], 2) }}</strong>
-          allocated
-          <span style="margin-left:8px;font-weight:700;color:{{ $progress['budgetPct'] >= 100 ? '#EF4444' : ($progress['budgetPct'] >= 80 ? '#F59E0B' : '#10B981') }}">({{ $progress['budgetPct'] }}%)</span>
-        </div>
-        @endif
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('updateBudget')">Cancel</button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Budget</button>
-      </div>
-    </form>
-  </div>
-</div>
+@include('partials.budget-log-modal', [
+  'storeRoute'  => route('ec.trainings.store'),
+  'viewTraining' => $viewTraining,
+  'progress'    => $progress,
+  'budgetItems' => $budgetItems,
+])
 
 <!-- MODAL: UPDATE ACTIVITY -->
 <div class="modal-overlay" id="modal-editTraining">
@@ -305,7 +267,7 @@
           <div style="font-size:13px;color:var(--gray-700);background:var(--gray-50);border-radius:8px;padding:9px 12px">
             {{ $viewTraining->budget_allocated ? '₱'.number_format((float) $viewTraining->budget_allocated, 2) : 'Not set' }}
           </div>
-          <div style="font-size:11px;color:var(--gray-400);margin-top:4px"><i class="fas fa-lock"></i> Fixed at creation — use "Log Budget Usage" to record spending</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:4px"><i class="fas fa-lock"></i> Fixed at creation — use "Budget Log" to record spending</div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -409,26 +371,14 @@
   <button class="btn btn-primary" onclick="openModal('addTraining')"><i class="fas fa-plus"></i> Create Activity</button>
 </div>
 
-<form method="GET" action="{{ route('ec.trainings') }}" class="filter-row">
-  <div class="search-box">
-    <i class="fas fa-magnifying-glass"></i>
-    <input type="text" name="q" value="{{ $q }}" placeholder="Search activities…"/>
+<div style="margin-bottom:20px">
+  <div style="position:relative;max-width:400px">
+    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
+    <input type="text" id="activitySearch" placeholder="Search activities..." oninput="filterActivities()"
+      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
   </div>
-  <select name="area" class="filter-select" onchange="this.form.submit()">
-    <option value="">All Areas</option>
-    @foreach($areas as $a)
-    <option value="{{ $a }}" {{ $area === $a ? 'selected' : '' }}>{{ $a }}</option>
-    @endforeach
-  </select>
-  <select name="status" class="filter-select" onchange="this.form.submit()">
-    <option value="">All Status</option>
-    <option value="Upcoming" {{ $status === 'Upcoming' ? 'selected' : '' }}>Upcoming</option>
-    <option value="Ongoing" {{ $status === 'Ongoing' ? 'selected' : '' }}>Ongoing</option>
-    <option value="Completed" {{ $status === 'Completed' ? 'selected' : '' }}>Completed</option>
-  </select>
-  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Search</button>
-  @if($q || $area || $status)<a href="{{ route('ec.trainings') }}" class="btn btn-ghost btn-sm">Clear</a>@endif
-</form>
+</div>
 
 @if($trainings->isEmpty())
 <div class="empty-state"><i class="fas fa-book"></i><p>No activities found. <a href="#" onclick="openModal('addTraining')">Create one.</a></p></div>
@@ -448,7 +398,7 @@
       @if($project)<span class="badge badge-{{ strtolower($project->status) }}">{{ $project->status }}</span>@endif
       <span class="card-group-count">{{ $projectTrainings->count() }} {{ \Illuminate\Support\Str::plural('activity', $projectTrainings->count()) }}</span>
     </div>
-    <div class="home-grid home-grid-grouped">
+    <div class="home-grid home-grid-grouped" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));max-width:none">
       @foreach($projectTrainings as $t)
         @php
           $hs = $statusMap[$t->status] ?? $t->status;
@@ -456,30 +406,30 @@
           $icon = \App\Support\TrainingCategoryIcon::icon($t->area);
           $c = $catColors[$t->area] ?? ['#1A56DB', '#2E6BF0'];
         @endphp
-        <div class="training-card">
+        <div class="training-card" style="max-width:none" data-title="{{ strtolower($t->title) }}">
           <div class="training-card-img" style="background:linear-gradient(135deg,{{ $c[0] }},{{ $c[1] }})">
             @if($t->cover_image)
               <img src="{{ route('files.activity-cover', $t) }}" alt="{{ $t->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
             @endif
-            <div class="training-card-cat" style="z-index:2;position:relative">{{ $t->area }}</div>
             @if(!$t->cover_image)
               <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
             @endif
           </div>
           <div class="training-card-body">
             <div class="training-card-title">{{ $t->title }}</div>
-            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($t->description ?? '', 100, '…') }}</div>
-            <div class="training-card-meta">
-              <span><i class="fas fa-calendar"></i> {{ $t->date_start?->format('Y-m-d') ?? '—' }}</span>
-              <span><i class="fas fa-user"></i> {{ $t->trainer->full_name ?? 'TBA' }}</span>
-              <span><i class="fas fa-users"></i> {{ (int) $t->target_participants }} pax</span>
-            </div>
-            <div class="training-card-meta" style="margin-top:-4px">
-              <span><i class="fas fa-diagram-project"></i> {{ $t->program->title ?? 'No program assigned' }}</span>
-            </div>
-            <div class="training-card-footer">
+            <div class="training-card-footer" style="margin-top:8px">
               <span class="badge {{ $sc }}">{{ $hs }}</span>
-              <a href="{{ route('ec.trainings') }}?view={{ $t->id }}" class="btn btn-sm btn-primary">View Details</a>
+              <div style="display:flex;gap:5px;align-items:center">
+                <button class="btn btn-outline" style="padding:7px 12px;font-size:13px;line-height:1"
+                  onclick="openEditTrainingModal({{ $t->id }}, '{{ addslashes($t->title) }}', '{{ addslashes($t->area) }}', '{{ addslashes($t->description ?? '') }}', '{{ $t->date_start?->format('Y-m-d') ?? '' }}', '{{ $t->date_end?->format('Y-m-d') ?? '' }}', '{{ $t->status }}', {{ (int)$t->target_participants }}, {{ $t->program_id ?? 'null' }})">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="btn btn-danger" style="padding:7px 12px;font-size:13px;line-height:1"
+                  onclick="openDeleteTrainingModal({{ $t->id }}, '{{ addslashes($t->title) }}')">
+                  <i class="fas fa-trash"></i>
+                </button>
+                <a href="{{ route('ec.trainings') }}?view={{ $t->id }}" class="btn btn-primary" style="padding:7px 14px;font-size:13px;line-height:1">View</a>
+              </div>
             </div>
           </div>
         </div>
@@ -488,6 +438,123 @@
   </div>
 @endforeach
 @endif
+
+<script>
+function filterActivities() {
+  const q = document.getElementById('activitySearch').value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.training-card[data-title]');
+  cards.forEach(card => {
+    card.style.display = (!q || card.dataset.title.includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('.card-group').forEach(group => {
+    const visible = group.querySelectorAll('.training-card[data-title]:not([style*="display: none"])').length;
+    group.style.display = visible === 0 ? 'none' : '';
+  });
+}
+function openEditTrainingModal(id, title, area, description, dateStart, dateEnd, status, targetPax, programId) {
+  document.getElementById('editTrainingId').value = id;
+  document.getElementById('editTrainingTitle').value = title;
+  document.getElementById('editTrainingArea').value = area;
+  document.getElementById('editTrainingDesc').value = description;
+  document.getElementById('editTrainingDateStart').value = dateStart;
+  document.getElementById('editTrainingDateEnd').value = dateEnd;
+  document.getElementById('editTrainingTargetPax').value = targetPax;
+  openModal('editTraining');
+}
+function openDeleteTrainingModal(id, title) {
+  document.getElementById('deleteTrainingId').value = id;
+  document.getElementById('deleteTrainingName').textContent = title;
+  openModal('deleteTraining');
+}
+</script>
+
+<!-- MODAL: EDIT ACTIVITY -->
+<div class="modal-overlay" id="modal-editTraining">
+  <div class="modal">
+    <div class="modal-header">
+      <h2><i class="fas fa-pen"></i> Edit Activity</h2>
+      <button class="modal-close" onclick="closeModal('editTraining')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('ec.trainings.store') }}">
+      @csrf
+      <input type="hidden" name="action" value="update"/>
+      <input type="hidden" name="training_id" id="editTrainingId"/>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Activity Title *</label>
+            <input type="text" name="title" id="editTrainingTitle" class="form-control" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Area / Specialization *</label>
+            <input type="text" name="area" id="editTrainingArea" class="form-control" maxlength="120" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="description" id="editTrainingDesc" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Program</label>
+          <select name="program_id" id="editTrainingProgram" class="form-control">
+            <option value="">— None —</option>
+            @foreach($programs as $prog)
+            <option value="{{ $prog->id }}">{{ $prog->title }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Start Date</label>
+            <input type="date" name="date_start" id="editTrainingDateStart" class="form-control"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Date</label>
+            <input type="date" name="date_end" id="editTrainingDateEnd" class="form-control"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <div style="padding:9px 12px;border-radius:var(--radius-sm);background:var(--gray-50);font-size:13px;color:var(--gray-500)">
+              <i class="fas fa-lock" style="margin-right:4px"></i> Set automatically from dates
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Participants</label>
+            <input type="number" name="target_participants" id="editTrainingTargetPax" class="form-control" min="1"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editTraining')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: DELETE ACTIVITY -->
+<div class="modal-overlay" id="modal-deleteTraining">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h2><i class="fas fa-trash"></i> Delete Activity</h2>
+      <button class="modal-close" onclick="closeModal('deleteTraining')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('ec.trainings.store') }}">
+      @csrf
+      <input type="hidden" name="action" value="delete"/>
+      <input type="hidden" name="training_id" id="deleteTrainingId"/>
+      <div class="modal-body">
+        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteTrainingName"></strong>? This cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('deleteTraining')">Cancel</button>
+        <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Yes, Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- MODAL: CREATE ACTIVITY -->
 <div class="modal-overlay" id="modal-addTraining">

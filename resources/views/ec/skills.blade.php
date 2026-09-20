@@ -34,32 +34,70 @@
     <p style="margin-top:8px;color:var(--gray-400)">No beneficiary progress entries recorded yet.</p>
   </div>
   @else
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Beneficiary</th>
-          <th>Activity / Skill Applied</th>
-          <th>Date</th>
-          <th>Progress / Outcome</th>
-          <th>Service Fee / Earnings</th>
-          <th>Remarks</th>
-        </tr>
-      </thead>
-      <tbody>
-        @foreach($progressEntries as $e)
-        <tr>
-          <td>{{ $e->beneficiary->full_name ?? '—' }}</td>
-          <td><strong>{{ $e->activity_name }}</strong></td>
-          <td style="white-space:nowrap">{{ $e->activity_date->format('M d, Y') }}</td>
-          <td><span class="badge badge-active">{{ $e->outcome_type }}</span></td>
-          <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $e->service_fee, 2) }}</td>
-          <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $e->remarks ?: '—' }}</td>
-        </tr>
-        @endforeach
-      </tbody>
-    </table>
+  @foreach($entriesByActivity as $activityName => $activityEntries)
+  @php
+    $visibleEntries = $activityEntries->take(3);
+    $moreEntries = $activityEntries->slice(3);
+  @endphp
+  <div style="{{ $loop->last ? '' : 'border-bottom:1px solid var(--gray-100)' }}">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--gray-50)">
+      <div style="font-size:13px;font-weight:700;color:var(--text-heading)">
+        <i class="fas fa-layer-group" style="color:var(--gray-400);margin-right:6px"></i>{{ $activityName }}
+      </div>
+      <div style="font-size:12px;color:var(--gray-400)">
+        {{ $activityEntries->count() }} entr{{ $activityEntries->count() !== 1 ? 'ies' : 'y' }}
+        &nbsp;·&nbsp;
+        <span style="font-weight:700;color:var(--green)">&#8369;{{ number_format((float) $activityEntries->sum('service_fee'), 2) }}</span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Beneficiary</th>
+            <th>Date</th>
+            <th>Progress / Outcome</th>
+            <th>Service Fee / Earnings</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach($visibleEntries as $e)
+          <tr>
+            <td>{{ $e->beneficiary->full_name ?? '—' }}</td>
+            <td style="white-space:nowrap">{{ $e->activity_date->format('M d, Y') }}</td>
+            <td><span class="badge badge-active">{{ $e->outcome_type }}</span></td>
+            <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $e->service_fee, 2) }}</td>
+            <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $e->remarks ?: '—' }}</td>
+          </tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
+    @if($moreEntries->isNotEmpty())
+    <details style="padding:0 20px 14px">
+      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--blue-primary);padding:8px 0;list-style:none">
+        <i class="fas fa-chevron-down" style="font-size:10px;margin-right:4px"></i>Show {{ $moreEntries->count() }} more
+      </summary>
+      <div class="table-wrap" style="margin-top:4px">
+        <table>
+          <tbody>
+            @foreach($moreEntries as $e)
+            <tr>
+              <td>{{ $e->beneficiary->full_name ?? '—' }}</td>
+              <td style="white-space:nowrap">{{ $e->activity_date->format('M d, Y') }}</td>
+              <td><span class="badge badge-active">{{ $e->outcome_type }}</span></td>
+              <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $e->service_fee, 2) }}</td>
+              <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $e->remarks ?: '—' }}</td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </details>
+    @endif
   </div>
+  @endforeach
   @endif
 </div>
 @endif
@@ -188,67 +226,6 @@
           <td style="font-size:13px;color:var(--gray-700)">{{ $r->responses[$fi] ?? '—' }}</td>
           @endforeach
         </tr>
-        @endforeach
-      </tbody>
-    </table>
-  </div>
-</div>
-@endif
-
-@else
-{{-- ═══════════════ FORMS LIST ═══════════════ --}}
-
-@if($forms->isEmpty())
-<div class="card">
-  <div class="card-body" style="text-align:center;padding:60px 24px">
-    <i class="fas fa-chart-line"></i>
-    <div style="font-size:15px;font-weight:700;color:var(--text-heading);margin:12px 0 6px">No skills surveys found</div>
-    <p style="font-size:13px;color:var(--gray-400)">Trainers create and send skills surveys to beneficiaries. They will appear here once created.</p>
-  </div>
-</div>
-@else
-<div class="card">
-  <div class="card-header">
-    <div class="card-title">All Skills Surveys</div>
-    <div class="card-subtitle">{{ $forms->count() }} form{{ $forms->count() !== 1 ? 's' : '' }} found</div>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Form Title</th>
-          <th>Activity</th>
-          <th>Project Leader</th>
-          <th>Sent</th>
-          <th>Participants</th>
-          <th>Responded</th>
-          <th>Response Rate</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @foreach($forms as $f)
-          @php $rate = $f->total_pax > 0 ? round($f->responses_count / $f->total_pax * 100) : 0; @endphp
-          <tr>
-            <td><strong>{{ $f->title }}</strong></td>
-            <td style="font-size:12px;color:var(--gray-700)">{{ $f->training->title ?? '—' }}</td>
-            <td style="font-size:12px;color:var(--gray-400)">{{ $f->training->trainer->full_name ?? 'N/A' }}</td>
-            <td style="font-size:12px;color:var(--gray-400)">
-              @if($f->sent_at)
-                {{ $f->sent_at->format('M d, Y') }}
-              @else
-                <span style="color:var(--gray-300)">Not sent</span>
-              @endif
-            </td>
-            <td><strong>{{ (int) $f->total_pax }}</strong></td>
-            <td style="color:var(--green);font-weight:700">{{ (int) $f->responses_count }}</td>
-            <td>
-              <span style="font-size:13px;font-weight:700;color:var(--gray-700)">{{ $rate }}%</span>
-            </td>
-            <td>
-              <a href="{{ route('ec.skills') }}?form={{ $f->id }}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> View Responses</a>
-            </td>
-          </tr>
         @endforeach
       </tbody>
     </table>

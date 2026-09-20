@@ -77,6 +77,22 @@ trait HandlesDocumentUploads
             $file = $request->file('file');
             $ext = strtolower($file->getClientOriginalExtension());
 
+            // If the extension is missing (e.g. Windows hiding it), derive it
+            // from the actual MIME type so the upload still works.
+            if (empty($ext)) {
+                $mimeMap = [
+                    'application/pdf'                                                        => 'pdf',
+                    'application/msword'                                                     => 'doc',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+                    'application/vnd.ms-excel'                                               => 'xls',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'      => 'xlsx',
+                    'image/jpeg'                                                             => 'jpg',
+                    'image/png'                                                              => 'png',
+                    'video/mp4'                                                              => 'mp4',
+                ];
+                $ext = $mimeMap[$file->getMimeType()] ?? '';
+            }
+
             if (! in_array($ext, $this->allowedDocumentFileTypes, true)) {
                 return [false, 'File type not allowed.', null];
             }

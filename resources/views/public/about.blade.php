@@ -21,7 +21,7 @@
     .lp-links { display:flex;align-items:center;gap:4px; }
     .lp-link { padding:7px 14px;border-radius:8px;font-size:13.5px;font-weight:500;color:rgba(255,255,255,.7);transition:all .24s;text-decoration:none; }
     .lp-link:hover,.lp-link.active { background:rgba(255,255,255,.08);color:#fff; }
-    .lp-nav-actions { display:flex;align-items:center;gap:10px; }
+    .lp-nav-actions { display:flex;align-items:center;gap:10px;flex-wrap:nowrap; }
     .lp-btn-login { padding:8px 18px;border-radius:8px;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.85);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);transition:all .24s;text-decoration:none;display:inline-flex;align-items:center;gap:7px; }
     .lp-btn-login:hover { background:rgba(255,255,255,.15);color:#fff; }
     .lp-btn-signup { padding:8px 20px;border-radius:8px;font-size:13.5px;font-weight:700;background:linear-gradient(135deg,#1A56DB,#2E6BF0);color:#fff;box-shadow:0 2px 10px rgba(26,86,219,.45);transition:all .24s;text-decoration:none;display:inline-flex;align-items:center;gap:7px; }
@@ -102,6 +102,7 @@
         <a href="{{ route('home') }}"            class="lp-link">Home</a>
         <a href="{{ route('about') }}"            class="lp-link active">About</a>
         <a href="{{ route('trainings-public') }}" class="lp-link">Trainings</a>
+        <a href="{{ route('public.posts.index') }}" class="lp-link">Announcements</a>
         <a href="{{ route('contact') }}"          class="lp-link">Contact</a>
       </div>
       @include('public.partials.nav', ['navPrefix' => 'lp-'])
@@ -246,6 +247,7 @@
           <a href="{{ route('home') }}"             class="lp-footer-link">Home</a>
           <a href="{{ route('about') }}"             class="lp-footer-link">About PAThrive</a>
           <a href="{{ route('trainings-public') }}"  class="lp-footer-link">Training Programs</a>
+          <a href="{{ route('public.posts.index') }}" class="lp-footer-link">Announcements</a>
           <a href="{{ route('contact') }}"           class="lp-footer-link">Contact Us</a>
         </div>
       </div>

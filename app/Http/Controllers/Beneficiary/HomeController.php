@@ -32,7 +32,8 @@ class HomeController extends Controller
 
         $recentTrainings = Training::whereIn('id', $trainingIds)
             ->with('trainer')
-            ->orderByDesc('date_start')
+            ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
+            ->orderBy('date_start')
             ->limit(3)
             ->get();
 

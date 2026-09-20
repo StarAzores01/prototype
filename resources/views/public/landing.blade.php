@@ -114,7 +114,7 @@
       background: rgba(255,255,255,.08); color: #fff;
     }
 
-    .lp-nav-actions { display: flex; align-items: center; gap: 10px; }
+    .lp-nav-actions { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
     .lp-btn-login {
       padding: 8px 18px; border-radius: var(--lp-rs);
       font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,.85);
@@ -311,32 +311,6 @@
     .lp-fl-sub { font-size: 10px; font-weight: 600; }
     .lp-fl-sub.grn { color: var(--lp-em); }
     .lp-fl-sub.bl  { color: var(--lp-blue); }
-
-    /* ── TICKER ── */
-    .lp-ticker {
-      background: linear-gradient(90deg, var(--lp-blue), var(--lp-blue-b));
-      padding: 10px 0; overflow: hidden; contain: layout paint;
-    }
-    .lp-ticker-inner { display: flex; align-items: center; gap: 0; max-width: 1200px; margin: 0 auto; padding: 0 28px; }
-    .lp-ticker-lbl {
-      flex-shrink: 0; background: rgba(0,0,0,.2); color: #fff;
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1px; padding: 4px 16px; margin-right: 16px; border-radius: 4px;
-      font-family: 'Sora', sans-serif;
-    }
-    .lp-ticker-track {
-      display: flex; gap: 48px; white-space: nowrap;
-      animation: lpTick 30s linear infinite;
-      will-change: transform;
-    }
-    .lp-ticker-track:hover { animation-play-state: paused; }
-    @keyframes lpTick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    .lp-ticker-item { font-size: 13px; color: rgba(255,255,255,.9); display: flex; align-items: center; gap: 8px; }
-    .lp-ticker-dot  { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.5); }
-    /* Respect reduced-motion preference — also cheaper on low-power mobile devices */
-    @media (prefers-reduced-motion: reduce) {
-      .lp-ticker-track { animation: none; }
-    }
 
     /* ── SECTION SHARED ── */
     .lp-section { padding: 88px 0; }
@@ -654,6 +628,58 @@
       border: 1px solid rgba(56,189,248,.2); padding: 3px 9px; border-radius: 20px;
     }
 
+    /* ── POST / ANNOUNCEMENT — feed ── */
+    .lp-feed-col-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .lp-feed-col-title {
+      font-size: 17px; font-weight: 800; color: #fff;
+      display: flex; align-items: center; gap: 9px;
+    }
+    .lp-feed-col-title i { color: var(--lp-accent); font-size: 15px; }
+    .lp-feed-viewall {
+      font-size: 12.5px; font-weight: 700; color: var(--lp-accent);
+      text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+      transition: var(--lp-t);
+    }
+    .lp-feed-viewall:hover { gap: 8px; }
+
+    /* Latest Posts — photo-thumbnail cards */
+    .lp-post-grid { display: flex; flex-direction: column; gap: 16px; }
+    .lp-post-card {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 16px; overflow: hidden;
+      transition: var(--lp-t); display: flex;
+      text-decoration: none; color: inherit;
+    }
+    .lp-post-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(56,189,248,.3);
+      box-shadow: 0 12px 32px rgba(0,0,0,.3);
+    }
+    .lp-post-thumb {
+      width: 150px; flex-shrink: 0; position: relative;
+      display: flex; align-items: center; justify-content: center; font-size: 28px; color: #fff;
+      background: linear-gradient(135deg, var(--lp-blue), var(--lp-accent));
+    }
+    .lp-post-thumb img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .lp-post-body { padding: 16px 20px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 8px; min-width: 0; }
+    .lp-post-tag {
+      align-self: flex-start;
+      font-size: 10px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
+      background: rgba(56,189,248,.12); color: var(--lp-accent);
+      border: 1px solid rgba(56,189,248,.25); padding: 3px 9px; border-radius: 20px;
+    }
+    .lp-post-title { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.4; }
+    .lp-post-desc { font-size: 12.5px; color: rgba(255,255,255,.55); line-height: 1.6; }
+    .lp-post-meta { display: flex; align-items: center; gap: 14px; font-size: 11px; color: rgba(255,255,255,.4); flex-wrap: wrap; }
+    .lp-post-meta span { display: inline-flex; align-items: center; gap: 5px; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 640px) {
       .lp-hero-inner  { grid-template-columns: 1fr; }
@@ -684,13 +710,8 @@
       .lp-footer-grid { grid-template-columns: 1fr; }
       .lp-contact-grid{ grid-template-columns: 1fr; }
       .lp-course-grid { grid-template-columns: 1fr; }
-      /* Latest ticker — smaller footprint + lighter scroll on phones */
-      .lp-ticker      { padding: 7px 0; }
-      .lp-ticker-inner{ padding: 0 16px; }
-      .lp-ticker-lbl  { font-size: 9.5px; padding: 3px 10px; margin-right: 10px; }
-      .lp-ticker-track{ gap: 26px; animation-duration: 20s; }
-      .lp-ticker-item { font-size: 11.5px; gap: 6px; }
-      .lp-ticker-dot  { width: 4px; height: 4px; }
+      .lp-post-card   { flex-direction: column; }
+      .lp-post-thumb  { width: 100%; height: 130px; }
       /* Video montage — less dead space between the caption card and the
          CTA button below it, and a shorter bottom pad on this section. */
       #courses        { padding-bottom: 48px; }
@@ -722,6 +743,7 @@
         <a href="{{ route('home') }}"             class="lp-link active">Home</a>
         <a href="{{ route('about') }}"             class="lp-link">About</a>
         <a href="{{ route('trainings-public') }}"  class="lp-link">Trainings</a>
+        <a href="{{ route('public.posts.index') }}" class="lp-link">Announcements</a>
         <a href="{{ route('contact') }}"           class="lp-link">Contact</a>
       </div>
 
@@ -779,18 +801,6 @@
 </section>
 
 <!-- ════════════════════════════════════════
-     TICKER STRIP
-════════════════════════════════════════ -->
-<div class="lp-ticker">
-  <div class="lp-ticker-inner">
-    <span class="lp-ticker-lbl">Latest</span>
-    <div style="overflow:hidden;flex:1">
-      <div class="lp-ticker-track" id="lpTicker"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════════════
      VIDEO SHOWCASE — Course Highlights
 ════════════════════════════════════════ -->
 <section class="lp-section" id="courses" style="background:rgba(255,255,255,.04)">
@@ -809,26 +819,28 @@
     @php
       $hasHomepageVideo = (bool) ($homepageVideo?->video_url);
       $homepageVideoTitle = $homepageVideo?->video_title ?: 'CIT Extension Training Highlights';
-      // Only YouTube/Vimeo/direct-file links can be embedded + autoplayed inline.
+      // Only YouTube/Vimeo/direct-file links can be embedded inline.
       // Everything else (Google Drive, Facebook, Dropbox, ...) keeps the
       // original "open in a new tab" placeholder below — a generic link
-      // can't be embedded or autoplayed.
+      // can't be embedded.
       $homepageEmbed = $homepageVideo?->embed();
     @endphp
     <div class="lp-vid-layout">
 
       <!-- Main player. When the EC-provided link is from a platform we can
            embed (YouTube, Vimeo, direct video file), it plays inline —
-           muted autoplay, so every browser's autoplay policy allows it.
-           Any other link (Drive, Facebook, Dropbox, etc.) falls back to the
-           original click-through card that opens the link in a new tab. -->
+           but only once the visitor presses play; it does not autoplay,
+           since autoplaying a video montage for every visitor burns a lot
+           of bandwidth for no reason. Any other link (Drive, Facebook,
+           Dropbox, etc.) falls back to the original click-through card
+           that opens the link in a new tab. -->
       <div class="lp-vid-main">
         @if($homepageEmbed)
         <div class="lp-vid-frame">
           @if($homepageEmbed['type'] === 'file')
-          <video class="lp-vid-player" src="{{ $homepageEmbed['src'] }}" autoplay muted loop playsinline aria-label="{{ $homepageVideoTitle }}"></video>
+          <video class="lp-vid-player" src="{{ $homepageEmbed['src'] }}" controls preload="none" playsinline aria-label="{{ $homepageVideoTitle }}"></video>
           @else
-          <iframe class="lp-vid-player" src="{{ $homepageEmbed['src'] }}" title="{{ $homepageVideoTitle }}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          <iframe class="lp-vid-player" src="{{ $homepageEmbed['src'] }}" title="{{ $homepageVideoTitle }}" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
           @endif
         </div>
         @elseif($hasHomepageVideo)
@@ -879,6 +891,51 @@
   </div>
 </section>
 
+@if($posts->isNotEmpty())
+<!-- ════════════════════════════════════════
+     POSTS & ANNOUNCEMENTS
+════════════════════════════════════════ -->
+<section class="lp-section" id="posts" style="background:rgba(255,255,255,.02)">
+  <div class="lp-container">
+    <div class="lp-sec-header">
+      <div class="lp-sec-badge" style="background:rgba(56,189,248,.1);color:var(--lp-accent);border-color:rgba(56,189,248,.2)">
+        <i class="fas fa-bullhorn"></i> Announcements
+      </div>
+      <h2 class="lp-sec-title" style="color:#fff">Posts &amp; Announcements</h2>
+      <p class="lp-sec-desc" style="color:rgba(255,255,255,.6)">
+        Latest news and announcements from the College of Industrial Technology Extension Office.
+      </p>
+    </div>
+
+    <div class="lp-feed-col-head">
+      <div class="lp-feed-col-title"><i class="fas fa-newspaper"></i> Latest Posts</div>
+      <a href="{{ route('public.posts.index') }}" class="lp-feed-viewall">View all <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="lp-post-grid">
+      @foreach($posts->take(4) as $post)
+      <a href="{{ route('public.posts.show', $post) }}" class="lp-post-card">
+        <div class="lp-post-thumb">
+          @if($post->image)
+            <img src="{{ $post->image }}" alt="{{ $post->title }}"/>
+          @else
+            <i class="fas fa-bullhorn"></i>
+          @endif
+        </div>
+        <div class="lp-post-body">
+          <span class="lp-post-tag">Announcement</span>
+          <div class="lp-post-title">{{ $post->title }}</div>
+          <p class="lp-post-desc">{{ $post->excerpt(90) }}</p>
+          <div class="lp-post-meta">
+            <span><i class="fas fa-calendar"></i> {{ ($post->published_at ?? $post->created_at)?->format('M d, Y') }}</span>
+          </div>
+        </div>
+      </a>
+      @endforeach
+    </div>
+  </div>
+</section>
+@endif
+
 <!-- ════════════════════════════════════════
      COURSE CARDS
 ════════════════════════════════════════ -->
@@ -896,54 +953,50 @@
     </div>
 
     @php
-      // Decorative fallback gradient shown behind a category's photo until
-      // EC uploads one (Manage Public Site Content → Trainings) — not
-      // EC-editable, same spirit as the gradient already used elsewhere as
-      // a placeholder (e.g. trainings-public.blade.php's $catColors).
-      $categoryGradients = [
-        'Culinary Technology'            => ['#F59E0B', '#FBBF24'],
-        'Computer Technology'            => ['#6366F1', '#818CF8'],
-        'Automotive Technology'          => ['#64748B', '#94A3B8'],
-        'Electronics Technology'         => ['#10B981', '#34D399'],
-        'Apparel and Fashion Technology' => ['#EC4899', '#F472B6'],
-        'Mechanical Technology'          => ['#1A56DB', '#3B82F6'],
-        'Print Media Technology'         => ['#7C3AED', '#A78BFA'],
-        'Information Technology'         => ['#0EA5E9', '#38BDF8'],
+      // Training areas are entirely free text (the EC types whatever
+      // specialization she wants when featuring an activity, not a fixed
+      // list of categories) so the card's fallback gradient can't be keyed
+      // to specific area names. Instead it's derived deterministically
+      // from a hash of the area string, rotating through a small generic
+      // palette — shown only until EC uploads a photo for that activity.
+      $categoryPalette = [
+        ['#F59E0B', '#FBBF24'],
+        ['#6366F1', '#818CF8'],
+        ['#64748B', '#94A3B8'],
+        ['#10B981', '#34D399'],
+        ['#EC4899', '#F472B6'],
+        ['#1A56DB', '#3B82F6'],
+        ['#7C3AED', '#A78BFA'],
+        ['#0EA5E9', '#38BDF8'],
       ];
+      $gradFor = fn (string $area) => $categoryPalette[abs(crc32($area)) % count($categoryPalette)];
     @endphp
     <div class="lp-course-grid">
-      @foreach($trainingCategories as $cat)
+      @forelse($coursesOffered as $course)
       @php
-        $grad = $categoryGradients[$cat->activity_name] ?? ['#1A56DB', '#2E6BF0'];
+        $grad = $gradFor($course->area);
+        $img  = $course->display_featured_image;
       @endphp
       <div class="lp-course-card">
         <div class="lp-cc-thumb" style="background:linear-gradient(135deg,{{ $grad[0] }},{{ $grad[1] }})">
-          @if($cat->image)
-            <img src="{{ $cat->image }}" alt="{{ $cat->activity_name }}" class="lp-cc-thumb-img"/>
+          @if($img)
+            <img src="{{ $img }}" alt="{{ $course->area }}" class="lp-cc-thumb-img"/>
+          @else
+            <i class="fas fa-graduation-cap" style="color:#fff;font-size:28px"></i>
           @endif
         </div>
         <div class="lp-cc-body">
-          <div class="lp-cc-area">{{ $cat->activity_name }}</div>
-          <p class="lp-cc-desc">{{ $cat->description }}</p>
+          <div class="lp-cc-area">{{ $course->area }}</div>
+          <p class="lp-cc-desc"><strong>{{ $course->title }}</strong>@if($course->description)<br>{{ $course->description }}@endif</p>
         </div>
       </div>
-      @endforeach
+      @empty
+      <p style="color:rgba(255,255,255,.6)">No training activities are currently offered — check back soon.</p>
+      @endforelse
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════
-     CALL TO ACTION
-════════════════════════════════════════ -->
-<section class="lp-section" style="padding:64px 0;text-align:center;background:rgba(37,99,235,.08)">
-  <div class="lp-container">
-    <h2 class="lp-sec-title" style="color:#fff;margin-bottom:12px">{{ \App\Models\PageContent::get('landing', 'cta_heading', 'Ready to Join a Training?') }}</h2>
-    <p class="lp-sec-desc" style="color:rgba(255,255,255,.6);margin:0 auto 24px">{{ \App\Models\PageContent::get('landing', 'cta_desc', 'Register now and start building skills for a better livelihood.') }}</p>
-    <a href="{{ route('choose-role') }}" class="lp-btn-hero-primary" style="display:inline-flex">
-      <i class="fas fa-arrow-right"></i> {{ \App\Models\PageContent::get('landing', 'cta_button_text', 'Register Now') }}
-    </a>
-  </div>
-</section>
 
 <!-- ════════════════════════════════════════
      FOOTER
@@ -974,6 +1027,7 @@
           <a href="{{ route('home') }}"             class="lp-footer-link">Home</a>
           <a href="{{ route('about') }}"             class="lp-footer-link">About PAThrive</a>
           <a href="{{ route('trainings-public') }}"  class="lp-footer-link">Training Programs</a>
+          <a href="{{ route('public.posts.index') }}" class="lp-footer-link">Announcements</a>
           <a href="{{ route('contact') }}"           class="lp-footer-link">Contact Us</a>
         </div>
       </div>
@@ -1057,24 +1111,6 @@ document.querySelectorAll('.lp-link, .lp-footer-link').forEach(a => {
     }
   });
 });
-
-/* ── Ticker ── */
-(function buildTicker() {
-  const items = [
-    '<i class="fas fa-bullhorn"></i> Registration for Dressmaking & Sewing Basics opens April 2, 2026 — Candelaria, Quezon',
-    '<i class="fas fa-utensils"></i> Basic Pastry Making Batch 2 now accepting applicants — contact CIT Extension Office',
-    '<i class="fas fa-bolt"></i> Solar Panel Installation Basics scheduled May 10 — Mauban, Quezon — limited slots',
-    '<i class="fas fa-laptop"></i> Computer Literacy Program ongoing — 40 participants enrolled — Module 3 released',
-    '<i class="fas fa-clipboard-list"></i> Q1 2026 Accomplishment Report submitted to CHED Extension Office',
-  ];
-  const doubled = [...items, ...items];
-  const track = document.getElementById('lpTicker');
-  if (track) {
-    track.innerHTML = doubled.map(t =>
-      `<span class="lp-ticker-item"><span class="lp-ticker-dot"></span>${t}</span>`
-    ).join('');
-  }
-})();
 
 /* ── Animated counters ── */
 (function animateCounters() {

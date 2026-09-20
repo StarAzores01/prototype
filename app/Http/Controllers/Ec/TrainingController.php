@@ -45,7 +45,6 @@ class TrainingController extends Controller
             'create'        => $this->create($request),
             'update'        => $this->update($request),
             'delete'        => $this->delete($request),
-            'update_status' => $this->updateStatus($request),
             'update_budget' => $this->updateBudget($request),
             'upload'        => $this->uploadDocument($request),
             'upload_cover'  => $this->uploadCover($request),
@@ -79,7 +78,9 @@ class TrainingController extends Controller
             $query->where('status', $status);
         }
 
-        $trainings = $query->orderByDesc('date_start')->get();
+        $trainings = $query->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
+            ->orderBy('date_start')
+            ->get();
 
         // Grouped by the linked Program ("Project") for the card grid  -
         // grouping by id (not title) so two programs that happen to share a
@@ -131,6 +132,7 @@ class TrainingController extends Controller
             'trainers'         => $this->activeTrainers(),
             'programs'         => $this->allPrograms(),
             'progress'         => $this->progress($training),
+            'budgetItems'      => $training->budgetItems()->with('loggedBy')->get(),
         ]);
     }
 
@@ -196,7 +198,6 @@ class TrainingController extends Controller
             'date_start'          => 'nullable|date',
             'date_end'            => 'nullable|date|after_or_equal:date_start',
             'budget_used'         => 'nullable|numeric|min:0|max:9999999999.99',
-            'status'              => ['nullable', Rule::in(['Proposed', 'Approved', 'Ongoing', 'Completed'])],
             'target_participants' => 'nullable|integer|min:1',
         ];
 
@@ -228,26 +229,71 @@ class TrainingController extends Controller
     private function create(Request $request)
     {
         $data = Validator::make($request->all(), $this->trainingRules() + [
-            // Every new Activity must be nested under a Program from now on.
-            // Pre-existing Activities may still have program_id = null; that's
-            // untouched here since this path only ever creates new rows.
             'program_id' => 'required|integer|exists:programs,id',
-        ])->validate();
+        ])->after(function ($validator) use ($request) {
+            $programId = (int) $request->input('program_id');
+            $program   = $programId ? \App\Models\Program::find($programId) : null;
+            if (! $program) return;
 
-        $training = DB::transaction(function () use ($data) {
+            $start = $request->input('date_start');
+            $end   = $request->input('date_end');
+            $pStart = $program->timeline_start?->format('Y-m-d');
+            $pEnd   = $program->effective_end_date?->format('Y-m-d');
+
+            if ($start && $pStart && $start < $pStart) {
+                $validator->errors()->add('date_start', 'Start date cannot be before the program\'s start date ('.$pStart.').');
+            }
+            if ($start && $pEnd && $start > $pEnd) {
+                $validator->errors()->add('date_start', 'Start date cannot be after the program\'s end date ('.$pEnd.').');
+            }
+            if ($end && $pStart && $end < $pStart) {
+                $validator->errors()->add('date_end', 'End date cannot be before the program\'s start date ('.$pStart.').');
+            }
+            if ($end && $pEnd && $end > $pEnd) {
+                $validator->errors()->add('date_end', 'End date cannot be after the program\'s end date ('.$pEnd.').');
+            }
+        })->validate();
+
+        $training = DB::transaction(function () use ($data, $request) {
+            // Compute budget_used from line items if provided, otherwise default 0.
+            $budgetItems = $request->input('budget_items', []);
+            $budgetUsed  = 0;
+            foreach ($budgetItems as $item) {
+                $budgetUsed += round((float)($item['quantity'] ?? 0) * (float)($item['unit_cost'] ?? 0), 2);
+            }
+
             $training = Training::create([
                 'title'                => $data['title'],
                 'area'                 => $data['area'],
                 'description'          => $data['description'] ?? null,
                 'date_start'           => $data['date_start'] ?? null,
                 'date_end'             => $data['date_end'] ?? null,
-                'status'               => $data['status'] ?? 'Proposed',
                 'target_participants'  => $data['target_participants'] ?? 0,
                 'budget_allocated'     => $data['budget_allocated'] ?? null,
-                'budget_used'          => $data['budget_used'] ?? 0,
+                'budget_used'          => $budgetUsed,
                 'created_by'           => Auth::guard('web')->id(),
                 'program_id'           => $data['program_id'],
             ]);
+
+            // Save budget breakdown items.
+            $userId = Auth::guard('web')->id();
+            foreach ($budgetItems as $item) {
+                $cat = ($item['category'] ?? '') === 'Other'
+                    ? 'Other: '.trim($item['other_specify'] ?? '')
+                    : ($item['category'] ?? '');
+                if (! $cat) continue;
+                $qty = (float)($item['quantity'] ?? 0);
+                $uc  = (float)($item['unit_cost'] ?? 0);
+                if ($qty <= 0) continue;
+                \App\Models\BudgetItem::create([
+                    'training_id' => $training->id,
+                    'category'    => $cat,
+                    'description' => $item['description'] ?? null,
+                    'quantity'    => $qty,
+                    'unit_cost'   => $uc,
+                    'logged_by'   => $userId,
+                ]);
+            }
 
             $team = $this->teamFromProgram($data['program_id']);
             if ($team['lead_id']) {
@@ -256,6 +302,13 @@ class TrainingController extends Controller
 
             return $training;
         });
+
+        ProgramLogService::recordBudget($training, ProgramLogService::ACTION_BUDGET_LOGGED, [
+            'stage'          => 'creation',
+            'budget_allocated' => (float) ($training->budget_allocated ?? 0),
+            'budget_used'    => (float) $training->budget_used,
+            'item_count'     => count($request->input('budget_items', [])),
+        ]);
 
         return redirect()->route('ec.trainings', ['view' => $training->id])->with('success', 'Activity created.');
     }
@@ -281,7 +334,6 @@ class TrainingController extends Controller
                 'description'          => $data['description'] ?? null,
                 'date_start'           => $data['date_start'] ?? null,
                 'date_end'             => $data['date_end'] ?? null,
-                'status'               => $data['status'] ?? 'Proposed',
                 'target_participants'  => $data['target_participants'] ?? 0,
                 'budget_used'          => $data['budget_used'] ?? 0,
                 'program_id'           => $data['program_id'] ?? null,
@@ -333,31 +385,57 @@ class TrainingController extends Controller
         return redirect()->route('ec.trainings')->with('success', 'Activity deleted.');
     }
 
-    private function updateStatus(Request $request)
-    {
-        $data = Validator::make($request->all(), [
-            'training_id' => 'required|exists:trainings,id',
-            'status'      => ['required', Rule::in(['Proposed', 'Approved', 'Ongoing', 'Completed'])],
-        ])->validate();
-
-        Training::where('id', $data['training_id'])->update(['status' => $data['status']]);
-
-        return back()->with('success', 'Activity status updated.');
-    }
-
     /** Only budget_used is writable here  -  budget_allocated is locked for good after creation. */
     private function updateBudget(Request $request)
     {
         $data = Validator::make($request->all(), [
-            'training_id' => 'required|integer|exists:trainings,id',
-            'budget_used' => 'nullable|numeric|min:0|max:9999999999.99',
+            'training_id'           => 'required|integer|exists:trainings,id',
+            'items'                 => 'required|array|min:1',
+            'items.*.category'      => 'required|string|max:100',
+            'items.*.other_specify' => 'nullable|string|max:255',
+            'items.*.description'   => 'nullable|string|max:255',
+            'items.*.quantity'      => 'required|numeric|min:0.01',
+            'items.*.unit_cost'     => 'required|numeric|min:0',
         ])->validate();
 
-        Training::where('id', $data['training_id'])->update([
-            'budget_used' => $data['budget_used'] ?? 0,
+        $trainingId = $data['training_id'];
+        $userId     = Auth::guard('web')->id();
+
+        DB::transaction(function () use ($data, $trainingId, $userId) {
+            \App\Models\BudgetItem::where('training_id', $trainingId)->delete();
+
+            $total = 0;
+            foreach ($data['items'] as $item) {
+                $category = $item['category'] === 'Other'
+                    ? 'Other: '.trim($item['other_specify'] ?? '')
+                    : $item['category'];
+
+                $qty      = (float) $item['quantity'];
+                $unitCost = (float) $item['unit_cost'];
+                $lineTotal = round($qty * $unitCost, 2);
+                $total    += $lineTotal;
+
+                \App\Models\BudgetItem::create([
+                    'training_id' => $trainingId,
+                    'category'    => $category,
+                    'description' => $item['description'] ?? null,
+                    'quantity'    => $qty,
+                    'unit_cost'   => $unitCost,
+                    'logged_by'   => $userId,
+                ]);
+            }
+
+            Training::where('id', $trainingId)->update(['budget_used' => $total]);
+        });
+
+        $training = Training::findOrFail($trainingId);
+        ProgramLogService::recordBudget($training, ProgramLogService::ACTION_BUDGET_LOGGED, [
+            'stage'      => 'update',
+            'budget_used' => (float) $training->budget_used,
+            'item_count' => count($data['items']),
         ]);
 
-        return redirect()->route('ec.trainings', ['view' => $data['training_id']])->with('success', 'Budget usage updated successfully.');
+        return redirect()->route('ec.trainings', ['view' => $trainingId, 'budget_saved' => 1])->with('success', 'Budget breakdown saved.');
     }
 
     /** This activity's own document repository  -  file or link, stamped with activity_id (not the legacy training_id). */

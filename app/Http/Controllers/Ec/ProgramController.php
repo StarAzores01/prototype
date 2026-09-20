@@ -44,8 +44,9 @@ class ProgramController extends Controller
 
         return match ($action) {
             'create'          => $this->create($request),
+            'update'          => $this->update($request),
+            'delete'          => $this->delete($request),
             'extend_timeline' => $this->extendTimeline($request),
-            'update_status'   => $this->updateStatus($request),
             'update_team'     => $this->updateTeam($request),
             'upload'          => $this->uploadDocument($request),
             'upload_cover'    => $this->uploadCover($request),
@@ -56,7 +57,8 @@ class ProgramController extends Controller
     private function listView()
     {
         $programs = $this->withRollup(Program::query())
-            ->orderByDesc('created_at')
+            ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
+            ->orderBy('timeline_start')
             ->get();
 
         // Grouped by Area for the card grid  -  a Program has no further
@@ -81,6 +83,12 @@ class ProgramController extends Controller
 
         $activities = $program->trainings()->orderByDesc('date_start')->get();
 
+        // Budget items keyed by training_id for the breakdown display.
+        $activityIds = $activities->pluck('id');
+        $allBudgetItems = \App\Models\BudgetItem::whereIn('training_id', $activityIds)
+            ->orderBy('training_id')->orderBy('created_at')->get()
+            ->groupBy('training_id');
+
         $logs = \App\Models\ProgramLog::with('actor')
             ->where('program_id', $program->id)
             ->orderByDesc('created_at')
@@ -92,13 +100,14 @@ class ProgramController extends Controller
             ->get();
 
         return view('ec.programs', [
-            'activePage'      => 'programs',
-            'mode'            => 'detail',
-            'viewProgram'     => $program,
-            'viewActivities'  => $activities,
-            'viewLogs'        => $logs,
-            'viewDocuments'   => $documents,
-            'trainers'        => $this->activeTrainers(),
+            'activePage'        => 'programs',
+            'mode'              => 'detail',
+            'viewProgram'       => $program,
+            'viewActivities'    => $activities,
+            'viewLogs'          => $logs,
+            'viewDocuments'     => $documents,
+            'trainers'          => $this->activeTrainers(),
+            'allBudgetItems'    => $allBudgetItems,
         ]);
     }
 
@@ -168,7 +177,6 @@ class ProgramController extends Controller
                 'timeline_start'   => $data['timeline_start'],
                 'timeline_end'     => $data['timeline_end'],
                 'budget_allocated' => $data['budget_allocated'],
-                'status'           => 'Proposed',
                 'created_by'       => Auth::guard('web')->id(),
             ]);
 
@@ -181,6 +189,47 @@ class ProgramController extends Controller
         });
 
         return redirect()->route('ec.programs', ['view' => $program->id])->with('success', 'Program created.');
+    }
+
+    /**
+     * Edit a program's mutable fields. budget_allocated, timeline_start, and
+     * timeline_end are permanently fixed at creation and cannot be changed here
+     * (the model's saving() hook enforces this unconditionally). Use
+     * extend_timeline to push the effective end date further out.
+     */
+    private function update(Request $request)
+    {
+        $data = Validator::make($request->all(), [
+            'program_id'  => 'required|integer|exists:programs,id',
+            'title'       => 'required|string|max:200',
+            'description' => 'nullable|string',
+            'area'        => 'required|string|max:120',
+        ])->validate();
+
+        Program::where('id', $data['program_id'])->update([
+            'title'       => $data['title'],
+            'description' => $data['description'] ?? null,
+            'area'        => $data['area'],
+        ]);
+
+        return redirect()->route('ec.programs')->with('success', 'Program updated.');
+    }
+
+    /** Hard-delete a program and all its associated data. */
+    private function delete(Request $request)
+    {
+        $data = Validator::make($request->all(), [
+            'program_id' => 'required|integer|exists:programs,id',
+        ])->validate();
+
+        $program = Program::findOrFail($data['program_id']);
+
+        // Nullify program_id on child activities rather than orphaning them.
+        $program->trainings()->update(['program_id' => null]);
+
+        $program->delete();
+
+        return redirect()->route('ec.programs')->with('success', 'Program deleted.');
     }
 
     /**
@@ -228,22 +277,6 @@ class ProgramController extends Controller
         });
 
         return redirect()->route('ec.programs', ['view' => $program->id])->with('success', 'Program timeline extended.');
-    }
-
-    /**
-     * Status is not one of the two protected fields (budget/timeline)  -  EC
-     * can move it freely, no remark, no program_amendments row.
-     */
-    private function updateStatus(Request $request)
-    {
-        $data = Validator::make($request->all(), [
-            'program_id' => 'required|integer|exists:programs,id',
-            'status'     => ['required', Rule::in(['Proposed', 'Approved', 'Ongoing', 'Completed'])],
-        ])->validate();
-
-        Program::where('id', $data['program_id'])->update(['status' => $data['status']]);
-
-        return redirect()->route('ec.programs', ['view' => $data['program_id']])->with('success', 'Program status updated.');
     }
 
     /**

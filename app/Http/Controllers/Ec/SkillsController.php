@@ -37,12 +37,21 @@ class SkillsController extends Controller
 
         // Read-only monitoring of the beneficiary progress journal —
         // staff can view, never edit/delete a beneficiary's own entries.
-        $progressEntries = SkillProgressEntry::with('beneficiary:id,first_name,last_name')
+        $progressEntries = SkillProgressEntry::with(['beneficiary:id,first_name,last_name', 'training:id,title'])
             ->orderByDesc('activity_date')
             ->orderByDesc('id')
             ->get();
 
         $totalRecordedEarnings = $progressEntries->sum('service_fee');
+
+        // Grouped by the activity (training) the entry is tied to, so staff
+        // can see a beneficiary's progress in context rather than one long
+        // undifferentiated list. An entry logged without a training attached
+        // (see Beneficiary\SkillsController::rules()) falls under its own
+        // free-text activity_name instead.
+        $entriesByActivity = $progressEntries->groupBy(
+            fn ($e) => $e->training->title ?? $e->activity_name
+        );
 
         return view('ec.skills', [
             'activePage'            => 'skills',
@@ -50,6 +59,7 @@ class SkillsController extends Controller
             'viewForm'              => $viewForm,
             'responses'             => $responses,
             'progressEntries'       => $progressEntries,
+            'entriesByActivity'     => $entriesByActivity,
             'totalRecordedEarnings' => $totalRecordedEarnings,
         ]);
     }

@@ -266,96 +266,90 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
 @else
 {{-- ═══════════════ MAIN VIEW ═══════════════ --}}
 
-<!-- Overview bars -->
+<!-- Beneficiary Progress Entries -->
 <div class="card" style="margin-bottom:24px">
-  <div class="card-header"><div class="card-title">Skills Utilization Overview</div></div>
-  <div class="card-body">
-    @foreach([
-      ['Personal Use', $overview['personal']],
-      ['Income-Generating', $overview['income']],
-      ['Employment', $overview['employment']],
-    ] as [$label, $pct])
-    <div class="skills-row">
-      <div class="skills-label">{{ $label }}</div>
-      <div style="flex:1"><div class="progress-bar-wrap"><div class="progress-bar" style="width:{{ $pct }}%"></div></div></div>
-      <div class="skills-pct">{{ $pct }}%</div>
+  <div class="card-header">
+    <div>
+      <div class="card-title"><i class="fas fa-chart-line"></i> Beneficiary Progress Entries</div>
+      <div class="card-subtitle">Read-only — how your beneficiaries are applying their skills over time</div>
     </div>
-    @endforeach
+    <div style="text-align:right">
+      <div style="font-size:11px;color:var(--gray-400)">Total Recorded Earnings</div>
+      <div style="font-size:18px;font-weight:800;color:var(--green)">&#8369;{{ number_format((float) $totalRecordedEarnings, 2) }}</div>
+    </div>
   </div>
-</div>
 
-<!-- Per-activity table -->
-<div class="card">
-  <div class="card-header"><div class="card-title">Skills Forms by Activity</div></div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Activity</th>
-          <th>Date</th>
-          <th>Participants</th>
-          <th>Answered</th>
-          <th>Response Rate</th>
-          <th>Form</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-      @forelse($trainingSummary as $row)
-        @php $rate = $row->total_pax > 0 ? round($row->answered / $row->total_pax * 100) : 0; @endphp
-      <tr>
-        <td><strong>{{ $row->title }}</strong></td>
-        <td style="font-size:12px;color:var(--gray-400)">{{ $row->date_start?->format('Y-m-d') ?? '—' }}</td>
-        <td><strong>{{ (int) $row->total_pax }}</strong></td>
-        <td style="color:var(--green);font-weight:700">{{ (int) $row->answered }}</td>
-        <td>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="flex:1;background:var(--gray-100);border-radius:4px;height:6px;min-width:80px">
-              <div style="width:{{ $rate }}%;background:var(--blue-primary);height:6px;border-radius:4px"></div>
-            </div>
-            <span style="font-size:12px;font-weight:600;color:var(--gray-700)">{{ $rate }}%</span>
-          </div>
-        </td>
-        <td>
-          @if($row->form)
-            <span class="badge badge-active"><i class="fas fa-file-lines"></i> Created</span>
-            @if($row->form->sent_at)
-            <div style="font-size:11px;color:var(--gray-400);margin-top:2px">Sent {{ $row->form->sent_at->format('M d') }}</div>
-            @endif
-          @else
-            <span class="badge badge-pending">No form</span>
-          @endif
-        </td>
-        <td>
-          <div class="action-btns">
-            <a href="{{ route('trainer.skills') }}?edit_form={{ $row->id }}"
-               class="btn btn-sm btn-outline">
-              {!! $row->form ? '<i class="fas fa-pen"></i> Edit' : '<i class="fas fa-plus"></i> Create' !!}
-            </a>
-            @if($row->form)
-            <a href="{{ route('trainer.skills') }}?view_responses={{ $row->form->id }}"
-               class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> Responses
-              @if($row->answered > 0)
-              <span style="background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px">{{ (int) $row->answered }}</span>
-              @endif
-            </a>
-            <form method="POST" action="{{ route('trainer.skills.store') }}" style="display:inline"
-                  onsubmit="return confirm('Send this skills survey to all beneficiaries of this activity?')">
-              @csrf
-              <input type="hidden" name="action" value="send_form"/>
-              <input type="hidden" name="training_id" value="{{ $row->id }}"/>
-              <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-bell"></i> Send</button>
-            </form>
-            @endif
-          </div>
-        </td>
-      </tr>
-      @empty
-      <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400)">No activities assigned yet.</td></tr>
-      @endforelse
-      </tbody>
-    </table>
+  @if($progressEntries->isEmpty())
+  <div class="empty-state" style="padding:32px 24px;text-align:center">
+    <i class="fas fa-chart-line" style="font-size:24px;color:var(--gray-300)"></i>
+    <p style="margin-top:8px;color:var(--gray-400)">No beneficiary progress entries recorded yet.</p>
   </div>
+  @else
+  @foreach($entriesByActivity as $activityName => $activityEntries)
+  @php
+    $visibleEntries = $activityEntries->take(3);
+    $moreEntries = $activityEntries->slice(3);
+  @endphp
+  <div style="{{ $loop->last ? '' : 'border-bottom:1px solid var(--gray-100)' }}">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--gray-50)">
+      <div style="font-size:13px;font-weight:700;color:var(--text-heading)">
+        <i class="fas fa-layer-group" style="color:var(--gray-400);margin-right:6px"></i>{{ $activityName }}
+      </div>
+      <div style="font-size:12px;color:var(--gray-400)">
+        {{ $activityEntries->count() }} entr{{ $activityEntries->count() !== 1 ? 'ies' : 'y' }}
+        &nbsp;·&nbsp;
+        <span style="font-weight:700;color:var(--green)">&#8369;{{ number_format((float) $activityEntries->sum('service_fee'), 2) }}</span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Beneficiary</th>
+            <th>Date</th>
+            <th>Progress / Outcome</th>
+            <th>Service Fee / Earnings</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach($visibleEntries as $e)
+          <tr>
+            <td>{{ $e->beneficiary->full_name ?? '—' }}</td>
+            <td style="white-space:nowrap">{{ $e->activity_date->format('M d, Y') }}</td>
+            <td><span class="badge badge-active">{{ $e->outcome_type }}</span></td>
+            <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $e->service_fee, 2) }}</td>
+            <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $e->remarks ?: '—' }}</td>
+          </tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
+    @if($moreEntries->isNotEmpty())
+    <details style="padding:0 20px 14px">
+      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--blue-primary);padding:8px 0;list-style:none">
+        <i class="fas fa-chevron-down" style="font-size:10px;margin-right:4px"></i>Show {{ $moreEntries->count() }} more
+      </summary>
+      <div class="table-wrap" style="margin-top:4px">
+        <table>
+          <tbody>
+            @foreach($moreEntries as $e)
+            <tr>
+              <td>{{ $e->beneficiary->full_name ?? '—' }}</td>
+              <td style="white-space:nowrap">{{ $e->activity_date->format('M d, Y') }}</td>
+              <td><span class="badge badge-active">{{ $e->outcome_type }}</span></td>
+              <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $e->service_fee, 2) }}</td>
+              <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $e->remarks ?: '—' }}</td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </details>
+    @endif
+  </div>
+  @endforeach
+  @endif
 </div>
 
 @endif

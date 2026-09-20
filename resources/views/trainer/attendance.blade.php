@@ -201,9 +201,6 @@
             <td class="name-col" style="color:var(--gray-400);font-size:12px;width:32px">{{ $i + 1 }}</td>
             <td class="name-col">
               <strong>{{ $p->full_name }}</strong>
-              @if($p->id_number)
-              <div class="id-number-cell" style="font-size:11px;color:var(--gray-400)">{{ $p->id_number }}</div>
-              @endif
             </td>
             @foreach($days as $di => $day)
               @php $present = ($attGrid[$day][$p->id] ?? '') === 'Present'; @endphp

@@ -36,7 +36,7 @@
               @csrf
               <input type="hidden" name="action" value="remove_whitelist"/>
               <input type="hidden" name="whitelist_id" value="{{ $w->id }}"/>
-              <button type="submit" class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none;cursor:pointer"><i class="fas fa-trash"></i> Remove</button>
+              <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Remove</button>
             </form>
             @else
             <span style="font-size:12px;color:var(--gray-400)">Registered</span>
@@ -55,10 +55,15 @@
 <div class="card">
   <div class="card-header">
     <div class="card-title"><i class="fas fa-user"></i> Registered Evaluators</div>
-    <form method="GET" action="{{ route('ec.evaluators') }}" style="display:flex;gap:8px">
-      <input type="text" name="q" class="form-control" placeholder="Search..." value="{{ $q }}" style="width:220px"/>
-      <button type="submit" class="btn btn-outline btn-sm"><i class="fas fa-magnifying-glass"></i></button>
-      @if($q)<a href="{{ route('ec.evaluators') }}" class="btn btn-outline btn-sm"><i class="fas fa-xmark"></i></a>@endif
+  </div>
+  <div class="card-body" style="padding-bottom:0">
+    <form method="GET" action="{{ route('ec.evaluators') }}" class="filter-row">
+      <div class="search-box">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="text" name="q" value="{{ $q }}" placeholder="Search..."/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Search</button>
+      @if($q)<a href="{{ route('ec.evaluators') }}" class="btn btn-ghost btn-sm">Clear</a>@endif
     </form>
   </div>
   <div class="card-body" style="padding:0">
@@ -87,7 +92,7 @@
                 @csrf
                 <input type="hidden" name="action" value="toggle"/>
                 <input type="hidden" name="user_id" value="{{ $ev->id }}"/>
-                <button type="submit" class="btn btn-sm {{ $ev->is_active ? '' : 'btn-outline' }}" style="{{ $ev->is_active ? 'background:#FEE2E2;color:#991B1B;border:none' : '' }}">
+                <button type="submit" class="btn btn-sm {{ $ev->is_active ? 'btn-danger' : 'btn-outline' }}">
                   {!! $ev->is_active ? '<i class="fas fa-ban"></i> Disable' : '<i class="fas fa-square-check"></i> Enable' !!}
                 </button>
               </form>
@@ -120,7 +125,7 @@
         </div>
         <div class="form-group"><label class="form-label">Department <span style="color:var(--red)">*</span></label>
           <select name="department" class="form-control" required>
-            <option value="">— Select Department —</option>
+            <option value="" disabled selected>— Select Department —</option>
             @foreach($departments as $d)
             <option>{{ $d }}</option>
             @endforeach

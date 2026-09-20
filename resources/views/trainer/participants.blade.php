@@ -37,9 +37,6 @@
           <td style="color:var(--gray-400)">{{ $loop->iteration }}</td>
           <td>
             <strong>{{ $p->full_name }}</strong>
-            @if($p->address)
-            <div style="font-size:11px;color:var(--gray-400)"><i class="fas fa-location-dot"></i> {{ $p->address }}</div>
-            @endif
           </td>
           <td style="font-size:12px;color:var(--gray-500)">{{ $p->id_number ?? '—' }}</td>
           <td style="font-size:12px;color:var(--gray-500)">{{ $p->phone ?? '—' }}</td>

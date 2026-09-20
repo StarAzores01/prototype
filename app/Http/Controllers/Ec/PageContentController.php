@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Ec;
 use App\Http\Controllers\Controller;
 use App\Models\HomepageVideo;
 use App\Models\PageContent;
-use App\Models\TrainingCategory;
+use App\Models\Post;
+use App\Models\Program;
+use App\Models\Training;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -46,15 +48,15 @@ class PageContentController extends Controller
      * so every modal on the Pages/Site Settings tabs can be pre-filled
      * without a per-page round trip.
      */
-    public function index()
+    public function index(Request $request)
     {
         $pagesConfig = config('page_content_sections');
 
-        $existing = PageContent::query()
+        $allRows = PageContent::query()
             ->whereIn('page_key', array_keys($pagesConfig))
-            ->get()
-            ->groupBy('page_key')
-            ->map(fn ($rows) => $rows->pluck('content_value', 'section_key'));
+            ->get();
+
+        $existing = $allRows->groupBy('page_key')->map(fn ($rows) => $rows->pluck('content_value', 'section_key'));
 
         $values = collect($pagesConfig)->mapWithKeys(function (array $page, string $pageKey) use ($existing) {
             $rowsForPage = $existing->get($pageKey, collect());
@@ -64,12 +66,46 @@ class PageContentController extends Controller
             ])];
         });
 
+        // Whether page $pageKey (or the 'global' pseudo-page used by the
+        // Site Settings tab) has any draft value that hasn't been
+        // published yet — drives the "Unpublished changes" indicators.
+        $dirtyPages = $allRows->groupBy('page_key')->map(fn ($rows) => $rows->contains(fn ($row) => $row->hasUnpublishedChanges()));
+
+        // Featured Activities — real Training rows the EC has chosen to
+        // feature on the public site (Manage Public Site Content →
+        // Trainings). Includes anything currently featured as a draft
+        // (is_featured) AND anything still live but pending an unfeature
+        // (published_is_featured), so a pending "unfeature" still shows in
+        // this admin list with its "Unpublished changes" dot until
+        // published. See App\Models\Training::hasUnpublishedFeatureChanges().
+        $featuredTrainings = Training::where('is_featured', true)
+            ->orWhere('published_is_featured', true)
+            ->orderBy('title')
+            ->get();
+
+        // Activities not currently featured — offered in the "Existing
+        // Activity" picker so EC doesn't feature the same one twice.
+        $availableTrainings = Training::where('is_featured', false)
+            ->orderBy('title')
+            ->get(['id', 'title', 'area']);
+
+        // Programs offered in the "New Activity" quick-add form's
+        // required program_id field — same requirement as
+        // Ec\TrainingController::create().
+        $programsForFeature = Program::orderBy('title')->get(['id', 'title']);
+
         return view('ec.page-content.index', [
             'activePage' => 'page-content',
             'pagesConfig' => $pagesConfig,
             'values'      => $values,
-            'categories'  => TrainingCategory::orderBy('id')->get(),
+            'dirtyPages'  => $dirtyPages,
+            'featuredTrainings'  => $featuredTrainings,
+            'availableTrainings' => $availableTrainings,
+            'programsForFeature' => $programsForFeature,
+            'hasPendingPublish' => $dirtyPages->contains(true) || $featuredTrainings->contains(fn ($t) => $t->hasUnpublishedFeatureChanges()),
             'homepageVideo' => HomepageVideo::current(),
+            'posts'       => Post::with('author')->latest()->get(),
+            'activeTab'   => $request->input('tab', 'pages'),
         ]);
     }
 
@@ -77,6 +113,7 @@ class PageContentController extends Controller
     {
         $userId = Auth::guard('web')->id();
         $submitted = $request->input('sections', []);
+        $tab = $request->input('tab', 'pages');
 
         foreach (array_keys($submitted) as $pageKey) {
             $page = config("page_content_sections.$pageKey");
@@ -91,7 +128,7 @@ class PageContentController extends Controller
                     if ($request->hasFile($inputPath)) {
                         [$ok, $result] = $this->storeImage($request, $inputPath, $pageKey, $sectionKey);
                         if (! $ok) {
-                            return back()->with('error', $result);
+                            return $this->toTab($tab)->with('error', $result);
                         }
                         PageContent::put($pageKey, $sectionKey, 'image', $result, $userId);
                     } elseif ($request->boolean("sections.$pageKey.{$sectionKey}_clear")) {
@@ -111,7 +148,18 @@ class PageContentController extends Controller
             }
         }
 
-        return back()->with('success', 'Page content saved.');
+        return $this->toTab($tab)->with('success', 'Page content saved as draft. Click "Publish All Changes" to make it live.');
+    }
+
+    /**
+     * Redirects back to the Manage Public Site Content page with the
+     * given tab re-selected (see resources/views/ec/page-content/index.blade.php's
+     * openTabFromQueryString()/switchMainTab()), instead of a bare back()/
+     * route() that always lands the EC on the default Pages tab.
+     */
+    private function toTab(string $tab)
+    {
+        return redirect()->route('ec.page-content', ['tab' => $tab]);
     }
 
     /**
@@ -138,15 +186,18 @@ class PageContentController extends Controller
             return [false, 'Image must be smaller than 5 MB.'];
         }
 
-        // Old file (if any) is removed after the new one is stored — see
-        // deleteStoredImage() below, called with the *previous* content_value
-        // (fetched before PageContent::put() overwrites it).
-        $old = PageContent::query()->where('page_key', $pageKey)->where('section_key', $sectionKey)->value('content_value');
+        // Old file (if any) is removed after the new one is stored — but
+        // only if it isn't the file still live on the public site
+        // (published_value). Draft edits must never break what's
+        // currently published; an orphaned old draft file is cleaned up
+        // once publishAll() supersedes published_value instead.
+        $row = PageContent::query()->where('page_key', $pageKey)->where('section_key', $sectionKey)->first();
+        $old = $row?->content_value;
 
         $filename = $pageKey . '_' . $sectionKey . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
         $file->storeAs('page-content', $filename, 'public');
 
-        if ($old) {
+        if ($old && $old !== $row?->published_value) {
             $this->deleteStoredImageUrl($old);
         }
 
@@ -159,8 +210,9 @@ class PageContentController extends Controller
 
     private function deleteStoredImage(string $pageKey, string $sectionKey): void
     {
-        $old = PageContent::query()->where('page_key', $pageKey)->where('section_key', $sectionKey)->value('content_value');
-        if ($old) {
+        $row = PageContent::query()->where('page_key', $pageKey)->where('section_key', $sectionKey)->first();
+        $old = $row?->content_value;
+        if ($old && $old !== $row?->published_value) {
             $this->deleteStoredImageUrl($old);
         }
     }

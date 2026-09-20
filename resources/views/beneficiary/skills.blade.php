@@ -110,7 +110,7 @@
           <div class="form-group">
             <label class="form-label">Progress / Outcome Type *</label>
             <select name="outcome_type" id="pe_outcome_type" class="form-control" required>
-              <option value="">— Select —</option>
+              <option value="" disabled selected>— Select —</option>
               @foreach($outcomeTypes as $type)
                 <option value="{{ $type }}">{{ $type }}</option>
               @endforeach

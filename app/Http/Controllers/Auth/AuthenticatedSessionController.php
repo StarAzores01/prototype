@@ -40,12 +40,10 @@ class AuthenticatedSessionController extends Controller
 
         if (Auth::guard('web')->attempt($staffCredentials)) {
             $request->session()->regenerate();
-            Auth::guard('web')->user()->forceFill(['last_login' => now()])->save();
+            $user = Auth::guard('web')->user();
+            $user->forceFill(['last_login' => now()])->save();
 
-            // All 4 roles land on the shared feed (route('home')) after login,
-            // not straight on their dashboard — redirect()->intended() still
-            // honors a deep link that triggered the guest-only login redirect.
-            return redirect()->intended(route('home'));
+            return redirect()->intended(self::redirectPathFor($user->role));
         }
 
         $beneficiaryCredentials = [
@@ -57,7 +55,7 @@ class AuthenticatedSessionController extends Controller
         if (Auth::guard('beneficiary')->attempt($beneficiaryCredentials)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('home'));
+            return redirect()->intended(self::redirectPathFor('beneficiary'));
         }
 
         // Distinguish "deactivated" from "not found" like the original page did.

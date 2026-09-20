@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Trainer;
 
 use App\Http\Controllers\Controller;
 use App\Models\EvalForm;
-use App\Models\Evaluation;
+use App\Models\EvalResponse;
 use App\Models\SkillsUtilization;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,30 +26,28 @@ class EvaluationHubController extends Controller
             ->whereNotNull('sent_at')
             ->count();
 
-        $avgRatingRaw = Evaluation::whereHas('training', fn ($t) => $t->visibleToTrainer($trainerId))
-            ->whereNotNull('rating')
-            ->avg('rating');
-        $avgRating = $avgRatingRaw !== null ? round((float) $avgRatingRaw, 1) : null;
-
-        $submitted = Evaluation::whereHas('training', fn ($t) => $t->visibleToTrainer($trainerId))
-            ->where('status', 'Submitted')->count();
-        $pending = Evaluation::whereHas('training', fn ($t) => $t->visibleToTrainer($trainerId))
-            ->where('status', 'Pending')->count();
+        // Real count of beneficiary responses to this trainer's sent
+        // evaluation forms (App\Models\EvalResponse) — replaces the old
+        // Evaluation::where('status','Submitted') count, which always read
+        // 0 because nothing in the app ever writes an Evaluation row.
+        $submitted = EvalResponse::whereHas('training', fn ($t) => $t->visibleToTrainer($trainerId))
+            ->count();
 
         $skills = SkillsUtilization::whereHas('training', fn ($t) => $t->visibleToTrainer($trainerId))
-            ->selectRaw('AVG(personal_use_pct) as personal, AVG(income_gen_pct) as income, AVG(employment_pct) as employment')
+            ->selectRaw('AVG(personal_use_pct) as personal, AVG(income_gen_pct) as income, AVG(employment_pct) as employment, AVG(community_service_pct) as community, AVG(training_application_pct) as application, AVG(other_pct) as other')
             ->first();
 
         return view('trainer.evaluation', [
             'activePage'     => 'evaluation',
             'sentForms'      => $sentForms,
-            'avgRating'      => $avgRating,
             'submitted'      => $submitted,
-            'pending'        => $pending,
             'skillsOverview' => [
-                'personal'   => round((float) ($skills->personal ?? 0), 1),
-                'income'     => round((float) ($skills->income ?? 0), 1),
-                'employment' => round((float) ($skills->employment ?? 0), 1),
+                'personal'    => round((float) ($skills->personal ?? 0), 1),
+                'income'      => round((float) ($skills->income ?? 0), 1),
+                'employment'  => round((float) ($skills->employment ?? 0), 1),
+                'community'   => round((float) ($skills->community ?? 0), 1),
+                'application' => round((float) ($skills->application ?? 0), 1),
+                'other'       => round((float) ($skills->other ?? 0), 1),
             ],
         ]);
     }

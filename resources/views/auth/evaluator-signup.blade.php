@@ -94,7 +94,7 @@
       <div class="form-group">
         <label class="form-label">Department <span style="color:#EF4444">*</span></label>
         <select name="department" class="form-control {{ $errors->has('department') ? 'is-invalid' : '' }}" required>
-          <option value="">— Select Department —</option>
+          <option value="" disabled selected>— Select Department —</option>
           @foreach($departments as $d)
           <option value="{{ $d }}" {{ old('department') === $d ? 'selected' : '' }}>{{ $d }}</option>
           @endforeach

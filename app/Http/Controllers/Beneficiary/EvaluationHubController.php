@@ -7,8 +7,6 @@ use App\Models\EvalForm;
 use App\Models\EvalResponse;
 use App\Models\ImpactAssessmentForm;
 use App\Models\ImpactAssessmentResponse;
-use App\Models\SkillsForm;
-use App\Models\SkillsResponse;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -27,7 +25,26 @@ class EvaluationHubController extends Controller
 
         [$evalTotal, $evalPending] = $this->tally(EvalForm::class, EvalResponse::class, $beneficiaryId);
         [$iaTotal, $iaPending] = $this->tally(ImpactAssessmentForm::class, ImpactAssessmentResponse::class, $beneficiaryId);
-        [$skillsTotal, $skillsPending] = $this->tally(SkillsForm::class, SkillsResponse::class, $beneficiaryId);
+
+        // "Recent Surveys" — the 5 most recently sent forms across both
+        // Evaluations and Impact Assessments (Skills Utilization is a
+        // repeated journal, not a one-off sent form, so it's not part of
+        // this feed — see Beneficiary\SkillsController). Same per-form
+        // lookup {Evaluation,ImpactAssessment}Controller::index() does, so
+        // the "Answered / Pending" badge here matches what those pages show.
+        $recentEvalForms = EvalForm::with('training')
+            ->whereHas('training.participants', fn ($q) => $q->where('beneficiary_id', $beneficiaryId))
+            ->whereNotNull('sent_at')
+            ->orderByDesc('sent_at')
+            ->limit(5)
+            ->get();
+
+        foreach ($recentEvalForms as $form) {
+            $form->surveyType = 'Evaluation';
+            $form->myResponse = EvalResponse::where('form_id', $form->id)
+                ->where('beneficiary_id', $beneficiaryId)
+                ->first();
+        }
 
         $recentAssessmentForms = ImpactAssessmentForm::with('training')
             ->whereHas('training.participants', fn ($q) => $q->where('beneficiary_id', $beneficiaryId))
@@ -36,23 +53,25 @@ class EvaluationHubController extends Controller
             ->limit(5)
             ->get();
 
-        // Same per-form lookup ImpactAssessmentController::index() does, so the
-        // "Answered / Pending" badge here matches what that page would show.
         foreach ($recentAssessmentForms as $form) {
+            $form->surveyType = 'Impact Assessment';
             $form->myResponse = ImpactAssessmentResponse::where('form_id', $form->id)
                 ->where('beneficiary_id', $beneficiaryId)
                 ->first();
         }
 
+        $recentSurveys = $recentEvalForms->concat($recentAssessmentForms)
+            ->sortByDesc('sent_at')
+            ->take(5)
+            ->values();
+
         return view('beneficiary.evaluation', [
-            'activePage'            => 'evaluation',
-            'evalTotal'             => $evalTotal,
-            'evalPending'           => $evalPending,
-            'iaTotal'               => $iaTotal,
-            'iaPending'             => $iaPending,
-            'skillsTotal'           => $skillsTotal,
-            'skillsPending'         => $skillsPending,
-            'recentAssessmentForms' => $recentAssessmentForms,
+            'activePage'    => 'evaluation',
+            'evalTotal'     => $evalTotal,
+            'evalPending'   => $evalPending,
+            'iaTotal'       => $iaTotal,
+            'iaPending'     => $iaPending,
+            'recentSurveys' => $recentSurveys,
         ]);
     }
 

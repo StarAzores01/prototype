@@ -40,8 +40,18 @@ class TrainingCategoryController extends Controller
             'update'       => $this->updateCategory($request),
             'change_image' => $this->changeImage($request),
             'delete'       => $this->delete($request),
-            default        => back(),
+            default        => $this->toTab($request),
         };
+    }
+
+    /**
+     * Redirects back to the Manage Public Site Content page with the
+     * Trainings tab (or whichever tab the submitting form said it was on)
+     * re-selected, instead of back()/route() always landing on Pages.
+     */
+    private function toTab(Request $request)
+    {
+        return redirect()->route('ec.page-content', ['tab' => $request->input('tab', 'trainings')]);
     }
 
     private function add(Request $request)
@@ -58,12 +68,12 @@ class TrainingCategoryController extends Controller
         if ($request->hasFile('image')) {
             [$ok, $result] = $this->storeImage($request, $category);
             if (! $ok) {
-                return back()->with('error', $result);
+                return $this->toTab($request)->with('error', $result);
             }
             $category->update(['image' => $result]);
         }
 
-        return back()->with('success', 'Training added.');
+        return $this->toTab($request)->with('success', 'Training added.');
     }
 
     private function updateCategory(Request $request)
@@ -83,28 +93,28 @@ class TrainingCategoryController extends Controller
             'status'        => $data['status'],
         ]);
 
-        return back()->with('success', 'Training updated.');
+        return $this->toTab($request)->with('success', 'Training saved as draft. Click "Publish All Changes" to make it live.');
     }
 
     private function changeImage(Request $request)
     {
         $category = TrainingCategory::find((int) $request->input('id'));
         if (! $category) {
-            return back()->with('error', 'Training not found.');
+            return $this->toTab($request)->with('error', 'Training not found.');
         }
 
         if (! $request->hasFile('image')) {
-            return back()->with('error', 'Please choose an image to upload.');
+            return $this->toTab($request)->with('error', 'Please choose an image to upload.');
         }
 
         [$ok, $result] = $this->storeImage($request, $category);
         if (! $ok) {
-            return back()->with('error', $result);
+            return $this->toTab($request)->with('error', $result);
         }
 
         $category->update(['image' => $result]);
 
-        return back()->with('success', 'Image updated.');
+        return $this->toTab($request)->with('success', 'Image saved as draft. Click "Publish All Changes" to make it live.');
     }
 
     private function delete(Request $request)
@@ -117,7 +127,7 @@ class TrainingCategoryController extends Controller
             $category->delete();
         }
 
-        return back()->with('success', 'Training deleted.');
+        return $this->toTab($request)->with('success', 'Training deleted.');
     }
 
     /**
@@ -147,7 +157,11 @@ class TrainingCategoryController extends Controller
         $filename = 'training-category_' . $category->id . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
         $file->storeAs('page-content', $filename, 'public');
 
-        if ($category->image) {
+        // Only delete the old file if it isn't the one still live on the
+        // public site (published_image) — draft edits must never break
+        // what's currently published. The old draft file (if orphaned) is
+        // cleaned up once publishAll() supersedes published_image instead.
+        if ($category->image && $category->image !== $category->published_image) {
             $this->deleteStoredImageUrl($category->image);
         }
 

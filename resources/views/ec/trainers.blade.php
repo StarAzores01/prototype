@@ -383,15 +383,6 @@
                   {{ $tr->last_name }}
                 </div>
 
-                <div
-                  style="
-                    font-size:11px;
-                    color:var(--gray-400)
-                  "
-                >
-                  Project Leader
-                </div>
-
               </div>
 
             </div>

@@ -1,4 +1,4 @@
-﻿@extends('layouts.trainer')
+@extends('layouts.trainer')
 
 {{--
   Trainer-role Programs  -  a SCOPED version of ec/programs.blade.php, not a
@@ -12,7 +12,7 @@
 
 @section('content')
 @if($mode === 'detail')
-{{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DETAIL VIEW â•â•â• --}}
+{{-- ═══════════════════════════════════════════════════════ DETAIL VIEW ═══ --}}
 @php $r = \App\Http\Controllers\Trainer\ProgramController::rollup($viewProgram); @endphp
 <div class="page-header">
   <div class="page-header-left">
@@ -63,21 +63,7 @@
   <div class="stat-card">
     <div class="stat-icon {{ $viewProgram->status === 'Completed' ? 'green' : ($viewProgram->status === 'Ongoing' ? 'blue' : 'yellow') }}"><i class="fas fa-circle-info"></i></div>
     <div class="stat-body">
-      @if($isLead)
-      <form method="POST" action="{{ route('trainer.programs.store') }}" style="margin:0 0 2px">
-        @csrf
-        <input type="hidden" name="action" value="update_status"/>
-        <input type="hidden" name="program_id" value="{{ $viewProgram->id }}"/>
-        <select name="status" onchange="this.form.submit()"
-          style="font-size:16px;font-weight:700;color:var(--gray-800);border:none;background:transparent;padding:0;cursor:pointer">
-          @foreach(['Proposed', 'Approved', 'Ongoing', 'Completed'] as $s)
-          <option value="{{ $s }}" {{ $viewProgram->status === $s ? 'selected' : '' }}>{{ $s }}</option>
-          @endforeach
-        </select>
-      </form>
-      @else
       <div style="font-size:16px;font-weight:700;color:var(--gray-800)">{{ $viewProgram->status }}</div>
-      @endif
       <div class="stat-label">Status</div>
     </div>
   </div>
@@ -256,7 +242,7 @@
               </td>
               <td>{{ $logActionLabels[$log->action] ?? ucfirst($log->action) }}</td>
               <td>
-                <div>{{ $log->item_name ?? '—' }}</div>
+                <div>{{ $log->item_name ?? '�' }}</div>
                 @if($log->item_type)
                 <div style="font-size:11px;color:var(--gray-400)">{{ strtoupper($log->item_type) }}</div>
                 @endif
@@ -294,7 +280,7 @@
             ['Area / Specialization', e($viewProgram->area ?? ' - ')],
             ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? ' - ')],
             ['Timeline End', $timelineEndVal],
-            ['Budget Allocated', 'â‚±'.number_format((float) $viewProgram->budget_allocated, 2)],
+            ['Budget Allocated', '₱'.number_format((float) $viewProgram->budget_allocated, 2)],
             ['Created By', e($viewProgram->creator->full_name ?? ' - ')],
             ['Created', e($viewProgram->created_at?->format('M d, Y') ?? ' - ')],
           ];
@@ -453,7 +439,7 @@
 </div>
 
 @else
-{{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CARD GRID VIEW â•â•â•â• --}}
+{{-- ═══════════════════════════════════════════════════════ CARD GRID VIEW ════ --}}
 <div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Programs</span></div>
@@ -466,53 +452,137 @@
 @if($programs->isEmpty())
 <div class="empty-state"><i class="fas fa-diagram-project"></i><p>You're not on any program's team yet. <a href="#" onclick="openModal('addProgram')">Create one.</a></p></div>
 @else
-@foreach($programsByArea as $area => $areaPrograms)
-  <div class="card-group">
-    <div class="card-group-header">
-      <div class="card-group-title"><i class="fas fa-layer-group"></i> {{ $area }}</div>
-      <span class="card-group-count">{{ $areaPrograms->count() }} {{ \Illuminate\Support\Str::plural('project', $areaPrograms->count()) }}</span>
-    </div>
-    <div class="home-grid home-grid-grouped">
-      @foreach($areaPrograms as $p)
-        @php
-          $pr = \App\Http\Controllers\Trainer\ProgramController::rollup($p);
-          $icon = \App\Support\TrainingCategoryIcon::icon($p->area);
-        @endphp
-        <div class="training-card">
-          <div class="training-card-img" style="background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
-            @if($p->cover_image)
-              <img src="{{ route('files.program-cover', $p) }}" alt="{{ $p->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
+{{-- Search bar --}}
+<div style="margin-bottom:20px">
+  <div style="position:relative;max-width:400px">
+    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
+    <input type="text" id="programSearch" placeholder="Search programs..." oninput="filterPrograms()"
+      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
+  </div>
+</div>
+
+<div class="home-grid" id="programsGrid">
+  @foreach($programs as $p)
+    @php $icon = \App\Support\TrainingCategoryIcon::icon($p->area); @endphp
+    <div class="training-card program-card-item" data-title="{{ strtolower($p->title) }}">
+      <div class="training-card-img" style="background:linear-gradient(135deg,var(--navy),var(--blue-primary))">
+        @if($p->cover_image)
+          <img src="{{ route('files.program-cover', $p) }}" alt="{{ $p->title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0"/>
+        @endif
+        @if(!$p->cover_image)
+          <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
+        @endif
+      </div>
+      <div class="training-card-body">
+        <div class="training-card-title">{{ $p->title }}</div>
+        <div class="training-card-footer" style="margin-top:auto;padding-top:12px">
+          <span class="badge badge-{{ strtolower($p->status) }}">{{ $p->status }}</span>
+          <div style="display:flex;gap:5px;align-items:center">
+            @if($p->isLeadUser(auth('web')->id()))
+            <button class="btn btn-outline" style="padding:7px 12px;font-size:13px;line-height:1"
+              onclick="openEditProgramModal({{ $p->id }}, '{{ addslashes($p->title) }}', '{{ addslashes($p->area) }}', '{{ addslashes($p->description ?? '') }}')">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="btn btn-danger" style="padding:7px 12px;font-size:13px;line-height:1"
+              onclick="openDeleteProgramModal({{ $p->id }}, '{{ addslashes($p->title) }}')">
+              <i class="fas fa-trash"></i>
+            </button>
             @endif
-            <div class="training-card-cat" style="z-index:2;position:relative">{{ $p->area }}</div>
-            @if(!$p->cover_image)
-              <i class="fas {{ $icon }}" style="z-index:1;position:relative;font-size:40px"></i>
-            @endif
-          </div>
-          <div class="training-card-body">
-            <div class="training-card-title">{{ $p->title }}</div>
-            <div class="training-card-desc">{{ \Illuminate\Support\Str::limit($p->description ?? '', 100, '...') }}</div>
-            <div class="training-card-meta">
-              <span><i class="fas fa-user-tie"></i> {{ optional($p->lead->first())->full_name ?? 'No lead' }}</span>
-              <span><i class="fas fa-book"></i> {{ $pr['completed'] }}/{{ $pr['total'] }} done</span>
-            </div>
-            <div style="background:var(--gray-100);border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px">
-              <div style="height:100%;border-radius:8px;width:{{ $pr['progressPct'] }}%;background:{{ $pr['progressPct'] >= 100 ? '#10B981' : '#1A56DB' }}"></div>
-            </div>
-            <div style="font-size:11.5px;color:var(--gray-500);margin-bottom:12px">
-              Remaining: <strong style="color:{{ $pr['budgetRemain'] < 0 ? '#EF4444' : 'var(--gray-800)' }}">&#8369;{{ number_format($pr['budgetRemain'], 2) }}</strong>
-              of &#8369;{{ number_format($pr['budgetAlloc'], 2) }}
-            </div>
-            <div class="training-card-footer">
-              <span class="badge badge-{{ strtolower($p->status) }}">{{ $p->status }}</span>
-              <a href="{{ route('trainer.programs') }}?view={{ $p->id }}" class="btn btn-sm btn-primary">View Details</a>
-            </div>
+            <a href="{{ route('trainer.programs') }}?view={{ $p->id }}" class="btn btn-primary" style="padding:7px 14px;font-size:13px;line-height:1">View</a>
           </div>
         </div>
-      @endforeach
+      </div>
     </div>
-  </div>
-@endforeach
+  @endforeach
+</div>
+<div id="programsEmpty" style="display:none" class="empty-state"><i class="fas fa-magnifying-glass"></i><p>No programs match your search.</p></div>
 @endif
+
+<script>
+function filterPrograms() {
+  const q = document.getElementById('programSearch').value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.program-card-item');
+  let visible = 0;
+  cards.forEach(card => {
+    const match = !q || card.dataset.title.includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  const emptyMsg = document.getElementById('programsEmpty');
+  if (emptyMsg) emptyMsg.style.display = visible === 0 ? '' : 'none';
+}
+function openEditProgramModal(id, title, area, description) {
+  document.getElementById('editProgramId').value = id;
+  document.getElementById('editProgramTitle').value = title;
+  document.getElementById('editProgramArea').value = area;
+  document.getElementById('editProgramDesc').value = description;
+  openModal('editProgram');
+}
+function openDeleteProgramModal(id, title) {
+  document.getElementById('deleteProgramId').value = id;
+  document.getElementById('deleteProgramName').textContent = title;
+  openModal('deleteProgram');
+}
+</script>
+
+<!-- MODAL: EDIT PROGRAM -->
+<div class="modal-overlay" id="modal-editProgram">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2><i class="fas fa-pen"></i> Edit Program</h2>
+      <button class="modal-close" onclick="closeModal('editProgram')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('trainer.programs.store') }}">
+      @csrf
+      <input type="hidden" name="action" value="update"/>
+      <input type="hidden" name="program_id" id="editProgramId"/>
+      <div class="modal-body">
+        <div class="alert alert-info" style="margin-bottom:16px;font-size:13px">
+          <i class="fas fa-lock"></i> Budget and timeline are permanently fixed and cannot be changed here.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Program Title *</label>
+          <input type="text" name="title" id="editProgramTitle" class="form-control" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Area / Specialization *</label>
+          <input type="text" name="area" id="editProgramArea" class="form-control" maxlength="120" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="description" id="editProgramDesc" class="form-control" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editProgram')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: DELETE PROGRAM -->
+<div class="modal-overlay" id="modal-deleteProgram">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h2><i class="fas fa-trash"></i> Delete Program</h2>
+      <button class="modal-close" onclick="closeModal('deleteProgram')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('trainer.programs.store') }}">
+      @csrf
+      <input type="hidden" name="action" value="delete"/>
+      <input type="hidden" name="program_id" id="deleteProgramId"/>
+      <div class="modal-body">
+        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteProgramName"></strong>? This cannot be undone. All activities under this program will be unlinked.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('deleteProgram')">Cancel</button>
+        <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Yes, Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- MODAL: CREATE PROGRAM  -  no lead_id field: the creating trainer is
      automatically the Project Lead, so only member_ids are selectable. -->
@@ -554,7 +624,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Budget Allocated (â‚±) *</label>
+          <label class="form-label">Budget Allocated (₱) *</label>
           <input type="number" name="budget_allocated" class="form-control" placeholder="e.g. 200000" min="0" step="0.01" required/>
           <div style="font-size:11px;color:var(--gray-400);margin-top:4px">Fixed once saved  -  this can never be changed afterward, by anyone.</div>
         </div>

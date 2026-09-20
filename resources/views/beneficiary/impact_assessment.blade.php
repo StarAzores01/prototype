@@ -90,7 +90,7 @@
 
         @elseif($field['type'] === 'select')
         <select name="answer[{{ $fi }}]" class="form-control" {{ !empty($field['required']) ? 'required' : '' }}>
-          <option value="">— Select —</option>
+          <option value="" {{ !empty($field['required']) ? 'disabled' : '' }} selected>— Select —</option>
           @foreach($field['options'] as $opt)
           <option value="{{ $opt }}">{{ $opt }}</option>
           @endforeach

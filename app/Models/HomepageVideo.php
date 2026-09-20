@@ -29,12 +29,16 @@ class HomepageVideo extends Model
     }
 
     /**
-     * Resolve video_url into an inline, autoplay-muted embed when the link
-     * is from a platform we know how to embed (YouTube, Vimeo, or a direct
-     * video file). Returns null for anything else (Google Drive, Facebook,
+     * Resolve video_url into an inline embed when the link is from a
+     * platform we know how to embed (YouTube, Vimeo, or a direct video
+     * file). Returns null for anything else (Google Drive, Facebook,
      * Dropbox, or any link we don't recognize) — those keep falling back to
      * the existing "open in a new tab" placeholder, since a generic link
-     * can't be embedded or autoplayed inline.
+     * can't be embedded inline.
+     *
+     * Playback does not start automatically — autoplaying a video montage
+     * for every visitor burns a lot of bandwidth for no reason, so the
+     * visitor has to press play themselves.
      *
      * @return array{type: string, src: string}|null
      */
@@ -49,7 +53,7 @@ class HomepageVideo extends Model
         if (preg_match('#(?:youtube(?:-nocookie)?\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([\w-]{11})#i', $url, $m)) {
             return [
                 'type' => 'youtube',
-                'src'  => "https://www.youtube-nocookie.com/embed/{$m[1]}?autoplay=1&mute=1&playsinline=1&rel=0",
+                'src'  => "https://www.youtube-nocookie.com/embed/{$m[1]}?playsinline=1&rel=0",
             ];
         }
 
@@ -57,7 +61,7 @@ class HomepageVideo extends Model
         if (preg_match('#vimeo\.com/(?:video/)?(\d+)#i', $url, $m)) {
             return [
                 'type' => 'vimeo',
-                'src'  => "https://player.vimeo.com/video/{$m[1]}?autoplay=1&muted=1&playsinline=1",
+                'src'  => "https://player.vimeo.com/video/{$m[1]}?playsinline=1",
             ];
         }
 

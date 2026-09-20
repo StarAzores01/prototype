@@ -26,12 +26,14 @@ use App\Http\Controllers\Ec\MessageController as EcMessageController;
 use App\Http\Controllers\Ec\NotificationController as EcNotificationController;
 use App\Http\Controllers\Ec\PageContentController as EcPageContentController;
 use App\Http\Controllers\Ec\ParticipantController as EcParticipantController;
+use App\Http\Controllers\Ec\PostController as EcPostController;
 use App\Http\Controllers\Ec\ProfileController as EcProfileController;
+use App\Http\Controllers\Ec\PublishController as EcPublishController;
 use App\Http\Controllers\Ec\ProgramController as EcProgramController;
 use App\Http\Controllers\Ec\ReportController as EcReportController;
 use App\Http\Controllers\Ec\SkillsController as EcSkillsController;
 use App\Http\Controllers\Ec\TrainerController as EcTrainerController;
-use App\Http\Controllers\Ec\TrainingCategoryController as EcTrainingCategoryController;
+use App\Http\Controllers\Ec\FeaturedActivityController as EcFeaturedActivityController;
 use App\Http\Controllers\Ec\TrainingController as EcTrainingController;
 use App\Http\Controllers\Evaluator\DashboardController as EvaluatorDashboardController;
 use App\Http\Controllers\Evaluator\EvaluationHubController as EvaluatorEvaluationHubController;
@@ -43,6 +45,7 @@ use App\Http\Controllers\PublicSite\AboutController;
 use App\Http\Controllers\PublicSite\ChooseRoleController;
 use App\Http\Controllers\PublicSite\ContactController;
 use App\Http\Controllers\PublicSite\LandingController;
+use App\Http\Controllers\PublicSite\PostController as PublicPostController;
 use App\Http\Controllers\PublicSite\TrainingsPublicController;
 use App\Http\Controllers\Trainer\ActivityController as TrainerActivityController;
 use App\Http\Controllers\Trainer\AttendanceController as TrainerAttendanceController;
@@ -77,6 +80,8 @@ Route::view('/privacy', 'public.privacy')->name('privacy');
 Route::view('/terms', 'public.terms')->name('terms');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::get('/posts', [PublicPostController::class, 'index'])->name('public.posts.index');
+Route::get('/posts/{post}', [PublicPostController::class, 'show'])->name('public.posts.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -193,7 +198,9 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
 
         Route::get('/page-content', [EcPageContentController::class, 'index'])->name('page-content');
         Route::post('/page-content', [EcPageContentController::class, 'update'])->name('page-content.update');
-        Route::post('/page-content/trainings', [EcTrainingCategoryController::class, 'store'])->name('page-content.trainings.store');
+        Route::post('/page-content/trainings', [EcFeaturedActivityController::class, 'store'])->name('page-content.trainings.store');
+        Route::post('/page-content/posts', [EcPostController::class, 'store'])->name('page-content.posts.store');
+        Route::post('/page-content/publish', [EcPublishController::class, 'publishAll'])->name('page-content.publish');
     });
 
 // Legacy .php URL redirects (kept for old bookmarks and any links already

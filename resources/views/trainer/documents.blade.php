@@ -152,7 +152,7 @@
         <div class="form-group">
           <label class="form-label">Link Type <span style="color:var(--red)">*</span></label>
           <select name="link_type" class="form-control" required>
-            <option value="">— Select type —</option>
+            <option value="" disabled selected>— Select type —</option>
             <option value="gdrive">Google Drive</option>
             <option value="youtube">YouTube</option>
             <option value="external">External / Other URL</option>

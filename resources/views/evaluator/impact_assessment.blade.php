@@ -60,9 +60,6 @@
           <td style="font-weight:600">{{ $a->title }}</td>
           <td>
             {{ $a->training->title ?? '—' }}
-            @if($a->training?->program)
-            <div style="font-size:11px;color:var(--gray-400)"><i class="fas fa-diagram-project"></i> {{ $a->training->program->title }}</div>
-            @endif
           </td>
           <td>
             @if($a->file_name)

@@ -16,6 +16,14 @@
 
 @if(!$viewForm)
 {{-- ═══════════════ BENEFICIARY PROGRESS MONITORING ═══════════════ --}}
+<div style="margin-bottom:20px">
+  <div style="position:relative;max-width:400px">
+    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
+    <input type="text" id="skillsEntrySearch" placeholder="Search beneficiary or activity..." oninput="filterSkillsEntries()"
+      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
+  </div>
+</div>
 <div class="card" style="margin-bottom:24px">
   <div class="card-header">
     <div>
@@ -36,10 +44,17 @@
   @else
   @foreach($entriesByActivity as $activityName => $activityEntries)
   @php
-    $visibleEntries = $activityEntries->take(3);
-    $moreEntries = $activityEntries->slice(3);
+    // One row per beneficiary (their most recent entry for this
+    // activity), not one row per submission — a beneficiary who logged
+    // progress several times used to repeat as several near-identical
+    // rows. Older entries are still all there, just tucked behind the
+    // chevron toggle so the table reads as one line per person by
+    // default. $activityEntries is already sorted newest-first (see
+    // SkillsController::index()), so groupBy preserves that ordering
+    // and ->first() below is always the latest entry.
+    $entriesByBeneficiary = $activityEntries->groupBy(fn ($e) => $e->beneficiary_id ?? 'unlinked-' . $e->id);
   @endphp
-  <div style="{{ $loop->last ? '' : 'border-bottom:1px solid var(--gray-100)' }}">
+  <div class="skills-activity-group" data-activity="{{ strtolower($activityName) }}" style="{{ $loop->last ? '' : 'border-bottom:1px solid var(--gray-100)' }}">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--gray-50)">
       <div style="font-size:13px;font-weight:700;color:var(--text-heading)">
         <i class="fas fa-layer-group" style="color:var(--gray-400);margin-right:6px"></i>{{ $activityName }}
@@ -62,44 +77,104 @@
           </tr>
         </thead>
         <tbody>
-          @foreach($visibleEntries as $e)
-          <tr>
-            <td>{{ $e->beneficiary->full_name ?? '—' }}</td>
+          @foreach($entriesByBeneficiary as $beneficiaryKey => $beneficiaryEntries)
+          @php
+            $latest = $beneficiaryEntries->first();
+            $olderEntries = $beneficiaryEntries->skip(1);
+            $beneficiaryName = $latest->beneficiary->full_name ?? '—';
+          @endphp
+          <tr class="skills-entry-row skills-beneficiary-summary" data-beneficiary="{{ $beneficiaryKey }}"
+            data-search="{{ strtolower($beneficiaryName . ' ' . $activityName . ' ' . $latest->outcome_type) }}">
+            <td>
+              @if($olderEntries->isNotEmpty())
+              <button type="button" class="skills-expand-btn" onclick="toggleBeneficiaryEntries(this)"
+                title="Show all {{ $beneficiaryEntries->count() }} entries for {{ $beneficiaryName }}"
+                style="background:none;border:none;cursor:pointer;color:var(--gray-400);padding:2px 4px;margin-right:2px;vertical-align:middle">
+                <i class="fas fa-chevron-down" style="font-size:11px"></i>
+              </button>
+              @endif
+              {{ $beneficiaryName }}
+              @if($olderEntries->isNotEmpty())
+              <span style="font-size:10.5px;font-weight:700;color:var(--blue-primary);background:rgba(26,86,219,.08);border-radius:20px;padding:1px 7px;margin-left:4px">&times;{{ $beneficiaryEntries->count() }}</span>
+              @endif
+            </td>
+            <td style="white-space:nowrap">{{ $latest->activity_date->format('M d, Y') }}</td>
+            <td><span class="badge badge-active">{{ $latest->outcome_type }}</span></td>
+            <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $latest->service_fee, 2) }}</td>
+            <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $latest->remarks ?: '—' }}</td>
+          </tr>
+          @foreach($olderEntries as $e)
+          <tr class="skills-entry-row skills-extra-row" data-beneficiary="{{ $beneficiaryKey }}"
+            data-search="{{ strtolower($beneficiaryName . ' ' . $activityName . ' ' . $e->outcome_type) }}" style="display:none;background:var(--gray-50)">
+            <td style="padding-left:30px;color:var(--gray-500)"><i class="fas fa-turn-up fa-rotate-90" style="font-size:10px;margin-right:6px;color:var(--gray-300)"></i>{{ $beneficiaryName }}</td>
             <td style="white-space:nowrap">{{ $e->activity_date->format('M d, Y') }}</td>
             <td><span class="badge badge-active">{{ $e->outcome_type }}</span></td>
             <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $e->service_fee, 2) }}</td>
             <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $e->remarks ?: '—' }}</td>
           </tr>
           @endforeach
+          @endforeach
         </tbody>
       </table>
     </div>
-    @if($moreEntries->isNotEmpty())
-    <details style="padding:0 20px 14px">
-      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--blue-primary);padding:8px 0;list-style:none">
-        <i class="fas fa-chevron-down" style="font-size:10px;margin-right:4px"></i>Show {{ $moreEntries->count() }} more
-      </summary>
-      <div class="table-wrap" style="margin-top:4px">
-        <table>
-          <tbody>
-            @foreach($moreEntries as $e)
-            <tr>
-              <td>{{ $e->beneficiary->full_name ?? '—' }}</td>
-              <td style="white-space:nowrap">{{ $e->activity_date->format('M d, Y') }}</td>
-              <td><span class="badge badge-active">{{ $e->outcome_type }}</span></td>
-              <td style="white-space:nowrap;font-weight:600">&#8369;{{ number_format((float) $e->service_fee, 2) }}</td>
-              <td style="max-width:220px;white-space:normal;color:var(--gray-600)">{{ $e->remarks ?: '—' }}</td>
-            </tr>
-            @endforeach
-          </tbody>
-        </table>
-      </div>
-    </details>
-    @endif
   </div>
   @endforeach
   @endif
+  <div id="skillsEntryNoMatch" style="display:none;padding:40px 24px;text-align:center;color:var(--gray-400)">No entries match your search.</div>
 </div>
+
+<script>
+function toggleBeneficiaryEntries(btn) {
+  var row = btn.closest('tr');
+  var table = btn.closest('table');
+  var bid = row.dataset.beneficiary;
+  var expand = !row.classList.contains('expanded');
+  row.classList.toggle('expanded', expand);
+  var icon = btn.querySelector('i');
+  icon.classList.toggle('fa-chevron-down', !expand);
+  icon.classList.toggle('fa-chevron-up', expand);
+  table.querySelectorAll('.skills-extra-row[data-beneficiary="' + bid + '"]').forEach(function (r) {
+    r.style.display = expand ? '' : 'none';
+  });
+}
+
+function filterSkillsEntries() {
+  const q = document.getElementById('skillsEntrySearch').value.toLowerCase().trim();
+  const groups = document.querySelectorAll('.skills-activity-group');
+  let anyGroupVisible = false;
+  groups.forEach(group => {
+    let groupHasMatch = false;
+    group.querySelectorAll('.skills-beneficiary-summary').forEach(summary => {
+      const bid = summary.dataset.beneficiary;
+      const extras = group.querySelectorAll('.skills-extra-row[data-beneficiary="' + bid + '"]');
+      let extraMatch = false;
+      extras.forEach(x => { if (q && x.dataset.search.includes(q)) extraMatch = true; });
+      const summaryMatch = !q || summary.dataset.search.includes(q);
+      const rowMatch = summaryMatch || extraMatch;
+      summary.style.display = rowMatch ? '' : 'none';
+      if (rowMatch) groupHasMatch = true;
+      // While actively searching, auto-expand a beneficiary whose match
+      // is hidden in an older entry, so the matching row is visible
+      // instead of collapsed away; clearing the search collapses again.
+      const shouldExpand = q ? extraMatch : false;
+      summary.classList.toggle('expanded', shouldExpand);
+      const icon = summary.querySelector('.skills-expand-btn i');
+      if (icon) {
+        icon.classList.toggle('fa-chevron-down', !shouldExpand);
+        icon.classList.toggle('fa-chevron-up', shouldExpand);
+      }
+      extras.forEach(x => {
+        const match = !q || x.dataset.search.includes(q);
+        x.style.display = (rowMatch && (shouldExpand || match)) ? '' : 'none';
+      });
+    });
+    group.style.display = groupHasMatch ? '' : 'none';
+    if (groupHasMatch) anyGroupVisible = true;
+  });
+  const noMatch = document.getElementById('skillsEntryNoMatch');
+  if (noMatch) noMatch.style.display = (groups.length > 0 && !anyGroupVisible) ? '' : 'none';
+}
+</script>
 @endif
 
 @if($viewForm)

@@ -50,7 +50,7 @@
   <label class="form-label">Team Members <span style="font-weight:400;color:var(--gray-400)">(optional, up to 3)</span></label>
   <div class="form-row" style="grid-template-columns:1fr 1fr 1fr" id="memberDropdownsWrap">
     @for($i = 0; $i < 3; $i++)
-    <select name="member_ids[]" class="form-control member-select">
+    <select name="member_ids[]" class="form-control member-select" onchange="syncMemberDropdowns()">
       <option value="">— None —</option>
       @foreach($trainers as $tr)
       <option value="{{ $tr->id }}">{{ $tr->first_name }} {{ $tr->last_name }}</option>
@@ -62,18 +62,31 @@
 </div>
 
 <script>
+// Keeps the 3 Team Member dropdowns in this modal from offering the same
+// person twice, and from offering whoever is picked as Project Lead. Runs
+// on the Lead select's onchange (already wired) and, now, on each Team
+// Member select's own onchange too — picking someone in dropdown 1 removes
+// them from dropdowns 2 and 3's option lists (and vice versa), instead of
+// only the server-side `distinct` validation catching it after submit.
 function syncMemberDropdowns() {
   const leadId  = document.getElementById('programLeadSelect').value;
-  const selects = document.querySelectorAll('.member-select');
+  const selects = Array.from(document.querySelectorAll('.member-select'));
+  const chosenElsewhere = function (sel) {
+    return selects.filter(function (s) { return s !== sel; }).map(function (s) { return s.value; }).filter(Boolean);
+  };
   selects.forEach(function (sel) {
     const current = sel.value;
+    const takenByOtherSelects = chosenElsewhere(sel);
     Array.from(sel.options).forEach(function (opt) {
       if (opt.value === '') return; // keep the "— None —" option
-      opt.hidden   = leadId && opt.value === leadId;
-      opt.disabled = leadId && opt.value === leadId;
+      const isLead = leadId && opt.value === leadId;
+      const takenElsewhere = opt.value !== current && takenByOtherSelects.includes(opt.value);
+      opt.hidden   = isLead;
+      opt.disabled = isLead || takenElsewhere;
     });
     // If the currently selected member is now the lead, reset it
     if (current && current === leadId) sel.value = '';
   });
 }
+document.addEventListener('DOMContentLoaded', syncMemberDropdowns);
 </script>

@@ -184,7 +184,7 @@
             : '— Not yet assigned —';
           $details = [
             ['Program', $programVal],
-            ['Area / Specification', $viewTraining->area ?? '—'],
+            ['Activity Type', $viewTraining->area ?? '—'],
             ['Start Date', $viewTraining->date_start?->format('Y-m-d') ?? '—'],
             ['End Date', $viewTraining->date_end?->format('Y-m-d') ?? '—'],
             ['Status', $viewTraining->status ?? '—'],
@@ -229,16 +229,11 @@
       <input type="hidden" name="action" value="update"/>
       <input type="hidden" name="training_id" value="{{ $viewTraining->id }}"/>
       <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Activity Title *</label>
-            <input type="text" name="title" class="form-control" value="{{ $viewTraining->title }}" required/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Area / Specification *</label>
-            <input type="text" name="area" class="form-control" value="{{ $viewTraining->area }}" placeholder="e.g. Culinary Technology" maxlength="120" required/>
-          </div>
+        <div class="form-group">
+          <label class="form-label">Activity Title *</label>
+          <input type="text" name="title" class="form-control" value="{{ $viewTraining->title }}" required/>
         </div>
+        @include('partials.activity-type-fields', ['idPrefix' => 'editArea', 'selected' => $viewTraining->area])
         <div class="form-group">
           <label class="form-label">Description</label>
           <textarea name="description" class="form-control" rows="3">{{ $viewTraining->description }}</textarea>
@@ -454,7 +449,7 @@ function filterActivities() {
 function openEditTrainingModal(id, title, area, description, dateStart, dateEnd, status, targetPax, programId) {
   document.getElementById('editTrainingId').value = id;
   document.getElementById('editTrainingTitle').value = title;
-  document.getElementById('editTrainingArea').value = area;
+  setActivityTypeValue('editArea', area);
   document.getElementById('editTrainingDesc').value = description;
   document.getElementById('editTrainingDateStart').value = dateStart;
   document.getElementById('editTrainingDateEnd').value = dateEnd;
@@ -480,16 +475,11 @@ function openDeleteTrainingModal(id, title) {
       <input type="hidden" name="action" value="update"/>
       <input type="hidden" name="training_id" id="editTrainingId"/>
       <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Activity Title *</label>
-            <input type="text" name="title" id="editTrainingTitle" class="form-control" required/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Area / Specialization *</label>
-            <input type="text" name="area" id="editTrainingArea" class="form-control" maxlength="120" required/>
-          </div>
+        <div class="form-group">
+          <label class="form-label">Activity Title *</label>
+          <input type="text" name="title" id="editTrainingTitle" class="form-control" required/>
         </div>
+        @include('partials.activity-type-fields', ['idPrefix' => 'editArea'])
         <div class="form-group">
           <label class="form-label">Description</label>
           <textarea name="description" id="editTrainingDesc" class="form-control" rows="3"></textarea>

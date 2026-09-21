@@ -181,7 +181,15 @@ class TrainingController extends Controller
 
     private function allPrograms()
     {
-        return Program::orderBy('title')->get(['id', 'title']);
+        // Must include timeline_start/timeline_end/extended_end_date, not
+        // just id+title: ec.partials.activity-create-fields renders each
+        // option's data-start/data-end from $prog->timeline_start and
+        // $prog->effective_end_date (which reads extended_end_date ??
+        // timeline_end) to bound the activity's date pickers to the chosen
+        // program's timeline. Selecting only id/title left those two
+        // always null, so the bounds were silently never applied and any
+        // date could be typed in, regardless of the program picked.
+        return Program::orderBy('title')->get(['id', 'title', 'timeline_start', 'timeline_end', 'extended_end_date']);
     }
 
     /**

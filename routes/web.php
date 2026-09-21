@@ -15,7 +15,6 @@ use App\Http\Controllers\Beneficiary\ProfileController as BeneficiaryProfileCont
 use App\Http\Controllers\Beneficiary\NotificationController as BeneficiaryNotificationController;
 use App\Http\Controllers\Beneficiary\SkillsController as BeneficiarySkillsController;
 use App\Http\Controllers\Beneficiary\TrainingController as BeneficiaryTrainingController;
-use App\Http\Controllers\Ec\AnalyticsController as EcAnalyticsController;
 use App\Http\Controllers\Ec\DashboardController as EcDashboardController;
 use App\Http\Controllers\Ec\DocumentController as EcDocumentController;
 use App\Http\Controllers\Ec\EvaluationController as EcEvaluationController;
@@ -190,7 +189,6 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
         Route::post('/impact-assessment', [EcImpactAssessmentController::class, 'store'])->name('impact_assessment.store');
         Route::get('/skills', [EcSkillsController::class, 'index'])->name('skills');
         Route::get('/reports', [EcReportController::class, 'index'])->name('reports');
-        Route::get('/analytics', [EcAnalyticsController::class, 'index'])->name('analytics');
         Route::get('/trainers', [EcTrainerController::class, 'index'])->name('trainers');
         Route::post('/trainers', [EcTrainerController::class, 'store'])->name('trainers.store');
         Route::get('/evaluators', [EcEvaluatorController::class, 'index'])->name('evaluators');
@@ -236,7 +234,7 @@ Route::middleware(['auth:web', 'role:extension_coordinator', 'no-back-cache'])
             '/impact_assessment.php'    => '/ec/impact-assessment',
             '/skills.php'               => '/ec/skills',
             '/reports.php'              => '/ec/reports',
-            '/analytics.php'            => '/ec/analytics',
+            '/analytics.php'            => '/ec/reports',
             '/trainers.php'             => '/ec/trainers',
             '/evaluators.php'           => '/ec/evaluators',
             '/page-content.php'         => '/ec/page-content',

@@ -121,7 +121,7 @@
         @php
           $details = [
             ['Program', $viewTraining->program->title ?? '—'],
-            ['Area', $viewTraining->area],
+            ['Activity Type', $viewTraining->area],
             ['Start Date', $viewTraining->date_start?->format('Y-m-d') ?? '—'],
             ['End Date', $viewTraining->date_end?->format('Y-m-d') ?? '—'],
             ['Status', $viewTraining->status],
@@ -296,6 +296,9 @@ function switchDocAddAsActivity(kind) {
     <h1>My Activities</h1>
     <p>All extension activities assigned to you by the Extension Coordinator</p>
   </div>
+  @if($programs->isNotEmpty())
+  <button class="btn btn-primary" onclick="openModal('addTraining')"><i class="fas fa-plus"></i> Create Activity</button>
+  @endif
 </div>
 
 <form method="GET" action="{{ route('trainer.trainings') }}" class="filter-row">
@@ -322,7 +325,14 @@ function switchDocAddAsActivity(kind) {
 @endphp
 
 @if($trainings->isEmpty())
-<div class="empty-state"><i class="fas fa-book"></i><p>No activities assigned yet.</p></div>
+<div class="empty-state">
+  <i class="fas fa-book"></i>
+  @if($programs->isNotEmpty())
+  <p>No activities yet. <a href="#" onclick="openModal('addTraining')">Create one.</a></p>
+  @else
+  <p>No activities yet. You'll need to be on a Program's team before you can add one  -  see <a href="{{ route('trainer.programs') }}">Programs</a>.</p>
+  @endif
+</div>
 @else
 @foreach($trainingsByProject as $projectTrainings)
   @php $project = $projectTrainings->first()->program; @endphp
@@ -386,7 +396,7 @@ function switchDocAddAsActivity(kind) {
 function openEditTrainingModal(id, title, area, description, dateStart, dateEnd, status, targetPax) {
   document.getElementById('editTrainingId').value = id;
   document.getElementById('editTrainingTitle').value = title;
-  document.getElementById('editTrainingArea').value = area;
+  setActivityTypeValue('editArea', area);
   document.getElementById('editTrainingDesc').value = description;
   document.getElementById('editTrainingDateStart').value = dateStart;
   document.getElementById('editTrainingDateEnd').value = dateEnd;
@@ -412,16 +422,11 @@ function openDeleteTrainingModal(id, title) {
       <input type="hidden" name="action" value="update"/>
       <input type="hidden" name="training_id" id="editTrainingId"/>
       <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Activity Title *</label>
-            <input type="text" name="title" id="editTrainingTitle" class="form-control" required/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Area / Specialization *</label>
-            <input type="text" name="area" id="editTrainingArea" class="form-control" maxlength="120" required/>
-          </div>
+        <div class="form-group">
+          <label class="form-label">Activity Title *</label>
+          <input type="text" name="title" id="editTrainingTitle" class="form-control" required/>
         </div>
+        @include('partials.activity-type-fields', ['idPrefix' => 'editArea'])
         <div class="form-group">
           <label class="form-label">Description</label>
           <textarea name="description" id="editTrainingDesc" class="form-control" rows="3"></textarea>
@@ -478,5 +483,34 @@ function openDeleteTrainingModal(id, title) {
     </form>
   </div>
 </div>
+
+@if($programs->isNotEmpty())
+<!-- MODAL: CREATE ACTIVITY  -  standalone (not scoped to a single program's
+     detail page, unlike the "Add Activity" modal on trainer/programs.blade.php).
+     Same shared field set as EC's own Create Activity modal
+     (ec.partials.activity-create-fields), which is what already ties the
+     Start/End Date inputs' min/max to whichever Program is picked in the
+     dropdown (see that partial's syncActivityDateBounds())  -  so a trainer
+     can't pick dates outside the chosen program's timeline here either. -->
+<div class="modal-overlay" id="modal-addTraining">
+  <div class="modal">
+    <div class="modal-header">
+      <h2><i class="fas fa-plus"></i> Create New Activity</h2>
+      <button class="modal-close" onclick="closeModal('addTraining')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('trainer.trainings.store') }}">
+      @csrf
+      <input type="hidden" name="action" value="create"/>
+      <div class="modal-body">
+        @include('ec.partials.activity-create-fields', ['programs' => $programs])
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('addTraining')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Activity</button>
+      </div>
+    </form>
+  </div>
+</div>
+@endif
 @endif
 @endsection

@@ -66,24 +66,14 @@
   </div>
 </div>
 
-<div class="chart-row">
+<div class="chart-row" style="grid-template-columns:1fr">
   <!-- BY FILE TYPE -->
   <div class="chart-card">
-    <div class="chart-card-title"><i class="fas fa-chart-pie"></i> Documents &amp; Links by Type</div>
+    <div class="chart-card-title"><i class="fas fa-chart-column"></i> Documents &amp; Links by Type</div>
     @if(empty($byType))
       <div class="chart-empty">No documents yet.</div>
     @else
       <canvas id="chartByType" style="max-height:260px"></canvas>
-    @endif
-  </div>
-
-  <!-- BY SCOPE -->
-  <div class="chart-card">
-    <div class="chart-card-title"><i class="fas fa-layer-group"></i> By Scope</div>
-    @if($totalDocuments === 0)
-      <div class="chart-empty">No documents yet.</div>
-    @else
-      <canvas id="chartByScope" style="max-height:260px"></canvas>
     @endif
   </div>
 </div>
@@ -146,21 +136,10 @@
 
   @if(!empty($byType))
   new Chart(document.getElementById('chartByType'), {
-    type: 'doughnut',
+    type: 'bar',
     data: {
       labels: {!! json_encode(array_keys($byType)) !!},
       datasets: [{ data: {!! json_encode(array_values($byType)) !!}, backgroundColor: palette }],
-    },
-    options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } },
-  });
-  @endif
-
-  @if($totalDocuments > 0)
-  new Chart(document.getElementById('chartByScope'), {
-    type: 'bar',
-    data: {
-      labels: {!! json_encode(array_keys($byScope)) !!},
-      datasets: [{ data: {!! json_encode(array_values($byScope)) !!}, backgroundColor: ['#1A56DB','#10B981','#F59E0B'] }],
     },
     options: {
       plugins: { legend: { display: false } },

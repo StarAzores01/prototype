@@ -57,10 +57,25 @@
           @endphp
           @foreach($viewDocs as $d)
             @php
+              // A "material" here can be either an uploaded file (streamed
+              // through the auth-checked files.document route, which needs
+              // a real file_name) or an external link (no file_name at
+              // all — see Document::isLink()). This used to always build
+              // route('files.document', $d), which sent link documents
+              // through the file-streaming controller too; it has no file
+              // to stream, so it 500'd for every participant who clicked a
+              // link a Project Leader had posted. Links now open their
+              // link_url directly, same as everywhere else documents are
+              // listed (see partials.document-rows-table).
+              $isLink = $d->isLink();
+              $openUrl = $isLink ? $d->link_url : route('files.document', $d);
               $ext = strtolower($d->file_type ?? '');
-              [$ico, $color, $bg] = $icons[$ext] ?? ['fa-file', '#64748B', '#F1F5F9'];
+              [$ico, $color, $bg] = $isLink
+                ? ['fa-link', '#1A56DB', '#DBEAFE']
+                : ($icons[$ext] ?? ['fa-file', '#64748B', '#F1F5F9']);
+              $typeLabel = $isLink ? ($d->link_type ?: 'Link') : $ext;
             @endphp
-          <a href="{{ route('files.document', $d) }}" target="_blank"
+          <a href="{{ $openUrl }}" target="_blank" rel="noopener"
              style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;border-radius:12px;border:1.5px solid var(--gray-200);text-decoration:none;transition:all .2s;background:var(--surface)"
              onmouseover="this.style.borderColor='{{ $color }}';this.style.background='{{ $bg }}'"
              onmouseout="this.style.borderColor='var(--gray-200)';this.style.background='var(--surface)'">
@@ -69,7 +84,7 @@
             </div>
             <div style="text-align:center">
               <div style="font-size:12px;font-weight:600;color:var(--gray-800);word-break:break-word;line-height:1.3">{{ $d->original_name }}</div>
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:{{ $color }};margin-top:4px">{{ strtoupper($ext) }}</div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:{{ $color }};margin-top:4px">{{ strtoupper($typeLabel) }}</div>
             </div>
           </a>
           @endforeach

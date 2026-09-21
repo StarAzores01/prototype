@@ -32,12 +32,12 @@
     .lp-hamburger.lp-open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
     .lp-hamburger.lp-open span:nth-child(2) { opacity:0; }
     .lp-hamburger.lp-open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
-    .page-hero { padding:120px 0 48px;background:linear-gradient(135deg,#09182F,#102545,#1A3A72); }
+    .page-hero { padding:120px 0 48px;background:linear-gradient(135deg,#09182F,#102545,#1A3A72);text-align:center; }
     .eyebrow { display:inline-flex;align-items:center;gap:8px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.25);color:#38BDF8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;padding:5px 14px;border-radius:40px;margin-bottom:18px; }
     .lp-container { max-width:1200px;margin:0 auto;padding:0 28px; }
 
     /* ── Posts index grid ── */
-    .posts-index-wrap { max-width:1100px;margin:-24px auto 0;padding:0 24px 80px;position:relative;z-index:1; }
+    .posts-index-wrap { max-width:1100px;margin:0 auto;padding:56px 24px 80px;position:relative;z-index:1; }
     .posts-index-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px; }
     .posts-index-card {
       background:#fff;border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;
@@ -125,7 +125,7 @@
   <div style="max-width:760px;margin:0 auto;padding:0 24px">
     <div class="eyebrow"><i class="fas fa-bullhorn"></i> Posts &amp; Announcements</div>
     <h1 style="font-size:clamp(26px,4vw,38px);font-weight:800;color:#fff;margin-bottom:10px;line-height:1.25">All Posts &amp; Announcements</h1>
-    <p style="color:rgba(255,255,255,.6);font-size:14.5px;max-width:600px;line-height:1.7">
+    <p style="color:rgba(255,255,255,.6);font-size:14.5px;max-width:600px;margin:0 auto;line-height:1.7">
       Every update from the College of Industrial Technology Extension Office, newest first.
     </p>
   </div>

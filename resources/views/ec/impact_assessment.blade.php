@@ -181,6 +181,14 @@
   </div>
 </div>
 @else
+<div style="margin-bottom:20px">
+  <div style="position:relative;max-width:400px">
+    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
+    <input type="text" id="surveyFormSearch" placeholder="Search survey forms..." oninput="filterSurveyForms()"
+      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
+  </div>
+</div>
 <div class="card">
   <div class="card-body" style="padding:0">
     <div class="table-wrap">
@@ -194,14 +202,14 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="surveyFormBody">
         @foreach($surveyForms as $sf)
           @php
             $total = (int) $sf->total_participants;
             $done = (int) $sf->responses_count;
             $pct = $total > 0 ? round($done / $total * 100) : 0;
           @endphp
-          <tr>
+          <tr class="survey-form-row" data-search="{{ strtolower($sf->title . ' ' . ($sf->training->title ?? '')) }}">
             <td style="font-weight:600">{{ $sf->title }}</td>
             <td>{{ $sf->training->title ?? '—' }}</td>
             <td>{{ $sf->sent_at?->format('M d, Y') ?? '—' }}</td>
@@ -228,9 +236,24 @@
         @endforeach
       </tbody>
     </table>
+    <div id="surveyFormNoMatch" style="display:none;text-align:center;padding:40px;color:var(--gray-400)">No survey forms match your search.</div>
     </div>
   </div>
 </div>
+<script>
+function filterSurveyForms() {
+  const q = document.getElementById('surveyFormSearch').value.toLowerCase().trim();
+  const rows = document.querySelectorAll('#surveyFormBody .survey-form-row');
+  let visibleCount = 0;
+  rows.forEach(row => {
+    const match = !q || row.dataset.search.includes(q);
+    row.style.display = match ? '' : 'none';
+    if (match) visibleCount++;
+  });
+  const noMatch = document.getElementById('surveyFormNoMatch');
+  if (noMatch) noMatch.style.display = (rows.length > 0 && visibleCount === 0) ? '' : 'none';
+}
+</script>
 @endif
 @endif
 

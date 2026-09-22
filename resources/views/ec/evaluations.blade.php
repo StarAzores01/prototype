@@ -238,6 +238,15 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
   <a href="{{ route('ec.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
 </div>
 
+<div style="margin-bottom:20px">
+  <div style="position:relative;max-width:400px">
+    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
+    <input type="text" id="evalActivitySearch" placeholder="Search activities..." oninput="filterEvalActivities()"
+      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
+  </div>
+</div>
+
 <div class="card">
   <div class="card-header"><div class="card-title">Activities — Evaluation Status</div></div>
   <div class="table-wrap">
@@ -252,13 +261,13 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="evalActivityBody">
       @forelse($trainings as $t)
         @php
           $totalRc = $t->evalForms->sum('responses_count');
           $today   = now()->startOfDay();
         @endphp
-        <tr>
+        <tr class="eval-activity-row" data-title="{{ strtolower($t->title) }}">
           <td><strong>{{ $t->title }}</strong></td>
           <td style="font-size:12px;color:var(--gray-400)">
             {{ $t->date_start?->format('M d') ?? '—' }}@if($t->date_end) – {{ $t->date_end->format('M d, Y') }}@endif
@@ -282,23 +291,23 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
                     $fStatus = 'Awaiting'; $fBadge = 'badge-ongoing'; $fIcon = 'fa-hourglass-half';
                 }
               @endphp
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:nowrap;white-space:nowrap">
-                <span style="font-size:10px;color:var(--gray-400)">{{ $ef->send_date?->format('M d') ?? '—' }}</span>
-                <span class="badge {{ $fBadge }}" style="font-size:10px;white-space:nowrap"><i class="fas {{ $fIcon }}"></i> {{ $fStatus }}</span>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:nowrap;white-space:nowrap">
+                <span style="font-size:12px;color:var(--gray-400)">{{ $ef->send_date?->format('M d') ?? '—' }}</span>
+                <span class="badge {{ $fBadge }}" style="font-size:12px;white-space:nowrap;padding:4px 10px"><i class="fas {{ $fIcon }}"></i> {{ $fStatus }}</span>
                 @if($ef->sent_at)
                   {{-- Already sent — locked. Editing now would silently change
                        questions beneficiaries may already be answering, so
                        the form can only be viewed, not edited. --}}
-                  <a href="{{ route('ec.evaluations') }}?responses={{ $t->id }}&rform={{ $ef->id }}" class="btn btn-sm btn-ghost" style="padding:2px 7px;font-size:11px" title="View Responses"><i class="fas fa-eye"></i></a>
-                  <span class="btn btn-sm btn-outline" style="padding:2px 7px;font-size:11px;opacity:.4;cursor:not-allowed" title="Already sent — cannot be edited"><i class="fas fa-lock"></i></span>
+                  <a href="{{ route('ec.evaluations') }}?responses={{ $t->id }}&rform={{ $ef->id }}" class="btn btn-sm btn-ghost" style="padding:4px 9px;font-size:13px" title="View Responses"><i class="fas fa-eye"></i></a>
+                  <span class="btn btn-sm btn-outline" style="padding:4px 9px;font-size:13px;opacity:.4;cursor:not-allowed" title="Already sent — cannot be edited"><i class="fas fa-lock"></i></span>
                 @else
-                  <a href="{{ route('ec.evaluations') }}?edit_form={{ $t->id }}&form_id={{ $ef->id }}" class="btn btn-sm btn-outline" style="padding:2px 7px;font-size:11px" title="Edit"><i class="fas fa-pen"></i></a>
+                  <a href="{{ route('ec.evaluations') }}?edit_form={{ $t->id }}&form_id={{ $ef->id }}" class="btn btn-sm btn-outline" style="padding:4px 9px;font-size:13px" title="Edit"><i class="fas fa-pen"></i></a>
                 @endif
                 <form method="POST" action="{{ route('ec.evaluations.store') }}" style="display:inline" onsubmit="return confirm('Delete this evaluation form?')">
                   @csrf
                   <input type="hidden" name="action" value="delete_form"/>
                   <input type="hidden" name="form_id" value="{{ $ef->id }}"/>
-                  <button type="submit" class="btn btn-sm btn-danger" style="padding:2px 7px;font-size:11px" title="Delete"><i class="fas fa-trash"></i></button>
+                  <button type="submit" class="btn btn-sm btn-danger" style="padding:4px 9px;font-size:13px" title="Delete"><i class="fas fa-trash"></i></button>
                 </form>
               </div>
             @empty
@@ -316,7 +325,23 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
       @endforelse
       </tbody>
     </table>
+    <div id="evalActivityNoMatch" style="display:none;text-align:center;padding:40px;color:var(--gray-400)">No activities match your search.</div>
   </div>
 </div>
+
+<script>
+function filterEvalActivities() {
+  const q = document.getElementById('evalActivitySearch').value.toLowerCase().trim();
+  const rows = document.querySelectorAll('#evalActivityBody .eval-activity-row');
+  let visibleCount = 0;
+  rows.forEach(row => {
+    const match = !q || row.dataset.title.includes(q);
+    row.style.display = match ? '' : 'none';
+    if (match) visibleCount++;
+  });
+  const noMatch = document.getElementById('evalActivityNoMatch');
+  if (noMatch) noMatch.style.display = (rows.length > 0 && visibleCount === 0) ? '' : 'none';
+}
+</script>
 @endif
 @endsection

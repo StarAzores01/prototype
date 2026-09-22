@@ -87,6 +87,11 @@ class TrainingController extends Controller
             'mode'               => 'list',
             'trainings'          => $trainings,
             'trainingsByProject' => $trainingsByProject,
+            // Only programs this trainer is lead/member on  -  same scope
+            // create() already enforces, and the same shared field set EC
+            // uses (ec.partials.activity-create-fields) for its own
+            // standalone Create Activity modal.
+            'programs'           => Program::visibleToTrainer($this->trainerId())->orderBy('title')->get(),
             'q'          => $q,
             'status'     => $status,
         ]);
@@ -290,13 +295,23 @@ class TrainingController extends Controller
      * unlike Trainer\ProgramController's lead-only amendment actions).
      * program_id is validated against Program::visibleToTrainer() so a
      * tampered form can't sneak in an arbitrary program the trainer isn't
-     * on. lead_id/member_ids for the Activity's own team come from the
-     * full trainer pool, same as Ec\TrainingController::create()  -  this
-     * team is independent of the Program's team.
+     * on.
+     *
+     * FIX: this used to require lead_id (and validate budget_used as a
+     * plain field), copied from an older shape of the create form. The
+     * actual "Add Activity" markup both roles share
+     * (resources/views/ec/partials/activity-create-fields.blade.php) has
+     * had no Project Leader/Team Members inputs for a while now  -  an
+     * activity inherits its team from the Program  -  and posts a
+     * budget_items[] breakdown table instead of a bare budget_used field.
+     * Requiring lead_id here meant every submission from that form failed
+     * validation and bounced back to the (closed) modal with no visible
+     * error, which looked like "the activity isn't saving." Brought in
+     * line with Ec\TrainingController::create(): team is derived via
+     * teamFromProgram(), and budget_used is computed from budget_items.
      */
     private function create(Request $request)
     {
-        $this->scrubMemberIds($request);
         $trainerId = $this->trainerId();
 
         $data = Validator::make($request->all(), [
@@ -305,29 +320,27 @@ class TrainingController extends Controller
             'description'         => 'nullable|string',
             'date_start'          => 'nullable|date',
             'date_end'            => 'nullable|date|after_or_equal:date_start',
-            'budget_allocated'    => 'required|numeric|min:0|max:9999999999.99',
-            'budget_used'         => 'nullable|numeric|min:0|max:9999999999.99',
+            'budget_allocated'    => 'nullable|numeric|min:0|max:9999999999.99',
             'target_participants' => 'nullable|integer|min:1',
-            'lead_id'             => 'required|integer|exists:users,id',
-            'member_ids'          => 'nullable|array|max:3',
-            'member_ids.*'        => 'integer|distinct|exists:users,id',
             'program_id'          => [
                 'required',
                 'integer',
                 Rule::exists('programs', 'id'),
             ],
-        ], [
-            'member_ids.max' => 'You can assign at most 3 team members.',
         ])->after(function (ValidatorContract $validator) use ($request, $trainerId) {
-            $this->validateTeamRoles($validator, (int) $request->input('lead_id'), (array) $request->input('member_ids', []));
-
             $programId = (int) $request->input('program_id');
             if ($programId && ! Program::visibleToTrainer($trainerId)->where('id', $programId)->exists()) {
                 $validator->errors()->add('program_id', 'You can only add activities under a program you belong to.');
             }
         })->validate();
 
-        $training = DB::transaction(function () use ($data, $trainerId) {
+        $training = DB::transaction(function () use ($data, $request, $trainerId) {
+            $budgetItems = $request->input('budget_items', []);
+            $budgetUsed  = 0;
+            foreach ($budgetItems as $item) {
+                $budgetUsed += round((float) ($item['quantity'] ?? 0) * (float) ($item['unit_cost'] ?? 0), 2);
+            }
+
             $training = Training::create([
                 'title'                => $data['title'],
                 'area'                 => $data['area'],
@@ -335,13 +348,39 @@ class TrainingController extends Controller
                 'date_start'           => $data['date_start'] ?? null,
                 'date_end'             => $data['date_end'] ?? null,
                 'target_participants'  => $data['target_participants'] ?? 0,
-                'budget_allocated'     => $data['budget_allocated'],
-                'budget_used'          => $data['budget_used'] ?? 0,
+                'budget_allocated'     => $data['budget_allocated'] ?? null,
+                'budget_used'          => $budgetUsed,
                 'created_by'           => $trainerId,
                 'program_id'           => $data['program_id'],
             ]);
 
-            $this->syncTeam($training, (int) $data['lead_id'], $data['member_ids'] ?? []);
+            foreach ($budgetItems as $item) {
+                $cat = ($item['category'] ?? '') === 'Other'
+                    ? 'Other: '.trim($item['other_specify'] ?? '')
+                    : ($item['category'] ?? '');
+                if (! $cat) {
+                    continue;
+                }
+                $qty = (float) ($item['quantity'] ?? 0);
+                $uc  = (float) ($item['unit_cost'] ?? 0);
+                if ($qty <= 0) {
+                    continue;
+                }
+
+                \App\Models\BudgetItem::create([
+                    'training_id' => $training->id,
+                    'category'    => $cat,
+                    'description' => $item['description'] ?? null,
+                    'quantity'    => $qty,
+                    'unit_cost'   => $uc,
+                    'logged_by'   => $trainerId,
+                ]);
+            }
+
+            $team = $this->teamFromProgram($data['program_id']);
+            if ($team['lead_id']) {
+                $this->syncTeam($training, $team['lead_id'], $team['member_ids']);
+            }
 
             return $training;
         });
@@ -353,6 +392,25 @@ class TrainingController extends Controller
         ]);
 
         return redirect()->route('trainer.trainings', ['view' => $training->id])->with('success', 'Activity created.');
+    }
+
+    /**
+     * An activity doesn't have its own Project Leader/Team Members  -  it
+     * inherits whoever is assigned to its Program. Returns a null lead_id
+     * (and no members) when the program has no lead yet, so create() can
+     * skip syncTeam() rather than attach a nonexistent user id. Identical
+     * to Ec\TrainingController::teamFromProgram()  -  kept in sync on purpose.
+     *
+     * @return array{lead_id: ?int, member_ids: int[]}
+     */
+    private function teamFromProgram(?int $programId): array
+    {
+        $program = $programId ? Program::with(['lead', 'members'])->find($programId) : null;
+
+        return [
+            'lead_id'    => optional($program?->lead->first())->id,
+            'member_ids' => $program?->members->pluck('id')->all() ?? [],
+        ];
     }
 
     /** Same wholesale-replace behavior as Ec\TrainingController::syncTeam()  -  kept identical on purpose. */

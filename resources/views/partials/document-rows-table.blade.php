@@ -63,13 +63,54 @@
     ->sortByDesc(fn ($group) => optional($group->max('created_at'))->timestamp ?? 0);
 @endphp
 
+{{--
+  Every group on the page (a Program's documents, an Activity's sub-group,
+  the General bucket, each further split by upload date) renders its OWN
+  <table> — there's no single table spanning the whole page. Left to their
+  own devices, plain HTML tables each auto-size their columns from just
+  their own rows, so the same "Document"/"Type"/"Time" column doesn't line
+  up between one group's table and the next whenever the row content
+  happens to differ in length (a long link URL vs. a short filename, etc.)
+  — the ragged look from stacking several independently-sized tables.
+  Fixing that needs every table on the page to agree on the same column
+  widths regardless of its own content, which is what the .doc-table rule
+  + <colgroup> below do: table-layout:fixed makes each table obey the
+  widths in its <colgroup> instead of measuring its own content, and since
+  every table's <colgroup> is generated from the same conditionals as its
+  <thead>, the columns land in the same place table after table.
+--}}
+@once
+<style>
+table.doc-table { table-layout: fixed; }
+table.doc-table th, table.doc-table td { overflow: hidden; text-overflow: ellipsis; }
+</style>
+@endonce
+
 @foreach($dateGrouped as $dateLabel => $dateGroup)
   <div class="doc-date-group-header" style="font-size:11px;opacity:.85">
     <i class="fas fa-calendar-alt" style="margin-right:6px;opacity:.6"></i>{{ $dateLabel }}
     <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $dateGroup->count() }} file{{ $dateGroup->count() === 1 ? '' : 's' }})</span>
   </div>
   <div class="table-wrap">
-  <table class="data-table">
+  <table class="data-table doc-table">
+    <colgroup>
+      {{--
+        Document is the one column that isn't a fixed pixel width, but it
+        still needs a cap — left fully open, it soaks up 100% of whatever
+        the fixed columns below don't use, which on a wide screen with few
+        other columns (e.g. the read-only Trainer view, no Visibility
+        column) stretched it out into a huge gap between the filename and
+        the next column. 45% keeps it generous for long names/links
+        without ballooning past what the content actually needs.
+      --}}
+      <col style="width:45%"/> {{-- Document --}}
+      <col style="width:90px"/> {{-- Type --}}
+      @if($showLinkedTo)<col style="width:190px"/>@endif {{-- Linked To --}}
+      @if($canManage)<col style="width:170px"/>@endif {{-- Visibility --}}
+      @if($showUploader)<col style="width:150px"/>@endif {{-- Uploaded By --}}
+      <col style="width:90px"/> {{-- Time --}}
+      <col style="width:{{ $canManage ? 180 : 110 }}px"/> {{-- Actions --}}
+    </colgroup>
     <thead>
       <tr>
         <th>Document</th>
@@ -135,7 +176,7 @@
             @csrf
             <input type="hidden" name="action" value="set_visibility"/>
             <input type="hidden" name="doc_id" value="{{ $d->id }}"/>
-            <select name="visibility" class="filter-select" style="font-size:12px;padding:4px 8px;border-radius:6px;color:{{ $visColor[$vis] }}" onchange="this.form.submit()">
+            <select name="visibility" class="filter-select" style="font-size:12px;padding:4px 8px;border-radius:6px;color:{{ $visColor[$vis] }};max-width:100%;box-sizing:border-box" onchange="this.form.submit()">
               <option value="private" {{ $vis === 'private' ? 'selected' : '' }}>Private</option>
               <option value="ec_trainer" {{ $vis === 'ec_trainer' ? 'selected' : '' }}>EC &amp; Project Leaders</option>
               <option value="public" {{ $vis === 'public' ? 'selected' : '' }}>Public</option>
@@ -148,7 +189,7 @@
         @endif
         <td style="font-size:12px;color:var(--gray-400);white-space:nowrap">{{ $d->created_at?->format('g:i A') ?? '—' }}</td>
         <td>
-          <div class="action-btns">
+          <div class="action-btns" style="flex-wrap:wrap">
             @if($d->isLink())
             <a href="{{ $d->link_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline" title="Open link"><i class="fas fa-arrow-up-right-from-square"></i></a>
             @else

@@ -36,8 +36,14 @@ class TrainingController extends Controller
 
     private function detailView(Training $training)
     {
+        // 'ec_trainer' visibility means EC + Project Leader/Trainer only  -
+        // FileDownloadController::authorizeVisibility() already denies a
+        // beneficiary who tries to open one (403). Listing them here too
+        // used to show a beneficiary a document card they'd get blocked
+        // from the moment they clicked it, so only 'public'  -  the one
+        // tier beneficiaries are actually allowed to open  -  is shown.
         $documents = Document::where('training_id', $training->id)
-            ->whereIn('visibility', ['public', 'ec_trainer'])
+            ->where('visibility', 'public')
             ->orderByDesc('created_at')
             ->get();
 

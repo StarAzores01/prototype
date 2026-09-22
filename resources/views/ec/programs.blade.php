@@ -411,7 +411,7 @@ function toggleBreakdown(id) {
         </div>
         <div class="form-group">
           <label class="form-label">Project Lead * <span style="font-weight:400;color:var(--gray-400)">(exactly one, from Project Leaders)</span></label>
-          <select name="lead_id" class="form-control" required>
+          <select name="lead_id" id="mtLeadSelect" class="form-control" required onchange="syncManageTeamDropdowns()">
             <option value="" disabled selected> -  Select Project Lead  - </option>
             @foreach($trainers as $tr)
             <option value="{{ $tr->id }}" {{ (int) $currentLeadId === $tr->id ? 'selected' : '' }}>{{ $tr->first_name }} {{ $tr->last_name }}</option>
@@ -423,7 +423,7 @@ function toggleBreakdown(id) {
           <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
             @for($i = 0; $i < 3; $i++)
             @php $cur = $currentMembers->get($i); @endphp
-            <select name="member_ids[]" class="form-control">
+            <select name="member_ids[]" class="form-control mt-member-select" onchange="syncManageTeamDropdowns()">
               <option value=""> -  None  - </option>
               @foreach($trainers as $tr)
               <option value="{{ $tr->id }}" {{ $cur && $cur->id === $tr->id ? 'selected' : '' }}>{{ $tr->first_name }} {{ $tr->last_name }}</option>
@@ -441,6 +441,36 @@ function toggleBreakdown(id) {
     </form>
   </div>
 </div>
+
+<script>
+// Same "can't pick the same person twice" enforcement as the Create Program
+// modal's syncMemberDropdowns(), scoped to this Manage Team modal's own
+// selects (its ids/classes are prefixed mt* so the two don't cross-wire on
+// pages where both modals exist). Runs once on load too, since these
+// dropdowns can start with members already selected  -  it only disables
+// options, never clears an existing selection.
+function syncManageTeamDropdowns() {
+  const leadSelect = document.getElementById('mtLeadSelect');
+  const leadId = leadSelect ? leadSelect.value : '';
+  const selects = Array.from(document.querySelectorAll('.mt-member-select'));
+  const chosenElsewhere = function (sel) {
+    return selects.filter(function (s) { return s !== sel; }).map(function (s) { return s.value; }).filter(Boolean);
+  };
+  selects.forEach(function (sel) {
+    const current = sel.value;
+    const takenByOtherSelects = chosenElsewhere(sel);
+    Array.from(sel.options).forEach(function (opt) {
+      if (opt.value === '') return;
+      const isLead = leadId && opt.value === leadId;
+      const takenElsewhere = opt.value !== current && takenByOtherSelects.includes(opt.value);
+      opt.hidden   = isLead;
+      opt.disabled = isLead || takenElsewhere;
+    });
+    if (current && current === leadId) sel.value = '';
+  });
+}
+document.addEventListener('DOMContentLoaded', syncManageTeamDropdowns);
+</script>
 
 <!-- MODAL: ADD ACTIVITY (scoped to this program) -->
 <div class="modal-overlay" id="modal-addActivity">

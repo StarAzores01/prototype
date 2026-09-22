@@ -242,7 +242,9 @@
               </td>
               <td>{{ $logActionLabels[$log->action] ?? ucfirst($log->action) }}</td>
               <td>
-                <div>{{ $log->item_name ?? '—' }}</div>
+
+<div>{{ $log->item_name ?? 'â€”' }}</div>
+
                 @if($log->item_type)
                 <div style="font-size:11px;color:var(--gray-400)">{{ strtoupper($log->item_type) }}</div>
                 @endif
@@ -352,7 +354,7 @@
           <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
             @for($i = 0; $i < 3; $i++)
             @php $cur = $currentMembers->get($i); @endphp
-            <select name="member_ids[]" class="form-control">
+            <select name="member_ids[]" class="form-control mt-member-select" onchange="syncManageTeamDropdowns()">
               <option value=""> -  None  - </option>
               @foreach($trainers as $tr)
               @continue($tr->id === auth('web')->id())
@@ -371,6 +373,31 @@
     </form>
   </div>
 </div>
+
+<script>
+// Same member-vs-member "can't pick the same person twice" enforcement as
+// EC's Manage Team modal. There's no live Project Lead <select> here (the
+// lead is fixed to the current trainer and already excluded from the
+// options list in PHP above, so this only needs to cross-check
+// the three Team Member selects against each other. Runs once on load too
+// since these can start with members already selected  -  it only disables
+// options, never clears an existing selection.
+function syncManageTeamDropdowns() {
+  const selects = Array.from(document.querySelectorAll('.mt-member-select'));
+  const chosenElsewhere = function (sel) {
+    return selects.filter(function (s) { return s !== sel; }).map(function (s) { return s.value; }).filter(Boolean);
+  };
+  selects.forEach(function (sel) {
+    const current = sel.value;
+    const takenByOtherSelects = chosenElsewhere(sel);
+    Array.from(sel.options).forEach(function (opt) {
+      if (opt.value === '') return;
+      opt.disabled = opt.value !== current && takenByOtherSelects.includes(opt.value);
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', syncManageTeamDropdowns);
+</script>
 @endif
 
 <!-- MODAL: ADD ACTIVITY (scoped to this program, open to lead + member) -->
@@ -634,7 +661,7 @@ function openDeleteProgramModal(id, title) {
           <label class="form-label">Team Members <span style="font-weight:400;color:var(--gray-400)">(optional, up to 3, besides you)</span></label>
           <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
             @for($i = 0; $i < 3; $i++)
-            <select name="member_ids[]" class="form-control">
+            <select name="member_ids[]" class="form-control cp-member-select" onchange="syncCreateProgramDropdowns()">
               <option value=""> -  None  - </option>
               @foreach($trainers as $tr)
               @continue($tr->id === auth('web')->id())
@@ -653,6 +680,28 @@ function openDeleteProgramModal(id, title) {
     </form>
   </div>
 </div>
+
+<script>
+// Cross-checks this Create Program modal's own three Team Member selects
+// against each other (own class so it doesn't cross-wire with the Manage
+// Team modal's .mt-member-select on the same page). No live lead select to
+// exclude here  -  the auto-assigned lead is the current trainer, already
+// excluded from the options list in PHP above.
+function syncCreateProgramDropdowns() {
+  const selects = Array.from(document.querySelectorAll('.cp-member-select'));
+  const chosenElsewhere = function (sel) {
+    return selects.filter(function (s) { return s !== sel; }).map(function (s) { return s.value; }).filter(Boolean);
+  };
+  selects.forEach(function (sel) {
+    const current = sel.value;
+    const takenByOtherSelects = chosenElsewhere(sel);
+    Array.from(sel.options).forEach(function (opt) {
+      if (opt.value === '') return;
+      opt.disabled = opt.value !== current && takenByOtherSelects.includes(opt.value);
+    });
+  });
+}
+</script>
 @endif
 @endsection
 

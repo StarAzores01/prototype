@@ -11,7 +11,6 @@ $nav = [
     // reached from the hub itself (see ec/evaluation.blade.php).
     'evaluation'        => ['icon' => 'fa-square-check',   'label' => 'Evaluation',          'badge' => 'red'],
     'reports'           => ['icon' => 'fa-chart-column',   'label' => 'Reports',             'badge' => ''],
-    'analytics'         => ['icon' => 'fa-chart-pie',      'label' => 'Analytics',           'badge' => ''],
 ];
 $activePage = $activePage ?? 'dashboard';
 // $activePage is the 'trainings' route/key on purpose (unchanged) — its
@@ -137,7 +136,7 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage ===
   </div>
   <div class="sidebar-section">
     <div class="sidebar-label">Assessment</div>
-    @foreach(['evaluation','reports','analytics'] as $key)
+    @foreach(['evaluation','reports'] as $key)
     @php
       // The hub stays highlighted while on any of the 3 sub-pages it links to.
       $isActive = $key === 'evaluation'

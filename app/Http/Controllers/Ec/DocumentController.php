@@ -20,39 +20,63 @@ class DocumentController extends Controller
     use GroupsDocumentsByProgram;
 
     /**
-     * Grouped by Parent Program (see GroupsDocumentsByProgram) — replaces
-     * the old group-by-upload-date scheme entirely. `?archived=1` switches
-     * the whole list to the Archived Documents view; EC can see and act on
-     * every document either way, no ownership restriction (unlike the
-     * Trainer version).
+     * Split into "My Documents" (uploaded by the current EC user) vs.
+     * "Shared Documents" (uploaded by anyone else — other EC accounts,
+     * Project Leaders) — same split Trainer\DocumentController already
+     * uses for its own Documents page. EC still has full, unrestricted
+     * manage rights (set visibility / archive / delete) over BOTH
+     * sections, unlike the Trainer version where "Shared Documents" is
+     * read-only — that's enforced by the store() actions below having no
+     * ownership check, exactly as before this split. `?archived=1` only
+     * ever affects "My Documents", matching Trainer: archiving is a
+     * personal, per-document action, so "Shared Documents" always shows
+     * everyone else's active documents regardless of the toggle.
      */
     public function index(Request $request)
     {
+        $ecId = Auth::guard('web')->id();
         $q = trim($request->query('q', ''));
         $archived = $request->boolean('archived');
 
-        $docsQuery = Document::with(['training', 'program', 'activity', 'uploader', 'archivedBy'])
-            ->when($archived, fn ($query) => $query->archived(), fn ($query) => $query->active());
-
-        if ($q) {
-            $docsQuery->where(function ($query) use ($q) {
-                $query->where('original_name', 'like', "%{$q}%")
+        $applySearch = function ($query) use ($q) {
+            if (! $q) {
+                return;
+            }
+            $query->where(function ($w) use ($q) {
+                $w->where('original_name', 'like', "%{$q}%")
                     ->orWhereHas('training', fn ($t) => $t->where('title', 'like', "%{$q}%"))
                     ->orWhereHas('program', fn ($p) => $p->where('title', 'like', "%{$q}%"))
                     ->orWhereHas('activity', fn ($a) => $a->where('title', 'like', "%{$q}%"));
             });
-        }
+        };
 
-        $docs = $docsQuery->orderByDesc('created_at')->get();
-        $totalCount = $docs->count();
+        $myDocsQuery = Document::with(['training', 'program', 'activity', 'uploader', 'archivedBy'])
+            ->where('uploaded_by', $ecId)
+            ->when($archived, fn ($query) => $query->archived(), fn ($query) => $query->active());
+        $applySearch($myDocsQuery);
+        $myDocs = $myDocsQuery->orderByDesc('created_at')->get();
 
-        return view('ec.documents', array_merge([
-            'activePage' => 'documents',
-            'trainings'  => Training::orderBy('title')->get(['id', 'title']),
-            'q'          => $q,
-            'archived'   => $archived,
-            'totalCount' => $totalCount,
-        ], $this->groupDocumentsByProgram($docs)));
+        $sharedDocsQuery = Document::with(['training', 'program', 'activity', 'uploader', 'archivedBy'])
+            ->where('uploaded_by', '!=', $ecId)
+            ->active();
+        $applySearch($sharedDocsQuery);
+        $sharedDocs = $sharedDocsQuery->orderByDesc('created_at')->get();
+
+        $myGroups = $this->groupDocumentsByProgram($myDocs);
+        $sharedGroups = $this->groupDocumentsByProgram($sharedDocs);
+
+        return view('ec.documents', [
+            'activePage'          => 'documents',
+            'trainings'           => Training::orderBy('title')->get(['id', 'title']),
+            'q'                   => $q,
+            'archived'            => $archived,
+            'myProgramGroups'     => $myGroups['programGroups'],
+            'myGeneral'           => $myGroups['general'],
+            'myCount'             => $myDocs->count(),
+            'sharedProgramGroups' => $sharedGroups['programGroups'],
+            'sharedGeneral'       => $sharedGroups['general'],
+            'sharedCount'         => $sharedDocs->count(),
+        ]);
     }
 
     public function store(Request $request)

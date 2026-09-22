@@ -23,16 +23,11 @@
     </ul>
   </div>
 @endif
-<div class="form-row">
-  <div class="form-group">
-    <label class="form-label">Activity Title *</label>
-    <input type="text" name="title" class="form-control" placeholder="e.g. Basic Pastry Making" required/>
-  </div>
-  <div class="form-group">
-    <label class="form-label">Area / Specification *</label>
-    <input type="text" name="area" class="form-control" placeholder="e.g. Culinary Technology" maxlength="120" required/>
-  </div>
+<div class="form-group">
+  <label class="form-label">Activity Title *</label>
+  <input type="text" name="title" class="form-control" placeholder="e.g. Basic Pastry Making" required/>
 </div>
+@include('partials.activity-type-fields', ['idPrefix' => 'caArea'])
 <div class="form-group">
   <label class="form-label">Description (optional)</label>
   <textarea name="description" class="form-control" rows="3" placeholder="Briefly describe the activity…"></textarea>
@@ -78,6 +73,7 @@
   <div class="form-group">
     <label class="form-label">Start Date</label>
     <input type="date" name="date_start" id="activityDateStart" data-range-end="activityDateEnd" class="form-control"
+      oninput="clampActivityDate(this)" onchange="clampActivityDate(this)"
       @if($scopedProgram)
         min="{{ $scopedProgram->timeline_start?->format('Y-m-d') }}"
         max="{{ $scopedProgram->effective_end_date?->format('Y-m-d') }}"
@@ -87,6 +83,7 @@
   <div class="form-group">
     <label class="form-label">End Date</label>
     <input type="date" name="date_end" id="activityDateEnd" class="form-control"
+      oninput="clampActivityDate(this)" onchange="clampActivityDate(this)"
       @if($scopedProgram)
         min="{{ $scopedProgram->timeline_start?->format('Y-m-d') }}"
         max="{{ $scopedProgram->effective_end_date?->format('Y-m-d') }}"
@@ -215,5 +212,18 @@ function syncActivityDateBounds(select) {
   var de = document.getElementById('activityDateEnd');
   if (ds) { ds.min = start; ds.max = end; ds.value = ''; }
   if (de) { de.min = start; de.max = end; de.value = ''; }
+}
+
+// The min/max attributes on a <input type="date"> only gray out
+// out-of-range days in the native calendar popup and block form
+// submission (via the browser's constraint validation) — they do NOT stop
+// someone from typing an out-of-range date with the keyboard, so without
+// this, a date outside the chosen program's timeline could still be typed
+// in directly. Clamp back into range as soon as a value outside min/max is
+// entered, whether from typing or the picker.
+function clampActivityDate(input) {
+  if (!input.value) return;
+  if (input.min && input.value < input.min) input.value = input.min;
+  if (input.max && input.value > input.max) input.value = input.max;
 }
 </script>

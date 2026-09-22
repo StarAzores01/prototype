@@ -4,38 +4,39 @@
 <div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumb">PAThrive <i class="fas fa-chevron-right"></i> <span>Documents</span></div>
-    <h1>{{ $archived ? 'Archived Documents' : 'Document Repository' }}</h1>
-    <p>{{ $archived ? 'Documents archived out of the active list — restore or delete from here.' : 'Store and manage activity materials, reports, and media files' }}</p>
+    <h1>Document Repository</h1>
+    <p>Store and manage activity materials, reports, and media files</p>
   </div>
-  @unless($archived)
   <button class="btn btn-primary" onclick="openModal('uploadDoc')"><i class="fas fa-plus"></i> Add Document</button>
-  @endunless
 </div>
 
-<!-- Documents, grouped by Parent Program -->
-<div class="card">
+<div class="card" style="margin-bottom:20px">
+  <div class="card-body" style="padding:14px 20px">
+    <form method="GET" action="{{ route('ec.documents') }}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      @if($archived)<input type="hidden" name="archived" value="1"/>@endif
+      <div class="search-box" style="max-width:280px">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="text" name="q" value="{{ $q }}" placeholder="Search documents…"/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Search</button>
+      @if($q)<a href="{{ route('ec.documents', array_filter(['archived' => $archived ? 1 : null])) }}" class="btn btn-ghost btn-sm">Clear</a>@endif
+    </form>
+  </div>
+</div>
+
+<!-- My Documents — grouped by Parent Program; the only card the Archived toggle affects -->
+<div class="card" style="margin-bottom:24px">
   <div class="card-header">
     <div>
-      <div class="card-title">{{ $archived ? 'Archived Documents' : 'All Documents' }}</div>
-      <div class="card-subtitle">{{ $totalCount }} file{{ $totalCount === 1 ? '' : 's' }}</div>
+      <div class="card-title">{{ $archived ? 'My Archived Documents' : 'My Documents' }}</div>
+      <div class="card-subtitle">{{ $myCount }} file{{ $myCount === 1 ? '' : 's' }}</div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <form method="GET" action="{{ route('ec.documents') }}" style="display:flex;gap:8px;flex-wrap:wrap">
-        @if($archived)<input type="hidden" name="archived" value="1"/>@endif
-        <div class="search-box" style="max-width:280px">
-          <i class="fas fa-magnifying-glass"></i>
-          <input type="text" name="q" value="{{ $q }}" placeholder="Search documents…"/>
-        </div>
-        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Search</button>
-        @if($q)<a href="{{ route('ec.documents', array_filter(['archived' => $archived ? 1 : null])) }}" class="btn btn-ghost btn-sm">Clear</a>@endif
-      </form>
-      <a href="{{ route('ec.documents', array_filter(['q' => $q, 'archived' => $archived ? null : 1])) }}" class="btn btn-outline btn-sm">
-        @if($archived)<i class="fas fa-arrow-left"></i> Back to Active @else <i class="fas fa-box-archive"></i> Archived Documents @endif
-      </a>
-    </div>
+    <a href="{{ route('ec.documents', array_filter(['q' => $q, 'archived' => $archived ? null : 1])) }}#myDocuments" class="btn btn-outline btn-sm">
+      @if($archived)<i class="fas fa-arrow-left"></i> Back to Active @else <i class="fas fa-box-archive"></i> Archived @endif
+    </a>
   </div>
-  <div class="table-wrap">
-    @if($programGroups->isEmpty() && $general->isEmpty())
+  <div class="table-wrap" id="myDocuments">
+    @if($myProgramGroups->isEmpty() && $myGeneral->isEmpty())
       <div class="empty-state">
         <i class="fas fa-folder-open"></i>
         <p>
@@ -47,7 +48,7 @@
         </p>
       </div>
     @else
-      @foreach($programGroups as $group)
+      @foreach($myProgramGroups as $group)
         <div class="doc-date-group-header">
           <i class="fas fa-diagram-project" style="margin-right:6px;opacity:.6"></i>{{ $group['program']->title }}
           <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $group['documents']->count() + $group['activities']->sum(fn($a) => $a['documents']->count()) }} file{{ ($group['documents']->count() + $group['activities']->sum(fn($a) => $a['documents']->count())) === 1 ? '' : 's' }})</span>
@@ -64,12 +65,52 @@
         @endforeach
       @endforeach
 
-      @if($general->isNotEmpty())
+      @if($myGeneral->isNotEmpty())
         <div class="doc-date-group-header">
           <i class="fas fa-inbox" style="margin-right:6px;opacity:.6"></i>General
-          <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $general->count() }})</span>
+          <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $myGeneral->count() }})</span>
         </div>
-        @include('partials.document-rows-table', ['documents' => $general, 'storeRoute' => route('ec.documents.store'), 'archived' => $archived, 'showLinkedTo' => true])
+        @include('partials.document-rows-table', ['documents' => $myGeneral, 'storeRoute' => route('ec.documents.store'), 'archived' => $archived, 'showLinkedTo' => true])
+      @endif
+    @endif
+  </div>
+</div>
+
+<!-- Shared Documents — always active-only, regardless of the toggle above. EC keeps full manage rights here too (unlike the Trainer version, which is read-only), since EC has always been able to set visibility/archive/delete on any document. -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">Shared Documents</div>
+      <div class="card-subtitle">{{ $sharedCount }} file{{ $sharedCount === 1 ? '' : 's' }} — uploaded by other EC accounts or Project Leaders</div>
+    </div>
+  </div>
+  <div class="table-wrap">
+    @if($sharedProgramGroups->isEmpty() && $sharedGeneral->isEmpty())
+      <div class="empty-state"><i class="fas fa-share-nodes"></i><p>No shared documents yet.</p></div>
+    @else
+      @foreach($sharedProgramGroups as $group)
+        <div class="doc-date-group-header">
+          <i class="fas fa-diagram-project" style="margin-right:6px;opacity:.6"></i>{{ $group['program']->title }}
+          <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $group['documents']->count() + $group['activities']->sum(fn($a) => $a['documents']->count()) }} file{{ ($group['documents']->count() + $group['activities']->sum(fn($a) => $a['documents']->count())) === 1 ? '' : 's' }})</span>
+        </div>
+        @if($group['documents']->isNotEmpty())
+          @include('partials.document-rows-table', ['documents' => $group['documents'], 'storeRoute' => route('ec.documents.store')])
+        @endif
+        @foreach($group['activities'] as $entry)
+          <div class="doc-date-group-header" style="padding-left:28px;font-size:12px;background:var(--gray-25, var(--surface))">
+            <i class="fas fa-book" style="margin-right:6px;opacity:.6"></i>{{ $entry['activity']->title ?? 'Activity' }}
+            <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $entry['documents']->count() }})</span>
+          </div>
+          @include('partials.document-rows-table', ['documents' => $entry['documents'], 'storeRoute' => route('ec.documents.store')])
+        @endforeach
+      @endforeach
+
+      @if($sharedGeneral->isNotEmpty())
+        <div class="doc-date-group-header">
+          <i class="fas fa-inbox" style="margin-right:6px;opacity:.6"></i>General
+          <span style="font-weight:400;margin-left:8px;opacity:.7">({{ $sharedGeneral->count() }})</span>
+        </div>
+        @include('partials.document-rows-table', ['documents' => $sharedGeneral, 'storeRoute' => route('ec.documents.store'), 'showLinkedTo' => true])
       @endif
     @endif
   </div>

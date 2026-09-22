@@ -482,6 +482,12 @@
         <label for="cf-message">Message</label>
         <textarea id="cf-message" name="message" rows="5" placeholder="Write your message here…" required>{{ old('message') }}</textarea>
       </div>
+      <div class="form-group">
+        <label for="cf-human-answer">Human Verification</label>
+        <p style="font-size:13.5px;color:#334155;margin:0 0 2px;">{{ session('contact_human_question') }}</p>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="cf-human-answer" name="human_answer"
+               placeholder="Your answer" required autocomplete="off"/>
+      </div>
       <div class="hp-field" aria-hidden="true">
         <label for="cf-website">Leave this field empty</label>
         <input type="text" id="cf-website" name="website" tabindex="-1" autocomplete="off" value=""/>

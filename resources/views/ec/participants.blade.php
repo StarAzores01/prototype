@@ -7,7 +7,10 @@
     <h1>Participants</h1>
     <p>Manage activity beneficiaries and enrollments</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('addParticipant')"><i class="fas fa-plus"></i> Add Participant</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-outline" onclick="openModal('addExisting')"><i class="fas fa-user-check"></i> Add Existing Account</button>
+    <button class="btn btn-primary" onclick="openModal('addParticipant')"><i class="fas fa-plus"></i> Add Participant</button>
+  </div>
 </div>
 
 @if(session('success'))
@@ -154,6 +157,43 @@
   </div>
 </div>
 
+<!-- ADD EXISTING ACCOUNT MODAL -->
+<div class="modal-overlay" id="modal-addExisting">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2><i class="fas fa-user-check"></i> Add Existing Account</h2>
+      <button class="modal-close" onclick="closeModal('addExisting')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <form method="POST" action="{{ route('ec.participants.store') }}" onsubmit="return checkExisting()">
+      @csrf
+      <input type="hidden" name="action" value="enroll_existing"/>
+      <input type="hidden" name="beneficiary_id" id="existing_bid"/>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Assigned Activity *</label>
+          <select name="training_id" id="existing_training" class="form-control" required onchange="renderAccounts()">
+            <option value="" disabled selected>— Select Activity —</option>
+            @foreach($trainings as $t)
+            <option value="{{ $t->id }}">{{ $t->title }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Find Account *</label>
+          <input type="text" id="existing_search" class="form-control" placeholder="Search by name, username or email…" oninput="renderAccounts()"/>
+          <div id="existing_list" style="margin-top:8px;max-height:240px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:10px"></div>
+          <div class="form-hint" id="existing_picked" style="margin-top:6px">No account selected.</div>
+        </div>
+        <div class="form-hint"><i class="fas fa-circle-info"></i> This only enrolls the account in the activity. The account itself is not changed.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('addExisting')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Enroll</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- EDIT MODAL -->
 <div class="modal-overlay" id="modal-editParticipant">
   <div class="modal" style="max-width:560px">
@@ -218,6 +258,43 @@
 </div>
 
 <script>
+var ACCOUNTS = @json($accounts->map(fn ($a) => ['id' => $a->id, 'name' => $a->full_name, 'username' => $a->username, 'email' => $a->email])->values());
+var ENROLLED = @json($enrolledMap);
+function renderAccounts() {
+  var tid = document.getElementById('existing_training').value;
+  var q = document.getElementById('existing_search').value.toLowerCase().trim();
+  var list = document.getElementById('existing_list');
+  var picked = document.getElementById('existing_bid').value;
+  list.innerHTML = '';
+  var shown = 0;
+  ACCOUNTS.forEach(function (a) {
+    var hay = (a.name + ' ' + a.username + ' ' + (a.email || '')).toLowerCase();
+    if (q && hay.indexOf(q) === -1) return;
+    if (shown >= 50) return;
+    shown++;
+    var enrolled = tid && (ENROLLED[a.id] || []).indexOf(parseInt(tid, 10)) !== -1;
+    var row = document.createElement('div');
+    row.style.cssText = 'padding:8px 12px;border-bottom:1px solid var(--gray-100);font-size:13px;' +
+      (enrolled ? 'opacity:.45;cursor:not-allowed;' : 'cursor:pointer;') +
+      (String(a.id) === picked ? 'background:var(--blue-light,#DBEAFE);' : '');
+    row.textContent = a.name + ' (@' + a.username + ')' + (enrolled ? ' — already enrolled' : '');
+    if (!enrolled) row.onclick = function () {
+      document.getElementById('existing_bid').value = a.id;
+      document.getElementById('existing_picked').textContent = 'Selected: ' + a.name;
+      renderAccounts();
+    };
+    list.appendChild(row);
+  });
+  if (!shown) list.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--gray-400)">No accounts found.</div>';
+}
+function checkExisting() {
+  if (!document.getElementById('existing_bid').value) {
+    document.getElementById('existing_picked').textContent = 'Please pick an account first.';
+    return false;
+  }
+  return true;
+}
+document.addEventListener('DOMContentLoaded', renderAccounts);
 function openEditModal(p) {
   document.getElementById('edit_pid').value      = p.id;
   document.getElementById('edit_fullname').value = p.full_name;

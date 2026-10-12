@@ -17,9 +17,8 @@ class DashboardController extends Controller
         return view('evaluator.dashboard', [
             'activePage'      => 'dashboard',
             'userFirstName'   => Auth::guard('web')->user()->first_name,
-            'totalSubmitted'  => (clone $base)->where('status', 'Submitted')->count(),
-            'totalDraft'      => (clone $base)->where('status', 'Draft')->count(),
-            'totalReviewed'   => (clone $base)->where('status', 'Reviewed')->count(),
+            'totalSubmitted'  => (clone $base)->count(),
+            'totalSent'       => (clone $base)->whereNotNull('participant_form_id')->count(),
             'recent'          => ImpactAssessment::with('training.program')
                 ->where('evaluator_id', $evaluatorId)
                 ->orderByDesc('created_at')

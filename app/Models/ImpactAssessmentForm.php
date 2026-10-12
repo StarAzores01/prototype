@@ -9,11 +9,11 @@ class ImpactAssessmentForm extends Model
     protected $table = 'impact_assessment_forms';
     public $timestamps = false;
 
-    protected $fillable = ['training_id', 'title', 'fields', 'created_by', 'sent_at'];
+    protected $fillable = ['training_id', 'title', 'fields', 'created_by', 'sent_at', 'due_date'];
 
     protected function casts(): array
     {
-        return ['fields' => 'array', 'sent_at' => 'datetime', 'created_at' => 'datetime'];
+        return ['fields' => 'array', 'sent_at' => 'datetime', 'due_date' => 'date', 'created_at' => 'datetime'];
     }
 
     public function training()

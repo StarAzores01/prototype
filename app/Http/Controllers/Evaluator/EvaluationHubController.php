@@ -26,8 +26,8 @@ class EvaluationHubController extends Controller
                 ->orderByDesc('submitted_at')
                 ->limit(5)
                 ->get(),
-            'submittedCount' => ImpactAssessment::where('evaluator_id', $evaluatorId)->where('status', 'Submitted')->count(),
-            'reviewedCount'  => ImpactAssessment::where('evaluator_id', $evaluatorId)->where('status', 'Reviewed')->count(),
+            'submittedCount' => ImpactAssessment::where('evaluator_id', $evaluatorId)->count(),
+            'sentCount'      => ImpactAssessment::where('evaluator_id', $evaluatorId)->whereNotNull('participant_form_id')->count(),
         ]);
     }
 }

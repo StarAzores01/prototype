@@ -257,8 +257,13 @@
   </div>
 </div>
 
+@php
+  $accountsJs = $accounts->map(function ($a) {
+      return ['id' => $a->id, 'name' => $a->full_name, 'username' => $a->username, 'email' => $a->email];
+  })->values()->all();
+@endphp
 <script>
-var ACCOUNTS = @json($accounts->map(fn ($a) => ['id' => $a->id, 'name' => $a->full_name, 'username' => $a->username, 'email' => $a->email])->values());
+var ACCOUNTS = @json($accountsJs);
 var ENROLLED = @json($enrolledMap);
 function renderAccounts() {
   var tid = document.getElementById('existing_training').value;

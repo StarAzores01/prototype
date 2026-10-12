@@ -55,7 +55,7 @@ class EvaluationController extends Controller
     {
         $trainings = Training::query()
             ->withCount('participants as total_pax')
-            ->with(['evalForms' => fn ($q) => $q->withCount('responses')->orderBy('send_date')])
+            ->with(['evalForms' => fn ($q) => $q->with('creator')->withCount('responses')->orderBy('send_date')])
             ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
             ->orderBy('date_start')
             ->get();
@@ -149,12 +149,20 @@ class EvaluationController extends Controller
 
             // Prevent duplicate send_date for the same training (different form)
             $formId = (int) $request->input('form_id', 0);
-            $duplicate = EvalForm::where('training_id', $trainingId)
+            $duplicate = EvalForm::with('creator')
+                ->where('training_id', $trainingId)
                 ->where('send_date', $sendDate)
                 ->when($formId, fn ($q) => $q->where('id', '!=', $formId))
-                ->exists();
+                ->first();
             if ($duplicate) {
-                $validator->errors()->add('send_date', 'A form is already scheduled for this date on the same activity.');
+                $by = $duplicate->creator
+                    ? trim(($duplicate->creator->first_name ?? '').' '.($duplicate->creator->last_name ?? ''))
+                    : '';
+                $validator->errors()->add(
+                    'send_date',
+                    'An evaluation form has already been created for this date on this activity'
+                    .($by !== '' ? ' (by '.$by.')' : '').'. Please pick another date or edit the existing form.'
+                );
             }
         })->validate();
 

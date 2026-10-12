@@ -16,9 +16,10 @@
 <div class="card"><div class="card-body" style="text-align:center;padding:48px;color:var(--gray-400)">No responses submitted yet.</div></div>
 @else
 @php $fields = $viewForm->fields ?? []; @endphp
+@include('partials.response-pager', ['responses' => $responses])
 <div style="display:flex;flex-direction:column;gap:16px">
   @foreach($responses as $resp)
-  <div class="card">
+  <div class="card resp-card">
     <div class="card-header">
       <div>
         <div class="card-title"><i class="fas fa-user"></i> {{ $resp->beneficiary->first_name }} {{ $resp->beneficiary->last_name }}</div>
@@ -123,7 +124,16 @@
 
       <div id="fieldsContainer">
         @foreach($existingFields as $fi => $field)
-          @php $ftype = $field['type'] ?? 'text'; $fopts = implode("\n", $field['options'] ?? []); @endphp
+          @php
+            $ftype = $field['type'] ?? 'text';
+            $fopts = implode("\n", $field['options'] ?? []);
+            // Forms saved while the builder was misaligning option lists can
+            // have radio questions with no choices — pre-fill the standard
+            // rating scale so they just need to be re-saved.
+            if ($ftype === 'radio' && trim($fopts) === '') {
+                $fopts = implode("\n", ['5 - Pinakamahusay', '4 - Mas Mahusay', '3 - Mahusay', '2 - Tama Lang', "1 - 'Di Mahusay"]);
+            }
+          @endphp
           <div class="field-row" style="border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--gray-50)">
             <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
               <div class="form-group" style="flex:2;min-width:200px;margin:0">
@@ -151,9 +161,6 @@
               <label class="form-label">Options (one per line)</label>
               <textarea name="field_options[]" class="form-control" rows="3" placeholder="Option 1&#10;Option 2&#10;Option 3">{{ $fopts }}</textarea>
             </div>
-            @if(!in_array($ftype, ['radio','select']))
-            <textarea name="field_options[]" class="form-control" style="display:none" rows="1"></textarea>
-            @endif
           </div>
         @endforeach
       </div>
@@ -209,20 +216,27 @@ function addField() {
       <label class="form-label">Options (one per line)</label>
       <textarea name="field_options[]" class="form-control" rows="3" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
     </div>
-    <textarea name="field_options[]" class="form-control hidden-opts" style="display:none" rows="1"></textarea>
   </div>`;
   document.getElementById('fieldsContainer').insertAdjacentHTML('beforeend', html);
 }
 
 function removeField(btn) { btn.closest('.field-row').remove(); }
 
+// Labels/types/options post as sequential arrays, but the Required checkboxes
+// are keyed by an index that goes stale once a question is removed. Renumber
+// them to the rows' current positions just before submitting.
+document.getElementById('formBuilder').addEventListener('submit', function () {
+  this.querySelectorAll('.field-row').forEach(function (row, idx) {
+    var cb = row.querySelector('input[type=checkbox]');
+    if (cb) cb.name = 'field_required[' + idx + ']';
+  });
+});
+
 function toggleOptions(sel) {
   const row      = sel.closest('.field-row');
   const optWrap  = row.querySelector('.options-wrap');
-  const hiddenOpt = row.querySelector('.hidden-opts');
   const needsOpts = ['radio','select'].includes(sel.value);
   if (optWrap)   optWrap.style.display   = needsOpts ? '' : 'none';
-  if (hiddenOpt) hiddenOpt.style.display = 'none';
 }
 document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
 </script>
@@ -294,6 +308,7 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:nowrap;white-space:nowrap">
                 <span style="font-size:12px;color:var(--gray-400)">{{ $ef->send_date?->format('M d') ?? '—' }}</span>
                 <span class="badge {{ $fBadge }}" style="font-size:12px;white-space:nowrap;padding:4px 10px"><i class="fas {{ $fIcon }}"></i> {{ $fStatus }}</span>
+                @if($ef->creator)<span style="font-size:11px;color:var(--gray-400)" title="Created by">by {{ trim(($ef->creator->first_name ?? '').' '.($ef->creator->last_name ?? '')) }}</span>@endif
                 @if($ef->sent_at)
                   {{-- Already sent — locked. Editing now would silently change
                        questions beneficiaries may already be answering, so

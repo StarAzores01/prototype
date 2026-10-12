@@ -159,6 +159,8 @@ class ImpactAssessmentController extends Controller
     {
         $data = Validator::make($request->all(), [
             'training_id'    => 'required|integer|exists:trainings,id',
+            'assessment_id'  => 'nullable|integer|exists:impact_assessments,id',
+            'due_date'       => 'nullable|date',
             'form_title'     => 'nullable|string|max:200',
             'field_label'    => 'nullable|array',
             'field_type'     => 'nullable|array',
@@ -195,16 +197,31 @@ class ImpactAssessmentController extends Controller
             return redirect()->route('ec.impact_assessment', ['tab' => 'surveys'])->with('error', 'Please add at least one question.');
         }
 
+        // Created from an evaluator's uploaded file: the activity and due date
+        // come from what the evaluator submitted, and the submission is linked
+        // to the survey so it shows as sent.
+        $assessment = ! empty($data['assessment_id']) ? ImpactAssessment::find($data['assessment_id']) : null;
+        if ($assessment) {
+            $data['training_id'] = $assessment->training_id ?: $data['training_id'];
+            $data['due_date']    = $assessment->due_date?->format('Y-m-d') ?: ($data['due_date'] ?? null);
+        }
+
         $form = ImpactAssessmentForm::create([
             'training_id' => $data['training_id'],
+            'due_date'    => $data['due_date'] ?? null,
             'title'       => trim((string) $request->input('form_title', '')) ?: 'Impact Assessment Survey',
             'fields'      => $fields,
             'created_by'  => Auth::guard('web')->id(),
             'sent_at'     => now(),
         ]);
 
+        if ($assessment) {
+            $assessment->update(['participant_form_id' => $form->id]);
+        }
+
         $beneficiaryIds = Participant::where('training_id', $form->training_id)
             ->whereNotNull('beneficiary_id')
+            ->distinct()
             ->pluck('beneficiary_id');
 
         foreach ($beneficiaryIds as $beneficiaryId) {

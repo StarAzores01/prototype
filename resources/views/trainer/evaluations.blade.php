@@ -17,9 +17,10 @@
 <div class="card"><div class="card-body" style="text-align:center;padding:48px;color:var(--gray-400)">No responses submitted yet.</div></div>
 @else
 @php $fields = $viewForm->fields ?? []; @endphp
+@include('partials.response-pager', ['responses' => $responses])
 <div style="display:flex;flex-direction:column;gap:16px">
   @foreach($responses as $resp)
-  <div class="card">
+  <div class="card resp-card">
     <div class="card-header">
       <div>
         <div class="card-title"><i class="fas fa-user"></i> {{ $resp->beneficiary->first_name }} {{ $resp->beneficiary->last_name }}</div>
@@ -285,6 +286,7 @@ document.querySelectorAll('.field-type-sel').forEach(s => toggleOptions(s));
               <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:nowrap;white-space:nowrap">
                 <span style="font-size:10px;color:var(--gray-400)">{{ $ef->send_date?->format('M d') ?? '—' }}</span>
                 <span class="badge {{ $fBadge }}" style="font-size:10px;white-space:nowrap"><i class="fas {{ $fIcon }}"></i> {{ $fStatus }}</span>
+                @if($ef->creator)<span style="font-size:11px;color:var(--gray-400)" title="Created by">by {{ trim(($ef->creator->first_name ?? '').' '.($ef->creator->last_name ?? '')) }}</span>@endif
                 @if($ef->sent_at)
                   {{-- Already sent — locked. Editing now would silently change
                        questions beneficiaries may already be answering, so

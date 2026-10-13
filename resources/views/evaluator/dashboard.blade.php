@@ -14,13 +14,12 @@
 <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin-bottom:28px">
   @foreach([
     ['fa-clipboard-list', 'Submitted', 'var(--blue-primary)', $totalSubmitted],
-    ['fa-pen', 'Drafts', 'var(--amber)', $totalDraft],
-    ['fa-square-check', 'Reviewed', 'var(--green)', $totalReviewed],
+    ['fa-paper-plane', 'Sent to Participants', 'var(--green)', $totalSent],
   ] as [$icon, $label, $color, $val])
   <div class="card" style="padding:20px 24px">
     <div style="display:flex;align-items:center;gap:14px">
-      <div style="width:44px;height:44px;border-radius:12px;background:{{ $color }};opacity:.15;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;position:relative">
-        <i class="fas {{ $icon }}" style="position:absolute;opacity:1;font-size:20px;color:{{ $color }}"></i>
+      <div style="width:44px;height:44px;border-radius:12px;background:color-mix(in srgb, {{ $color }} 15%, transparent);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">
+        <i class="fas {{ $icon }}" style="font-size:20px;color:{{ $color }}"></i>
       </div>
       <div>
         <div style="font-size:26px;font-weight:800;color:var(--text-heading)">{{ $val }}</div>

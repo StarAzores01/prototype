@@ -14,15 +14,11 @@
 <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px">
   <div class="stat-card">
     <div class="stat-icon blue"><i class="fas fa-paper-plane"></i></div>
-    <div class="stat-body"><div class="stat-value">{{ $submittedCount + $reviewedCount }}</div><div class="stat-label">Total Submitted</div></div>
+    <div class="stat-body"><div class="stat-value">{{ $submittedCount }}</div><div class="stat-label">Total Submitted</div></div>
   </div>
   <div class="stat-card">
-    <div class="stat-icon yellow"><i class="fas fa-hourglass-half"></i></div>
-    <div class="stat-body"><div class="stat-value">{{ $submittedCount }}</div><div class="stat-label">Awaiting EC Review</div></div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon green"><i class="fas fa-check"></i></div>
-    <div class="stat-body"><div class="stat-value">{{ $reviewedCount }}</div><div class="stat-label">Reviewed</div></div>
+    <div class="stat-icon green"><i class="fas fa-users"></i></div>
+    <div class="stat-body"><div class="stat-value">{{ $sentCount }}</div><div class="stat-label">Sent to Participants</div></div>
   </div>
 </div>
 

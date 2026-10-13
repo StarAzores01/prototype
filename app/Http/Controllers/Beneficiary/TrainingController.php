@@ -42,8 +42,28 @@ class TrainingController extends Controller
         // used to show a beneficiary a document card they'd get blocked
         // from the moment they clicked it, so only 'public'  -  the one
         // tier beneficiaries are actually allowed to open  -  is shown.
-        $documents = Document::where('training_id', $training->id)
-            ->where('visibility', 'public')
+        //
+        // EC / Project Leader uploads are scoped in several ways, not just
+        // by training_id (the old, only lookup — which is why Public
+        // documents posted from the Documents pages or a Program/Activity
+        // repository never reached beneficiaries): this activity itself
+        // (activity_id or legacy training_id), its parent Program (program-
+        // level documents), or no scope at all (general documents). Every
+        // Public, non-archived document in any of those buckets is shown.
+        $documents = Document::where('visibility', 'public')
+            ->active()
+            ->where(function ($q) use ($training) {
+                $q->where('training_id', $training->id)
+                    ->orWhere('activity_id', $training->id)
+                    ->orWhere(function ($g) {
+                        $g->whereNull('training_id')->whereNull('program_id')->whereNull('activity_id');
+                    });
+                if ($training->program_id) {
+                    $q->orWhere(function ($p) use ($training) {
+                        $p->where('program_id', $training->program_id)->whereNull('activity_id');
+                    });
+                }
+            })
             ->orderByDesc('created_at')
             ->get();
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\EvalForm;
 use App\Models\EvalResponse;
 use App\Models\Training;
+use App\Services\EvalFormNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -62,7 +63,7 @@ class EvaluationController extends Controller
     {
         $evalData = Training::visibleToTrainer($trainerId)
             ->withCount('participants as total_pax')
-            ->with(['evalForms' => fn ($q) => $q->withCount('responses')->orderBy('send_date')])
+            ->with(['evalForms' => fn ($q) => $q->with('creator')->withCount('responses')->orderBy('send_date')])
             ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
             ->orderBy('date_start')
             ->get();
@@ -171,12 +172,20 @@ class EvaluationController extends Controller
             }
 
             $formId    = (int) $request->input('form_id', 0);
-            $duplicate = EvalForm::where('training_id', $trainingId)
+            $duplicate = EvalForm::with('creator')
+                ->where('training_id', $trainingId)
                 ->where('send_date', $sendDate)
                 ->when($formId, fn ($q) => $q->where('id', '!=', $formId))
-                ->exists();
+                ->first();
             if ($duplicate) {
-                $validator->errors()->add('send_date', 'A form is already scheduled for this date on the same activity.');
+                $by = $duplicate->creator
+                    ? trim(($duplicate->creator->first_name ?? '').' '.($duplicate->creator->last_name ?? ''))
+                    : '';
+                $validator->errors()->add(
+                    'send_date',
+                    'An evaluation form has already been created for this date on this activity'
+                    .($by !== '' ? ' (by '.$by.')' : '').'. Please pick another date or edit the existing form.'
+                );
             }
         })->validate();
 
@@ -216,6 +225,7 @@ class EvaluationController extends Controller
             }
 
             $resetSent = $existing->send_date?->format('Y-m-d') !== $data['send_date'];
+            $form = $existing;
             $existing->update([
                 'title'     => $title,
                 'fields'    => array_values($fields),
@@ -224,7 +234,7 @@ class EvaluationController extends Controller
             ]);
             $message = 'Evaluation form updated.';
         } else {
-            EvalForm::create([
+            $form = EvalForm::create([
                 'training_id' => $trainingId,
                 'title'       => $title,
                 'fields'      => array_values($fields),
@@ -232,6 +242,16 @@ class EvaluationController extends Controller
                 'created_by'  => $trainerId,
             ]);
             $message = 'Evaluation form scheduled.';
+        }
+
+        // If the send date is today (or already passed), send it to the
+        // enrolled beneficiaries right away instead of waiting for the
+        // daily eval:send-scheduled run (same behavior as the EC side).
+        if ($form->send_date && $form->send_date->format('Y-m-d') <= now()->format('Y-m-d')) {
+            $notified = EvalFormNotifier::sendNow($form);
+            if ($notified > 0) {
+                $message .= " {$notified} enrolled beneficiary(ies) notified.";
+            }
         }
 
         return redirect()->route('trainer.evaluations')->with('success', $message);
@@ -256,5 +276,10 @@ class EvaluationController extends Controller
             ->delete();
 
         return redirect()->route('trainer.evaluations')->with('success', 'Evaluation form deleted.');
+    }
+
+    private function trainerId(): ?int
+    {
+        return Auth::guard('web')->id();
     }
 }

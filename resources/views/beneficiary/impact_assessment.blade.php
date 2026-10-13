@@ -134,6 +134,10 @@
           <i class="fas fa-book"></i> {{ $f->training->title }}
           @if($f->training->date_start) &middot; <i class="fas fa-calendar"></i> {{ $f->training->date_start->format('Y-m-d') }}@endif
         </div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:3px">
+          Sent {{ $f->sent_at?->format('M d, Y') ?? '—' }}
+          @if($f->due_date) &middot; <span style="{{ ! $f->myResponse && $f->due_date->isPast() && ! $f->due_date->isToday() ? 'color:var(--red);font-weight:600' : '' }}">Due {{ $f->due_date->format('M d, Y') }}</span>@endif
+        </div>
         @if($f->myResponse)
         <div style="font-size:11px;color:var(--green);margin-top:4px"><i class="fas fa-square-check"></i> Submitted {{ $f->myResponse->submitted_at->format('M d, Y') }}</div>
         @endif

@@ -45,13 +45,8 @@
     <form method="GET" action="{{ route('ec.impact_assessment') }}" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <input type="hidden" name="tab" value="evaluators"/>
       <input type="text" name="q" class="form-control" placeholder="Search by title or evaluator..." value="{{ $q }}" style="max-width:280px"/>
-      <select name="status" class="form-control" style="max-width:160px">
-        <option value="">All Statuses</option>
-        <option value="Submitted" {{ $filterStatus === 'Submitted' ? 'selected' : '' }}>Submitted</option>
-        <option value="Reviewed" {{ $filterStatus === 'Reviewed' ? 'selected' : '' }}>Reviewed</option>
-      </select>
       <button type="submit" class="btn btn-outline btn-sm"><i class="fas fa-magnifying-glass"></i> Filter</button>
-      @if($q || $filterStatus)<a href="{{ route('ec.impact_assessment', ['tab' => 'evaluators']) }}" class="btn btn-outline btn-sm"><i class="fas fa-xmark"></i> Clear</a>@endif
+      @if($q)<a href="{{ route('ec.impact_assessment', ['tab' => 'evaluators']) }}" class="btn btn-outline btn-sm"><i class="fas fa-xmark"></i> Clear</a>@endif
     </form>
   </div>
 </div>
@@ -72,6 +67,7 @@
           <th>File</th>
           <th>Status</th>
           <th>Submitted</th>
+          <th>Due Date</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -87,7 +83,9 @@
           <td>{{ $a->evaluator->position ?? '—' }}</td>
           <td>{{ $a->training->title ?? '—' }}</td>
           <td>
-            @if($a->file_name)
+            @if($a->form_data)
+            <button type="button" class="btn btn-outline btn-sm" onclick="openModal('viewForm{{ $a->id }}')"><i class="fas fa-list-check"></i> Form &middot; {{ count($a->form_data) }} question{{ count($a->form_data) === 1 ? '' : 's' }}</button>
+            @elseif($a->file_name)
             <a href="{{ route('files.impact-assessment', $a) }}" target="_blank" class="btn btn-outline btn-sm"><i class="fas fa-file"></i> {{ $a->original_name ?? 'View' }}</a>
             @else
             <span style="color:var(--gray-300)">No file</span>
@@ -95,11 +93,10 @@
           </td>
           <td><span class="badge {{ $a->status === 'Reviewed' ? 'badge-success' : 'badge-info' }}">{{ $a->status }}</span></td>
           <td>{{ $a->submitted_at?->format('M d, Y') ?? '—' }}</td>
+          <td>{{ $a->due_date?->format('M d, Y') ?? '—' }}</td>
           <td style="display:flex;gap:6px;flex-wrap:wrap">
-            @if($a->status !== 'Reviewed')
-            <button class="btn btn-sm btn-primary" onclick="openReviewModal({{ $a->id }}, {{ json_encode($a->title) }})"><i class="fas fa-square-check"></i> Review</button>
-            @else
-            <span style="font-size:12px;color:var(--green)"><i class="fas fa-square-check"></i> Reviewed</span>
+            @if(! $a->participant_form_id && ! $a->form_data)
+            <button type="button" class="btn btn-sm btn-primary" onclick="openFormFromAssessment({{ $a->id }}, {{ (int) $a->training_id }}, {{ json_encode($a->due_date?->format('Y-m-d')) }}, {{ json_encode($a->title) }})"><i class="fas fa-file-lines"></i> Create Participant Form</button>
             @endif
             <form method="POST" action="{{ route('ec.impact_assessment.store') }}" onsubmit="return confirm('Delete this assessment?')" style="display:inline">
               @csrf
@@ -117,6 +114,13 @@
   </div>
 </div>
 
+@php
+  $formAssessments = $assessments->filter(function ($item) { return ! empty($item->form_data); });
+@endphp
+@foreach($formAssessments as $a)
+  @include('partials.assessment-form-modal', ['a' => $a])
+@endforeach
+
 @else
 {{-- ═══════════════ PARTICIPANT SURVEYS TAB ═══════════════ --}}
 
@@ -129,7 +133,7 @@
   <div class="card-header">
     <div>
       <div class="card-title">{{ $viewForm->title }}</div>
-      <div class="card-subtitle"><i class="fas fa-book"></i> {{ $viewForm->training->title ?? '—' }} &middot; Sent {{ $viewForm->sent_at?->format('M d, Y') ?? '—' }}</div>
+      <div class="card-subtitle"><i class="fas fa-book"></i> {{ $viewForm->training->title ?? '—' }} &middot; Submitted {{ $viewForm->sent_at?->format('M d, Y') ?? '—' }} &middot; Due {{ $viewForm->due_date?->format('M d, Y') ?? '—' }}</div>
     </div>
   </div>
 </div>
@@ -197,7 +201,8 @@
         <tr>
           <th>Form Title</th>
           <th>Activity</th>
-          <th>Sent</th>
+          <th>Form Submitted</th>
+          <th>Due Date</th>
           <th>Completion</th>
           <th>Actions</th>
         </tr>
@@ -213,6 +218,7 @@
             <td style="font-weight:600">{{ $sf->title }}</td>
             <td>{{ $sf->training->title ?? '—' }}</td>
             <td>{{ $sf->sent_at?->format('M d, Y') ?? '—' }}</td>
+            <td>{{ $sf->due_date?->format('M d, Y') ?? '—' }}</td>
             <td>
               <div style="display:flex;align-items:center;gap:10px">
                 <div style="flex:1;background:var(--gray-200);border-radius:99px;height:8px;min-width:80px">
@@ -295,10 +301,11 @@ function filterSurveyForms() {
     <form method="POST" action="{{ route('ec.impact_assessment.store') }}">
       @csrf
       <input type="hidden" name="action" value="create_form"/>
+      <input type="hidden" name="assessment_id" id="csAssessmentId" value=""/>
       <div class="modal-body" style="max-height:70vh;overflow-y:auto">
         <div class="form-group">
           <label class="form-label">Activity <span style="color:var(--red)">*</span></label>
-          <select name="training_id" class="form-control" required>
+          <select name="training_id" id="csTraining" class="form-control" required>
             <option value="" disabled selected>— Select Activity —</option>
             @foreach($trainings ?? [] as $t)
             <option value="{{ $t->id }}">{{ $t->title }}</option>
@@ -306,8 +313,13 @@ function filterSurveyForms() {
           </select>
         </div>
         <div class="form-group">
+          <label class="form-label">Due Date <span style="font-weight:400;color:var(--gray-400)" id="csDueNote">(date participants must answer by)</span></label>
+          <input type="date" name="due_date" id="csDue" class="form-control"/>
+          <div style="font-size:11.5px;color:var(--gray-400);margin-top:4px">The submitted date is recorded automatically when you send the form.</div>
+        </div>
+        <div class="form-group">
           <label class="form-label">Form Title</label>
-          <input type="text" name="form_title" class="form-control" value="Impact Assessment Survey" placeholder="e.g. Post-Activity Impact Assessment"/>
+          <input type="text" name="form_title" id="csTitle" class="form-control" value="Impact Assessment Survey" placeholder="e.g. Post-Activity Impact Assessment"/>
         </div>
 
         <div style="border-top:1px solid var(--gray-200);padding-top:16px;margin-top:4px">
@@ -325,6 +337,21 @@ function filterSurveyForms() {
 </div>
 
 <script>
+// From an evaluator's uploaded file: the activity and due date are the
+// evaluator's, so they are filled in and locked; the EC only writes the questions.
+function openFormFromAssessment(id, trainingId, due, title) {
+  document.getElementById('csAssessmentId').value = id;
+  var t = document.getElementById('csTraining');
+  if (trainingId) { t.value = String(trainingId); }
+  t.style.pointerEvents = trainingId ? 'none' : ''; t.style.background = trainingId ? 'var(--gray-100)' : '';
+  var d = document.getElementById('csDue');
+  d.value = due || ''; d.readOnly = !!due; d.style.background = due ? 'var(--gray-100)' : '';
+  document.getElementById('csDueNote').textContent = due ? '(set by the evaluator)' : '(date participants must answer by)';
+  document.getElementById('csTitle').value = title || 'Impact Assessment Survey';
+  openModal('createSurveyForm');
+  if (document.getElementById('fieldsContainer').children.length === 0) { setTimeout(addField, 80); }
+}
+
 function openReviewModal(id, title) {
   document.getElementById('review_id').value = id;
   document.getElementById('review_title').textContent = title;

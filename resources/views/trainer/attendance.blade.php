@@ -234,13 +234,32 @@
       <input type="hidden" name="action" value="add_day"/>
       <input type="hidden" name="training_id" value="{{ $selectedTraining }}"/>
       <span style="font-size:13px;font-weight:600;color:var(--text-heading)">Add Day {{ $days->count() + 1 }}:</span>
-      <input type="date" name="new_date" class="form-control" style="width:170px" value="{{ now()->format('Y-m-d') }}" required/>
+      @php
+        $dayMin = $trainingInfo->date_start?->format('Y-m-d');
+        $dayMax = $trainingInfo->date_end?->format('Y-m-d');
+        $dayDefault = now()->format('Y-m-d');
+        if ($dayMin && $dayDefault < $dayMin) { $dayDefault = $dayMin; }
+        if ($dayMax && $dayDefault > $dayMax) { $dayDefault = $dayMax; }
+      @endphp
+      <input type="date" name="new_date" id="newDayInput" class="form-control" style="width:170px" value="{{ $dayDefault }}"
+             @if($dayMin) min="{{ $dayMin }}" @endif @if($dayMax) max="{{ $dayMax }}" @endif
+             oninput="clampDay(this)" onchange="clampDay(this)" required/>
+      @if($dayMin || $dayMax)
+      <span style="font-size:12px;color:var(--gray-400)">Activity dates: {{ $dayMin ?? '?' }} to {{ $dayMax ?? '?' }}</span>
+      @endif
       <button type="submit" class="btn btn-outline"><i class="fas fa-plus"></i> Add Day</button>
     </form>
   </div>
 </div>
 
 <script>
+// Native min/max only grey out the calendar popup — a typed date can still
+// fall outside the activity, so snap it back into range.
+function clampDay(input) {
+  if (!input.value) return;
+  if (input.min && input.value < input.min) input.value = input.min;
+  if (input.max && input.value > input.max) input.value = input.max;
+}
 function updateCount(di) {
   const boxes   = document.querySelectorAll(`input.day-check[name^="present[${di}]"]`);
   const present = [...boxes].filter(b => b.checked).length;

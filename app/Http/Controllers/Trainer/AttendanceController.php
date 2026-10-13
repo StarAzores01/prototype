@@ -95,6 +95,20 @@ class AttendanceController extends Controller
         $training = Training::where('id', $trainingId)->visibleToTrainer($trainerId)->first();
 
         if ($training && $newDate) {
+            // An attendance day must fall inside the activity's own dates —
+            // the date picker's min/max only guides the UI (typed or
+            // out-of-range values still submit), so enforce it here too.
+            $start = $training->date_start?->format('Y-m-d');
+            $end   = $training->date_end?->format('Y-m-d');
+            $day   = \Illuminate\Support\Carbon::parse($newDate)->format('Y-m-d');
+
+            if (($start && $day < $start) || ($end && $day > $end)) {
+                $range = ($start ?? '?').' to '.($end ?? '?');
+
+                return redirect()->route('trainer.attendance', ['training' => $trainingId])
+                    ->with('error', "That date is outside the activity's schedule ({$range}).");
+            }
+
             $duplicate = Attendance::where('training_id', $trainingId)->where('session_date', $newDate)->exists();
 
             if (! $duplicate) {

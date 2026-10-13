@@ -77,7 +77,14 @@
 
         @elseif($field['type'] === 'radio')
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-          @foreach($field['options'] as $opt)
+          @php
+            // Radio questions saved with no choices (a past form-builder
+            // bug) fall back to the standard 5-point rating scale.
+            $radioOptions = ! empty($field['options'])
+                ? $field['options']
+                : ['5 - Pinakamahusay', '4 - Mas Mahusay', '3 - Mahusay', '2 - Tama Lang', "1 - 'Di Mahusay"];
+          @endphp
+          @foreach($radioOptions as $opt)
           <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px">
             <input type="radio" name="answer[{{ $fi }}]" value="{{ $opt }}"
                    {{ !empty($field['required']) ? 'required' : '' }}

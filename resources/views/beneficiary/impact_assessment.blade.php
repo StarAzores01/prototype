@@ -14,6 +14,19 @@
   @endif
 </div>
 
+@if(session('error'))
+<div class="alert alert-danger" style="margin-bottom:20px">{{ session('error') }}</div>
+@endif
+@if($errors->any())
+<div class="alert alert-danger" style="margin-bottom:20px" role="alert">
+  <ul>
+    @foreach($errors->all() as $error)
+    <li>{{ $error }}</li>
+    @endforeach
+  </ul>
+</div>
+@endif
+
 @if($viewForm)
 {{-- ═══════════════ FORM ANSWER / VIEW ═══════════════ --}}
 <div class="card">
@@ -66,6 +79,10 @@
 
       @php $fields = $viewForm->fields ?? []; @endphp
       @foreach($fields as $fi => $field)
+      @php
+        $previous = old('answer.'.$fi);
+        $previous = is_string($previous) ? $previous : '';
+      @endphp
       <div class="form-group" style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--gray-100)">
         <label class="form-label" style="font-size:14px;font-weight:700;color:var(--text-heading)">
           {{ $fi + 1 }}. {{ $field['label'] }}
@@ -74,13 +91,14 @@
 
         @if($field['type'] === 'textarea')
         <textarea name="answer[{{ $fi }}]" class="form-control" rows="3"
-                  {{ !empty($field['required']) ? 'required' : '' }}></textarea>
+                  {{ !empty($field['required']) ? 'required' : '' }}>{{ $previous }}</textarea>
 
         @elseif($field['type'] === 'radio')
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
           @foreach($field['options'] as $opt)
           <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px">
             <input type="radio" name="answer[{{ $fi }}]" value="{{ $opt }}"
+                   @checked($previous === $opt)
                    {{ !empty($field['required']) ? 'required' : '' }}
                    style="width:16px;height:16px;accent-color:var(--blue-primary)"/>
             {{ $opt }}
@@ -90,14 +108,14 @@
 
         @elseif($field['type'] === 'select')
         <select name="answer[{{ $fi }}]" class="form-control" {{ !empty($field['required']) ? 'required' : '' }}>
-          <option value="" {{ !empty($field['required']) ? 'disabled' : '' }} selected>— Select —</option>
+          <option value="" {{ !empty($field['required']) ? 'disabled' : '' }} @selected($previous === '')>— Select —</option>
           @foreach($field['options'] as $opt)
-          <option value="{{ $opt }}">{{ $opt }}</option>
+          <option value="{{ $opt }}" @selected($previous === $opt)>{{ $opt }}</option>
           @endforeach
         </select>
 
         @else
-        <input type="text" name="answer[{{ $fi }}]" class="form-control"
+        <input type="text" name="answer[{{ $fi }}]" class="form-control" value="{{ $previous }}"
                {{ !empty($field['required']) ? 'required' : '' }}/>
         @endif
       </div>

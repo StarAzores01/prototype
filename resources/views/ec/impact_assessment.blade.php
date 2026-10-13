@@ -10,7 +10,7 @@
   <div style="display:flex;gap:10px">
     <a href="{{ route('ec.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
     @if($tab === 'surveys' && !($viewForm ?? null))
-    <button class="btn btn-primary" onclick="openModal('createSurveyForm')"><i class="fas fa-plus"></i> Create Survey Form</button>
+    <button class="btn btn-primary" onclick="openStandaloneForm()"><i class="fas fa-plus"></i> Create Survey Form</button>
     @endif
   </div>
 </div>
@@ -22,6 +22,16 @@
 @elseif(session('error'))
 <div class="alert alert-danger" style="margin-bottom:20px">
   <i class="fas fa-triangle-exclamation"></i> {{ session('error') }}
+</div>
+@endif
+
+@if($errors->any())
+<div class="alert alert-danger" style="margin-bottom:20px" role="alert">
+  <ul>
+    @foreach($errors->all() as $error)
+    <li>{{ $error }}</li>
+    @endforeach
+  </ul>
 </div>
 @endif
 
@@ -95,8 +105,8 @@
           <td>{{ $a->submitted_at?->format('M d, Y') ?? '—' }}</td>
           <td>{{ $a->due_date?->format('M d, Y') ?? '—' }}</td>
           <td style="display:flex;gap:6px;flex-wrap:wrap">
-            @if(! $a->participant_form_id && ! $a->form_data)
-            <button type="button" class="btn btn-sm btn-primary" onclick="openFormFromAssessment({{ $a->id }}, {{ (int) $a->training_id }}, {{ json_encode($a->due_date?->format('Y-m-d')) }}, {{ json_encode($a->title) }})"><i class="fas fa-file-lines"></i> Create Participant Form</button>
+            @if($a->participant_form_id === null && $a->form_data === null && $a->file_name && $a->training_id && in_array($a->status, ['Submitted', 'Reviewed'], true))
+            <button type="button" class="btn btn-sm btn-primary" data-assessment-id="{{ $a->id }}" data-training-id="{{ $a->training_id }}" data-due="{{ $a->due_date?->format('Y-m-d') }}" data-title="{{ $a->title }}" onclick="openFormFromAssessment(this.dataset)"><i class="fas fa-file-lines"></i> Create Participant Form</button>
             @endif
             <form method="POST" action="{{ route('ec.impact_assessment.store') }}" onsubmit="return confirm('Delete this assessment?')" style="display:inline">
               @csrf
@@ -339,17 +349,34 @@ function filterSurveyForms() {
 <script>
 // From an evaluator's uploaded file: the activity and due date are the
 // evaluator's, so they are filled in and locked; the EC only writes the questions.
-function openFormFromAssessment(id, trainingId, due, title) {
-  document.getElementById('csAssessmentId').value = id;
+function resetSurveyForm() {
+  document.getElementById('csAssessmentId').value = '';
+  document.getElementById('fieldsContainer').replaceChildren();
+  fieldCount = 0;
+}
+function openStandaloneForm() {
+  resetSurveyForm();
   var t = document.getElementById('csTraining');
-  if (trainingId) { t.value = String(trainingId); }
-  t.style.pointerEvents = trainingId ? 'none' : ''; t.style.background = trainingId ? 'var(--gray-100)' : '';
+  t.disabled = false; t.required = true; t.value = '';
   var d = document.getElementById('csDue');
-  d.value = due || ''; d.readOnly = !!due; d.style.background = due ? 'var(--gray-100)' : '';
-  document.getElementById('csDueNote').textContent = due ? '(set by the evaluator)' : '(date participants must answer by)';
-  document.getElementById('csTitle').value = title || 'Impact Assessment Survey';
+  d.value = ''; d.readOnly = false; d.style.background = '';
+  document.getElementById('csDueNote').textContent = '(date participants must answer by)';
+  document.getElementById('csTitle').value = 'Impact Assessment Survey';
+  addField();
   openModal('createSurveyForm');
-  if (document.getElementById('fieldsContainer').children.length === 0) { setTimeout(addField, 80); }
+}
+function openFormFromAssessment(source) {
+  resetSurveyForm();
+  document.getElementById('csAssessmentId').value = source.assessmentId;
+  var t = document.getElementById('csTraining');
+  t.value = String(source.trainingId || '');
+  t.disabled = true; t.required = false;
+  var d = document.getElementById('csDue');
+  d.value = source.due || ''; d.readOnly = !!source.due; d.style.background = source.due ? 'var(--gray-100)' : '';
+  document.getElementById('csDueNote').textContent = source.due ? '(set by the evaluator)' : '(date participants must answer by)';
+  document.getElementById('csTitle').value = source.title || 'Impact Assessment Survey';
+  addField();
+  openModal('createSurveyForm');
 }
 
 function openReviewModal(id, title) {
@@ -400,12 +427,47 @@ function toggleOptions(sel, i) {
   document.getElementById('opts_'+i).style.display = show ? 'block' : 'none';
 }
 document.addEventListener('DOMContentLoaded', function() {
-  const btn = document.querySelector('[onclick="openModal(\'createSurveyForm\')"]');
-  if (btn) {
-    btn.addEventListener('click', function() {
-      if (document.getElementById('fieldsContainer').children.length === 0) {
-        setTimeout(addField, 80);
-      }
+  const previous = {{ Illuminate\Support\Js::from(old('action') === 'create_form' ? old() : []) }};
+  if (previous.action !== 'create_form') return;
+  const assessment = {{ Illuminate\Support\Js::from(isset($creationAssessment) ? [
+      'assessmentId' => $creationAssessment->id,
+      'trainingId' => $creationAssessment->training_id,
+      'due' => $creationAssessment->due_date?->format('Y-m-d'),
+      'title' => $creationAssessment->title,
+  ] : null) }};
+  if (assessment) {
+    openFormFromAssessment(assessment);
+  } else {
+    openStandaloneForm();
+    // Keep a failed linked request linked; never silently turn it into a
+    // standalone form if its source assessment has disappeared.
+    if (typeof previous.assessment_id === 'string' || typeof previous.assessment_id === 'number') {
+      document.getElementById('csAssessmentId').value = previous.assessment_id;
+    }
+    if (typeof previous.training_id === 'string' || typeof previous.training_id === 'number') {
+      document.getElementById('csTraining').value = previous.training_id;
+    }
+  }
+  if (typeof previous.form_title === 'string') document.getElementById('csTitle').value = previous.form_title;
+  if (!document.getElementById('csDue').readOnly && typeof previous.due_date === 'string') {
+    document.getElementById('csDue').value = previous.due_date;
+  }
+  if (previous.field_label && typeof previous.field_label === 'object') {
+    document.getElementById('fieldsContainer').replaceChildren();
+    fieldCount = 0;
+    Object.entries(previous.field_label).forEach(function ([key, label]) {
+      if (typeof label !== 'string') return;
+      const i = fieldCount;
+      addField();
+      const row = document.querySelector('[data-field="' + i + '"]');
+      row.querySelector('input[type="text"]').value = label;
+      const type = previous.field_type && previous.field_type[key];
+      const select = row.querySelector('select');
+      select.value = ['text', 'textarea', 'radio', 'select'].includes(type) ? type : 'text';
+      toggleOptions(select, i);
+      row.querySelector('input[type="checkbox"]').checked = previous.field_required && String(previous.field_required[key]) === '1';
+      const options = previous.field_options && previous.field_options[key];
+      row.querySelector('textarea').value = typeof options === 'string' ? options : '';
     });
   }
 });

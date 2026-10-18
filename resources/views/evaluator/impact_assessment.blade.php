@@ -23,6 +23,16 @@
 </div>
 @endif
 
+@if($errors->any())
+<div class="alert alert-danger" style="margin-bottom:20px" role="alert">
+  <ul>
+    @foreach($errors->all() as $error)
+    <li>{{ $error }}</li>
+    @endforeach
+  </ul>
+</div>
+@endif
+
 <!-- Search -->
 <div class="card" style="margin-bottom:20px">
   <div class="card-body" style="padding:14px 20px">
@@ -141,11 +151,11 @@
           <button type="button" id="iaTabForm" onclick="iaSetMode('form')" style="padding:8px 16px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;background:transparent;color:var(--gray-500)"><i class="fas fa-list-check"></i> Build a Form</button>
         </div>
         <div id="iaFileSection" class="form-group">
-          <label class="form-label">Upload Form / Document (PDF, DOC, DOCX, JPG, PNG – max 10 MB)</label>
+          <label class="form-label">Upload Form / Document (PDF, DOC, DOCX, JPG, PNG – max 5 MB)</label>
           <input type="file" name="assessment_file" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"/>
         </div>
         <div id="iaFormSection" style="display:none">
-          <div style="font-size:12.5px;color:var(--gray-500);margin-bottom:10px">Add your questions and fill in your answers. The Extension Coordinator will see both, and the questions are sent straight to the participants of the activity.</div>
+          <div style="font-size:12.5px;color:var(--gray-500);margin-bottom:10px">Add your questions. They go to the Extension Coordinator under Evaluator Submissions, who will review them and create the participant survey.</div>
           <div id="iaQuestions"></div>
           <button type="button" class="btn btn-outline btn-sm" onclick="iaAddQuestion()"><i class="fas fa-plus"></i> Add Question</button>
         </div>
@@ -174,7 +184,6 @@ function iaSetMode(mode) {
   var base = 'padding:8px 16px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;';
   document.getElementById('iaTabFile').style.cssText = base + (mode === 'file' ? on : off);
   document.getElementById('iaTabForm').style.cssText = base + (mode === 'form' ? on : off);
-  document.querySelectorAll('#iaQuestions .ia-q').forEach(iaApplyRequired);
   if (mode === 'form' && !document.querySelector('#iaQuestions .ia-q')) iaAddQuestion();
 }
 
@@ -198,10 +207,8 @@ function iaAddQuestion() {
       '<div style="padding-top:22px"><button type="button" class="btn btn-sm btn-danger" onclick="iaRemove(this)"><i class="fas fa-trash"></i></button></div>' +
     '</div>' +
     '<div class="ia-opts" style="margin-top:10px;display:none"><label class="form-label">Choices (one per line)</label>' +
-      '<textarea name="form_options[]" class="form-control" rows="3" placeholder="Choice 1&#10;Choice 2" oninput="iaRender(this.closest(\'.ia-q\'))"></textarea></div>' +
-    '<div style="margin-top:10px"><label class="form-label">Your Answer<span class="ia-star" style="color:var(--red);display:none"> *</span></label><div class="ia-ans"></div></div>';
+      '<textarea name="form_options[]" class="form-control" rows="3" placeholder="Choice 1&#10;Choice 2"></textarea></div>';
   document.getElementById('iaQuestions').appendChild(row);
-  iaRender(row);
 }
 
 function iaRemove(btn) { btn.closest('.ia-q').remove(); }
@@ -213,47 +220,11 @@ function iaRemove(btn) { btn.closest('.ia-q').remove(); }
 function iaReqChange(cb) {
   var row = cb.closest('.ia-q');
   row.querySelector('input[name="form_required[]"]').value = cb.checked ? '1' : '0';
-  iaApplyRequired(row);
-}
-function iaApplyRequired(row) {
-  var req = row.querySelector('.ia-req').checked;
-  var inForm = document.getElementById('iaMode').value === 'form';
-  var ans = row.querySelector('[name="form_answer[]"]');
-  if (ans) ans.required = req && inForm;
-  row.querySelector('.ia-star').style.display = req ? '' : 'none';
 }
 
 function iaTypeChange(sel) {
   var row = sel.closest('.ia-q');
   row.querySelector('.ia-opts').style.display = (sel.value === 'radio' || sel.value === 'select') ? '' : 'none';
-  iaRender(row);
-}
-
-// Rebuild the answer widget for the row's current type/choices, keeping
-// whatever was typed if it is still valid. Always exactly one form_answer[].
-function iaRender(row) {
-  var type = row.querySelector('select[name="form_type[]"]').value;
-  var holder = row.querySelector('.ia-ans');
-  var prev = holder.querySelector('[name="form_answer[]"]');
-  var prevVal = prev ? prev.value : '';
-  var el;
-  if (type === 'textarea') {
-    el = document.createElement('textarea'); el.rows = 2;
-  } else if (type === 'rating' || type === 'radio' || type === 'select') {
-    el = document.createElement('select');
-    var choices = type === 'rating' ? RATING_SCALE :
-      row.querySelector('textarea[name="form_options[]"]').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
-    var blank = document.createElement('option'); blank.value = ''; blank.textContent = '— Select —'; el.appendChild(blank);
-    choices.forEach(function (c) { var o = document.createElement('option'); o.value = c; o.textContent = c; el.appendChild(o); });
-  } else {
-    el = document.createElement('input'); el.type = 'text';
-  }
-  el.name = 'form_answer[]';
-  el.className = 'form-control';
-  holder.innerHTML = '';
-  holder.appendChild(el);
-  if (prevVal) el.value = prevVal;
-  iaApplyRequired(row);
 }
 
 // Reopen the modal on the Build a Form tab if validation sent us back with one.

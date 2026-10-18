@@ -80,6 +80,8 @@ class TrainingController extends Controller
 
         $trainings = $query->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
             ->orderBy('date_start')
+            ->orderBy('date_end')
+            ->orderBy('title')
             ->get();
 
         // Grouped by the linked Program ("Project") for the card grid  -
@@ -267,7 +269,7 @@ class TrainingController extends Controller
             $budgetItems = $request->input('budget_items', []);
             $budgetUsed  = 0;
             foreach ($budgetItems as $item) {
-                $budgetUsed += round((float)($item['quantity'] ?? 0) * (float)($item['unit_cost'] ?? 0), 2);
+                $budgetUsed += round((int) round((float) ($item['quantity'] ?? 0)) * (float)($item['unit_cost'] ?? 0), 2);
             }
 
             $training = Training::create([
@@ -290,7 +292,7 @@ class TrainingController extends Controller
                     ? 'Other: '.trim($item['other_specify'] ?? '')
                     : ($item['category'] ?? '');
                 if (! $cat) continue;
-                $qty = (float)($item['quantity'] ?? 0);
+                $qty = (int) round((float) ($item['quantity'] ?? 0));
                 $uc  = (float)($item['unit_cost'] ?? 0);
                 if ($qty <= 0) continue;
                 \App\Models\BudgetItem::create([
@@ -402,7 +404,7 @@ class TrainingController extends Controller
             'items.*.category'      => 'required|string|max:100',
             'items.*.other_specify' => 'nullable|string|max:255',
             'items.*.description'   => 'nullable|string|max:255',
-            'items.*.quantity'      => 'required|numeric|min:0.01',
+            'items.*.quantity'      => 'required|integer|min:1',
             'items.*.unit_cost'     => 'required|numeric|min:0',
         ])->validate();
 
@@ -418,7 +420,7 @@ class TrainingController extends Controller
                     ? 'Other: '.trim($item['other_specify'] ?? '')
                     : $item['category'];
 
-                $qty      = (float) $item['quantity'];
+                $qty      = (int) $item['quantity'];
                 $unitCost = (float) $item['unit_cost'];
                 $lineTotal = round($qty * $unitCost, 2);
                 $total    += $lineTotal;

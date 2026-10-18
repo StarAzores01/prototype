@@ -98,7 +98,11 @@ class TrainingController extends Controller
         return view('beneficiary.trainings', [
             'activePage' => 'trainings',
             'mode'       => 'list',
-            'trainings'  => $query->orderByDesc('date_start')->get(),
+            'trainings'  => $query
+                ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
+                ->orderBy('date_start')
+                ->orderBy('date_end')
+                ->get(),
             'q'          => $q,
             'status'     => $status,
         ]);

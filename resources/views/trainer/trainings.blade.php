@@ -349,7 +349,7 @@ function switchDocAddAsActivity(kind) {
       @if($project)<span class="badge badge-{{ strtolower($project->status) }}">{{ $project->status }}</span>@endif
       <span class="card-group-count">{{ $projectTrainings->count() }} {{ \Illuminate\Support\Str::plural('activity', $projectTrainings->count()) }}</span>
     </div>
-    <div class="home-grid home-grid-grouped">
+    <div class="home-grid home-grid-grouped programs-grid">
       @foreach($projectTrainings as $t)
         @php
           $hs = $statusMap[$t->status] ?? $t->status;
@@ -369,7 +369,10 @@ function switchDocAddAsActivity(kind) {
           <div class="training-card-body">
             <div class="training-card-title">{{ $t->title }}</div>
             <div class="training-card-footer" style="margin-top:8px;flex-wrap:wrap;gap:8px">
+<div style="display:flex;flex-direction:column;align-items:flex-start;gap:5px">
               <span class="badge {{ $sc }}">{{ $hs }}</span>
+@include('partials.date-range', ['start' => $t->date_start, 'end' => $t->date_end])
+</div>
               <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
                 @if($t->isLeadUser(auth('web')->id()))
                 <button class="btn btn-outline" style="padding:7px 12px;font-size:13px;line-height:1"
@@ -474,7 +477,7 @@ function openDeleteTrainingModal(id, title) {
       <input type="hidden" name="action" value="delete"/>
       <input type="hidden" name="training_id" id="deleteTrainingId"/>
       <div class="modal-body">
-        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteTrainingName"></strong>? This cannot be undone.</p>
+        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteTrainingName"></strong>? This cannot be undone, and its participants, attendance, evaluations and documents will be deleted with it.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('deleteTraining')">Cancel</button>

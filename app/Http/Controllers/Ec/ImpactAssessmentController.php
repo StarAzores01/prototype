@@ -164,6 +164,7 @@ class ImpactAssessmentController extends Controller
             'form_title'     => 'nullable|string|max:200',
             'field_label'    => 'nullable|array',
             'field_type'     => 'nullable|array',
+            'field_type.*'   => 'required|string|in:text,textarea,radio,select,rating',
             'field_required' => 'nullable|array',
             'field_options'  => 'nullable|array',
         ])->validate();
@@ -186,8 +187,18 @@ class ImpactAssessmentController extends Controller
                 'required' => isset($requiredIn[$i]),
             ];
 
-            if (in_array($type, ['radio', 'select'], true)) {
-                $field['options'] = array_values(array_filter(array_map('trim', explode("\n", $optionsIn[$i] ?? ''))));
+            if ($type === 'rating') {
+                // Rating is a fixed 5-point scale, answered as a multiple choice.
+                $field['type'] = 'radio';
+                $field['options'] = ['5 - Excellent', '4 - Very Good', '3 - Good', '2 - Fair', '1 - Poor'];
+            } elseif (in_array($type, ['radio', 'select'], true)) {
+                $field['options'] = array_values(array_filter(
+                    array_map('trim', explode("\n", $optionsIn[$i] ?? '')),
+                    fn ($option) => $option !== ''
+                ));
+                if ($field['options'] === []) {
+                    throw ValidationException::withMessages(['field_options.'.$i => 'Please add at least one choice for this question.']);
+                }
             }
 
             $fields[] = $field;

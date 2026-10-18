@@ -84,7 +84,7 @@
                     <input type="text" name="items[{{ $loop->index }}][description]" class="form-control form-control-sm" value="{{ $item->description }}" placeholder="e.g. Snacks for 30 pax"/>
                   </td>
                   <td style="padding:6px 8px">
-                    <input type="number" name="items[{{ $loop->index }}][quantity]" class="form-control form-control-sm budget-qty" value="{{ $item->quantity }}" min="0.01" step="0.01" required style="text-align:right" oninput="recalcRow(this)"/>
+                    <input type="number" name="items[{{ $loop->index }}][quantity]" class="form-control form-control-sm budget-qty" value="{{ (int) $item->quantity }}" min="1" step="1" required style="text-align:right" oninput="recalcRow(this)"/>
                   </td>
                   <td style="padding:6px 8px">
                     <input type="number" name="items[{{ $loop->index }}][unit_cost]" class="form-control form-control-sm budget-uc" value="{{ $item->unit_cost }}" min="0" step="0.01" required style="text-align:right" oninput="recalcRow(this)"/>
@@ -111,7 +111,7 @@
                     <input type="text" name="items[0][description]" class="form-control form-control-sm" placeholder="e.g. Snacks for 30 pax"/>
                   </td>
                   <td style="padding:6px 8px">
-                    <input type="number" name="items[0][quantity]" class="form-control form-control-sm budget-qty" value="1" min="0.01" step="0.01" required style="text-align:right" oninput="recalcRow(this)"/>
+                    <input type="number" name="items[0][quantity]" class="form-control form-control-sm budget-qty" value="1" min="1" step="1" required style="text-align:right" oninput="recalcRow(this)"/>
                   </td>
                   <td style="padding:6px 8px">
                     <input type="number" name="items[0][unit_cost]" class="form-control form-control-sm budget-uc" value="0" min="0" step="0.01" required style="text-align:right" oninput="recalcRow(this)"/>
@@ -153,7 +153,7 @@ function addBudgetRow() {
       <input type="text" name="items[${rowIndex}][other_specify]" class="form-control form-control-sm other-specify" placeholder="Please specify…" style="margin-top:4px;display:none"/>
     </td>
     <td style="padding:6px 8px"><input type="text" name="items[${rowIndex}][description]" class="form-control form-control-sm" placeholder="e.g. Snacks for 30 pax"/></td>
-    <td style="padding:6px 8px"><input type="number" name="items[${rowIndex}][quantity]" class="form-control form-control-sm budget-qty" value="1" min="0.01" step="0.01" required style="text-align:right" oninput="recalcRow(this)"/></td>
+    <td style="padding:6px 8px"><input type="number" name="items[${rowIndex}][quantity]" class="form-control form-control-sm budget-qty" value="1" min="1" step="1" required style="text-align:right" oninput="recalcRow(this)"/></td>
     <td style="padding:6px 8px"><input type="number" name="items[${rowIndex}][unit_cost]" class="form-control form-control-sm budget-uc" value="0" min="0" step="0.01" required style="text-align:right" oninput="recalcRow(this)"/></td>
     <td style="padding:6px 8px;text-align:right;font-weight:600;color:var(--gray-800)" class="budget-total">0.00</td>
     <td style="padding:6px 8px"><button type="button" class="btn btn-sm btn-danger" style="padding:3px 7px" onclick="removeBudgetRow(this)"><i class="fas fa-trash"></i></button></td>
@@ -176,7 +176,7 @@ function toggleOther(sel) {
 
 function recalcRow(input) {
   const row   = input.closest('tr');
-  const qty   = parseFloat(row.querySelector('.budget-qty').value) || 0;
+  const qty   = parseInt(row.querySelector('.budget-qty').value, 10) || 0;
   const uc    = parseFloat(row.querySelector('.budget-uc').value)  || 0;
   const total = (qty * uc).toFixed(2);
   row.querySelector('.budget-total').textContent = parseFloat(total).toLocaleString('en-PH', {minimumFractionDigits:2});

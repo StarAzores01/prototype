@@ -31,9 +31,22 @@ class ParticipantController extends Controller
             $participantsQuery->where('training_id', $filterTraining);
         }
 
+        $participants = $participantsQuery->get();
+
+        // One row per person: enrollments that belong to the same account are
+        // grouped (oldest first) so a participant in several activities shows
+        // once with all of their activities listed. Unregistered participants
+        // have no account yet, so each stays its own row.
+        $groups = $participants
+            ->sortBy('id')
+            ->groupBy(fn ($p) => $p->beneficiary_id ? 'b'.$p->beneficiary_id : 'p'.$p->id)
+            ->sortBy(fn ($rows) => mb_strtolower($rows->first()->full_name))
+            ->values();
+
         return view('ec.participants', [
             'activePage'     => 'participants',
-            'participants'   => $participantsQuery->get(),
+            'participants'   => $participants,
+            'groups'         => $groups,
             'trainings'      => Training::orderBy('title')->get(['id', 'title']),
             // For the "Add Existing Account" picker: every active account,
             // plus which trainings each one is already enrolled in so the
@@ -125,7 +138,14 @@ class ParticipantController extends Controller
                 return ['error', "{$account->full_name} is already enrolled in that activity."];
             }
 
-            $bfId = IdGenerator::next('BF', 'participants');
+            // An existing account keeps the User ID it was first registered
+            // with. Only fall back to a new ID if no enrollment has one.
+            $bfId = Participant::where('beneficiary_id', $account->id)
+                ->whereNotNull('id_number')
+                ->where('id_number', '!=', '')
+                ->orderBy('id')
+                ->value('id_number')
+                ?: IdGenerator::next('BF', 'participants');
 
             Participant::create([
                 'full_name'      => $account->full_name,
@@ -153,15 +173,32 @@ class ParticipantController extends Controller
             'id_number'      => 'nullable|string|max:40',
         ])->validate();
 
-        Participant::where('id', $data['participant_id'])->update([
-            'full_name'   => $data['full_name'],
-            'id_number'   => $data['id_number'] ?? '',
-            'phone'       => $data['phone'] ?? null,
-            'address'     => $data['address'] ?? null,
-            'age'         => $data['age'] ?? null,
-            'sex'         => $data['sex'] ?? null,
-            'training_id' => $data['training_id'],
-        ]);
+        $participant = Participant::findOrFail($data['participant_id']);
+
+        if ($participant->beneficiary_id
+            && Participant::where('beneficiary_id', $participant->beneficiary_id)
+                ->where('training_id', $data['training_id'])
+                ->where('id', '!=', $participant->id)
+                ->exists()) {
+            return back()->with('error', 'That participant is already enrolled in the selected activity.');
+        }
+
+        $personal = [
+            'full_name' => $data['full_name'],
+            'id_number' => $data['id_number'] ?? '',
+            'phone'     => $data['phone'] ?? null,
+            'address'   => $data['address'] ?? null,
+            'age'       => $data['age'] ?? null,
+            'sex'       => $data['sex'] ?? null,
+        ];
+
+        // Personal details and User ID belong to the person, so they are kept
+        // the same across all of that account's enrollments. Only the activity
+        // applies to the one enrollment being edited.
+        if ($participant->beneficiary_id) {
+            Participant::where('beneficiary_id', $participant->beneficiary_id)->update($personal);
+        }
+        $participant->update($personal + ['training_id' => $data['training_id']]);
 
         return back()->with('success', 'Participant updated.');
     }

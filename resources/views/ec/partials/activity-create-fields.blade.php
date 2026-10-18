@@ -127,7 +127,7 @@
             <input type="text" name="budget_items[0][other_specify]" class="form-control form-control-sm cb-other" placeholder="Please specify…" style="margin-top:4px;display:none"/>
           </td>
           <td style="padding:8px 10px"><input type="text" name="budget_items[0][description]" class="form-control form-control-sm" placeholder="e.g. Snacks for 30 pax"/></td>
-          <td style="padding:8px 10px"><input type="number" name="budget_items[0][quantity]" class="form-control form-control-sm cb-qty" value="1" min="0.01" step="0.01" style="text-align:right" oninput="cbRecalc(this)"/></td>
+          <td style="padding:8px 10px"><input type="number" name="budget_items[0][quantity]" class="form-control form-control-sm cb-qty" value="1" min="1" step="1" style="text-align:right" oninput="cbRecalc(this)"/></td>
           <td style="padding:8px 10px"><input type="number" name="budget_items[0][unit_cost]" class="form-control form-control-sm cb-uc" value="0" min="0" step="0.01" style="text-align:right" oninput="cbRecalc(this)"/></td>
           <td style="padding:8px 10px;text-align:right;font-weight:600;color:var(--gray-800)" class="cb-total">0.00</td>
           <td style="padding:8px 10px"><button type="button" class="btn btn-sm btn-danger" style="padding:4px 8px" onclick="cbRemoveRow(this)"><i class="fas fa-trash"></i></button></td>
@@ -157,7 +157,7 @@
         <input type="text" name="budget_items[${rowIndex}][other_specify]" class="form-control form-control-sm cb-other" placeholder="Please specify…" style="margin-top:4px;display:none"/>
       </td>
       <td style="padding:8px 10px"><input type="text" name="budget_items[${rowIndex}][description]" class="form-control form-control-sm" placeholder="e.g. Snacks for 30 pax"/></td>
-      <td style="padding:8px 10px"><input type="number" name="budget_items[${rowIndex}][quantity]" class="form-control form-control-sm cb-qty" value="1" min="0.01" step="0.01" style="text-align:right" oninput="cbRecalc(this)"/></td>
+      <td style="padding:8px 10px"><input type="number" name="budget_items[${rowIndex}][quantity]" class="form-control form-control-sm cb-qty" value="1" min="1" step="1" style="text-align:right" oninput="cbRecalc(this)"/></td>
       <td style="padding:8px 10px"><input type="number" name="budget_items[${rowIndex}][unit_cost]" class="form-control form-control-sm cb-uc" value="0" min="0" step="0.01" style="text-align:right" oninput="cbRecalc(this)"/></td>
       <td style="padding:8px 10px;text-align:right;font-weight:600;color:var(--gray-800)" class="cb-total">0.00</td>
       <td style="padding:8px 10px"><button type="button" class="btn btn-sm btn-danger" style="padding:4px 8px" onclick="cbRemoveRow(this)"><i class="fas fa-trash"></i></button></td>
@@ -178,7 +178,7 @@
 
   window.cbRecalc = function (input) {
     const row   = input.closest('tr');
-    const qty   = parseFloat(row.querySelector('.cb-qty').value) || 0;
+    const qty   = parseInt(row.querySelector('.cb-qty').value, 10) || 0;
     const uc    = parseFloat(row.querySelector('.cb-uc').value)  || 0;
     row.querySelector('.cb-total').textContent = (qty * uc).toFixed(2);
     cbUpdateTotal();

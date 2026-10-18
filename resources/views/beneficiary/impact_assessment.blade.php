@@ -56,6 +56,11 @@
       <a href="{{ route('beneficiary.impact_assessment') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to List</a>
     </div>
 
+    @elseif($viewForm->due_date && now()->greaterThan($viewForm->due_date->copy()->endOfDay()))
+    <div style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#991B1B">
+      <i class="fas fa-lock"></i> <strong>This impact assessment closed on {{ $viewForm->due_date->format('M d, Y') }}.</strong> It can no longer be submitted.
+    </div>
+
     @else
     <!-- ── ANSWER FORM ── -->
     <form method="POST" action="{{ route('beneficiary.impact_assessment.store') }}">
@@ -144,6 +149,8 @@
       </div>
       @if($f->myResponse)
       <a href="?form={{ $f->id }}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i> View Response</a>
+      @elseif($f->due_date && now()->greaterThan($f->due_date->copy()->endOfDay()))
+      <span class="badge" style="background:#FEE2E2;color:#991B1B"><i class="fas fa-lock"></i> Closed</span>
       @else
       <a href="?form={{ $f->id }}" class="btn btn-primary btn-sm"><i class="fas fa-file-lines"></i> Answer Assessment</a>
       @endif

@@ -379,6 +379,21 @@ select.filter-select:focus { border-color: var(--blue-primary); }
    two cards would stretch them oversized instead of just sitting compact
    and left-aligned like their neighboring groups. */
 .home-grid-grouped .training-card { max-width: 360px; }
+/* Programs pages: always lay cards out on a fixed 3-column track, so one
+   or two programs keep the same size as a full row instead of stretching
+   across the page. */
+.programs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .programs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px)  { .programs-grid { grid-template-columns: 1fr; } }
+/* Grouped activity cards were capped at 360px inside wider tracks, which left
+   a big gap between two cards. In the fixed grid the card fills its track. */
+.programs-grid .training-card { max-width: none; }
+
+/* Programs / Activities search bar (EC): follows the theme instead of a
+   hard-coded white background, so it is dark in dark mode. */
+.page-search { width: 100%; padding: 9px 12px 9px 36px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; color: var(--gray-800); background: var(--surface); outline: none; }
+.page-search::placeholder { color: var(--gray-400); }
+[data-theme="dark"] .page-search { background: var(--gray-100); border-color: var(--gray-200); color: var(--gray-800); }
 
 /* ===== PARTICIPANT AVATAR ===== */
 .participant-avatar { width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
@@ -631,6 +646,10 @@ select.filter-select:focus { border-color: var(--blue-primary); }
 .profile-dropdown a > span:first-child {
   font-size: .85em;
 }
+/* The Logout item is a <button> with a fixed inline size, while My Profile is a
+   link that inherits its size (rule above). Make the button follow the links so
+   both menu items always have the same font size. */
+.profile-dropdown > button { font-size: inherit !important; font-family: inherit !important; }
 /* Global: any bare unicode icon character next to text */
 .breadcrumb, .meta-item, .footer-ci, .lp-footer-ci,
 .alert, .card-link, .eyebrow, .lp-eyebrow {
@@ -1319,4 +1338,45 @@ table.data-table tr:hover td { background: var(--blue-xsoft); }
   background: var(--gray-100);
   color: var(--gray-500);
   border-color: var(--gray-200);
+}
+
+/* ===== PRINT / EXPORT: always light ===== */
+/* Whatever theme the screen is in, printed and exported pages (attendance
+   sheets, activity reports, and so on) use the light theme. This block sits
+   last so it wins over the [data-theme="dark"] rules above. */
+@media print {
+  :root, :root[data-theme="dark"] {
+    --gray-50: #F8FAFC; --gray-100: #F1F5F9; --gray-200: #E2E8F0;
+    --gray-400: #94A3B8; --gray-500: #64748B; --gray-600: #475569;
+    --gray-700: #334155; --gray-800: #1E293B;
+    --surface: #FFFFFF; --text-heading: var(--navy);
+    color-scheme: light;
+  }
+  html[data-theme="dark"], html[data-theme="dark"] body { background: #FFFFFF !important; color: #1E293B !important; }
+  html[data-theme="dark"] .card,
+  html[data-theme="dark"] .modal { background: #FFFFFF !important; border-color: #E2E8F0 !important; }
+  html[data-theme="dark"] th { background: #F1F5F9; color: #64748B; }
+  html[data-theme="dark"] tr:hover td { background: transparent; }
+  html[data-theme="dark"] .badge-proposed  { background: #FEF9C3; color: #854D0E; }
+  html[data-theme="dark"] .badge-ongoing   { background: #DBEAFE; color: #122B57; }
+  html[data-theme="dark"] .badge-completed { background: #D1FAE5; color: #065F46; }
+  html[data-theme="dark"] .badge-approved  { background: #E0E7FF; color: #3730A3; }
+  html[data-theme="dark"] .badge-pending   { background: #FEF9C3; color: #854D0E; }
+  html[data-theme="dark"] .badge-submitted { background: #D1FAE5; color: #065F46; }
+  html[data-theme="dark"] .badge-active    { background: #D1FAE5; color: #065F46; }
+  html[data-theme="dark"] .badge-inactive  { background: #FEF9C3; color: #854D0E; }
+  html[data-theme="dark"] .badge-info      { background: #DBEAFE; color: #122B57; }
+  html[data-theme="dark"] .badge-success   { background: #D1FAE5; color: #065F46; }
+  html[data-theme="dark"] .badge-warning   { background: #FEF9C3; color: #854D0E; }
+  html[data-theme="dark"] .badge-danger    { background: #FEE2E2; color: #991B1B; }
+  html[data-theme="dark"] .alert-danger    { background: #FEF2F2; color: #991B1B; border-color: #FECACA; }
+  html[data-theme="dark"] .alert-success   { background: #F0FDF4; color: #166534; border-color: #BBF7D0; }
+  html[data-theme="dark"] .alert-info      { background: #EFF6FF; color: #122B57; border-color: #DBEAFE; }
+  html[data-theme="dark"] .form-control,
+  html[data-theme="dark"] select.form-control { background: #FFFFFF; color: #1E293B; border-color: #E2E8F0; }
+  html[data-theme="dark"] .stat-icon.blue   { background: #DBEAFE; color: #1A56DB; }
+  html[data-theme="dark"] .stat-icon.green  { background: #D1FAE5; color: #065F46; }
+  html[data-theme="dark"] .stat-icon.yellow { background: #FEF9C3; color: #854D0E; }
+  html[data-theme="dark"] .stat-icon.red    { background: #FEE2E2; color: #991B1B; }
+  html[data-theme="dark"] .stat-icon.navy   { background: #E0E7FF; color: #3730A3; }
 }

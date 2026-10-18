@@ -149,7 +149,7 @@
 @if($trainings->isEmpty())
 <div class="empty-state"><i class="fas fa-book"></i><p>No activities found.</p></div>
 @else
-<div class="home-grid">
+<div class="home-grid programs-grid">
   @foreach($trainings as $t)
     @php
       $hs = $statusMap[$t->status] ?? $t->status;
@@ -179,7 +179,10 @@
           <span><i class="fas fa-diagram-project"></i> {{ $t->program->title ?? 'No program assigned' }}</span>
         </div>
         <div class="training-card-footer">
+<div style="display:flex;flex-direction:column;align-items:flex-start;gap:5px">
           <span class="badge {{ $sc }}">{{ $hs }}</span>
+@include('partials.date-range', ['start' => $t->date_start, 'end' => $t->date_end])
+</div>
           <a href="?view={{ $t->id }}" class="btn btn-sm btn-primary">View Details</a>
         </div>
       </div>

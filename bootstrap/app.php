@@ -5,7 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Exception\PostTooLargeException;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -48,6 +48,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // 413 error page instead of landing back on the form with a
         // message they can act on.
         $exceptions->render(function (PostTooLargeException $e, Request $request) {
-            return back()->with('error', 'That upload is too large. Please choose a smaller file and try again.');
+            return back()->with('error', 'That file is too large to upload. Please choose a file under 5 MB and try again.');
         });
     })->create();

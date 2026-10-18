@@ -41,6 +41,35 @@ $activePageTitle = $activePage === 'trainings' ? 'Activities' : ($activePage ===
        lives inside its content section and would run before a
        layout-level <script> placed after @yield('content') ever executes. --}}
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    // Chart text/grid colors follow the theme. Chart.js defaults to a mid-gray
+    // that is hard to read on the dark surface, so in dark mode use the same
+    // light tone as the page text, and re-apply live when the theme is toggled.
+    (function () {
+      if (typeof Chart === 'undefined') return;
+      var light = { text: '#475569', grid: 'rgba(0,0,0,.08)' };
+      var dark  = { text: '#E2E8F0', grid: 'rgba(255,255,255,.10)' };
+      function apply() {
+        var c = document.documentElement.getAttribute('data-theme') === 'dark' ? dark : light;
+        Chart.defaults.color = c.text;
+        Chart.defaults.borderColor = c.grid;
+        Object.values(Chart.instances || {}).forEach(function (ch) {
+          try {
+            var sc = ch.options.scales || {};
+            Object.keys(sc).forEach(function (k) {
+              if (sc[k].ticks) sc[k].ticks.color = c.text;
+              if (sc[k].grid && sc[k].grid.display !== false) sc[k].grid.color = c.grid;
+            });
+            var lg = ch.options.plugins && ch.options.plugins.legend && ch.options.plugins.legend.labels;
+            if (lg) lg.color = c.text;
+            ch.update('none');
+          } catch (e) {}
+        });
+      }
+      apply();
+      new MutationObserver(apply).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    })();
+  </script>
 </head>
 <body>
 

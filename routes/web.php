@@ -78,7 +78,7 @@ Route::get('/trainings-public', [TrainingsPublicController::class, 'index'])->na
 Route::view('/privacy', 'public.privacy')->name('privacy');
 Route::view('/terms', 'public.terms')->name('terms');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact')->name('contact.store');
 Route::get('/posts', [PublicPostController::class, 'index'])->name('public.posts.index');
 Route::get('/posts/{post}', [PublicPostController::class, 'show'])->name('public.posts.show');
 
@@ -101,8 +101,7 @@ Route::middleware(['guest:web,beneficiary', 'no-back-cache'])->group(function ()
     Route::get('/beneficiary-signup', [RegisteredBeneficiaryController::class, 'create'])->name('beneficiary.signup');
     Route::post('/beneficiary-signup', [RegisteredBeneficiaryController::class, 'store']);
 
-    // EC self-registration — no whitelist gate. Moved under /account/ (was
-    // the top-level /ecsignuppage.php).
+    // Keep the legacy named URL resolvable; both public signup actions return 404.
     Route::get('/account/ec-signup', [RegisteredEcController::class, 'create'])->name('ec.signup');
     Route::post('/account/ec-signup', [RegisteredEcController::class, 'store']);
 

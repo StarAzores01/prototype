@@ -10,7 +10,7 @@
   <div style="display:flex;gap:10px">
     <a href="{{ route('ec.evaluation') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
     @if($tab === 'surveys' && !($viewForm ?? null))
-    <button class="btn btn-primary" onclick="openModal('createSurveyForm')"><i class="fas fa-plus"></i> Create Survey Form</button>
+    <button class="btn btn-primary" onclick="openStandaloneForm()"><i class="fas fa-plus"></i> Create Survey Form</button>
     @endif
   </div>
 </div>
@@ -22,6 +22,16 @@
 @elseif(session('error'))
 <div class="alert alert-danger" style="margin-bottom:20px">
   <i class="fas fa-triangle-exclamation"></i> {{ session('error') }}
+</div>
+@endif
+
+@if($errors->any())
+<div class="alert alert-danger" style="margin-bottom:20px" role="alert">
+  <ul>
+    @foreach($errors->all() as $error)
+    <li>{{ $error }}</li>
+    @endforeach
+  </ul>
 </div>
 @endif
 
@@ -95,8 +105,22 @@
           <td>{{ $a->submitted_at?->format('M d, Y') ?? '—' }}</td>
           <td>{{ $a->due_date?->format('M d, Y') ?? '—' }}</td>
           <td style="display:flex;gap:6px;flex-wrap:wrap">
-            @if(! $a->participant_form_id && ! $a->form_data)
-            <button type="button" class="btn btn-sm btn-primary" onclick="openFormFromAssessment({{ $a->id }}, {{ (int) $a->training_id }}, {{ json_encode($a->due_date?->format('Y-m-d')) }}, {{ json_encode($a->title) }})"><i class="fas fa-file-lines"></i> Create Participant Form</button>
+            @if($a->status === 'Submitted')
+            <button type="button" class="btn btn-sm btn-outline" data-assessment-id="{{ $a->id }}" data-title="{{ $a->title }}" onclick="openReviewModal(this.dataset.assessmentId, this.dataset.title)"><i class="fas fa-square-check"></i> Review</button>
+            @endif
+            @if($a->participant_form_id === null && $a->training_id && in_array($a->status, ['Submitted', 'Reviewed'], true))
+              @if($a->form_data !== null)
+              <form method="POST" action="{{ route('ec.impact_assessment.store') }}" onsubmit="return confirm('Send the evaluator questions to participants now?')" style="display:inline">
+                @csrf
+                <input type="hidden" name="action" value="create_form"/>
+                <input type="hidden" name="assessment_id" value="{{ $a->id }}"/>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-paper-plane"></i> Send to Participants</button>
+              </form>
+              @elseif($a->file_name)
+              <button type="button" class="btn btn-sm btn-primary" data-assessment-id="{{ $a->id }}" data-training-id="{{ $a->training_id }}" data-due="{{ $a->due_date?->format('Y-m-d') }}" data-title="{{ $a->title }}" onclick="openFormFromAssessment(this.dataset)"><i class="fas fa-file-lines"></i> Create Participant Form</button>
+              @endif
+            @elseif($a->participant_form_id !== null)
+            <span class="badge badge-success">Sent to Participants</span>
             @endif
             <form method="POST" action="{{ route('ec.impact_assessment.store') }}" onsubmit="return confirm('Delete this assessment?')" style="display:inline">
               @csrf
@@ -339,20 +363,38 @@ function filterSurveyForms() {
 <script>
 // From an evaluator's uploaded file: the activity and due date are the
 // evaluator's, so they are filled in and locked; the EC only writes the questions.
-function openFormFromAssessment(id, trainingId, due, title) {
-  document.getElementById('csAssessmentId').value = id;
+function resetSurveyForm() {
+  document.getElementById('csAssessmentId').value = '';
+  document.getElementById('fieldsContainer').replaceChildren();
+  fieldCount = 0;
+}
+function openStandaloneForm() {
+  resetSurveyForm();
   var t = document.getElementById('csTraining');
-  if (trainingId) { t.value = String(trainingId); }
-  t.style.pointerEvents = trainingId ? 'none' : ''; t.style.background = trainingId ? 'var(--gray-100)' : '';
+  t.disabled = false; t.required = true; t.value = '';
   var d = document.getElementById('csDue');
-  d.value = due || ''; d.readOnly = !!due; d.style.background = due ? 'var(--gray-100)' : '';
-  document.getElementById('csDueNote').textContent = due ? '(set by the evaluator)' : '(date participants must answer by)';
-  document.getElementById('csTitle').value = title || 'Impact Assessment Survey';
+  d.value = ''; d.readOnly = false; d.style.background = '';
+  document.getElementById('csDueNote').textContent = '(date participants must answer by)';
+  document.getElementById('csTitle').value = 'Impact Assessment Survey';
+  addField();
   openModal('createSurveyForm');
-  if (document.getElementById('fieldsContainer').children.length === 0) { setTimeout(addField, 80); }
+}
+function openFormFromAssessment(source) {
+  resetSurveyForm();
+  document.getElementById('csAssessmentId').value = source.assessmentId;
+  var t = document.getElementById('csTraining');
+  t.value = String(source.trainingId || '');
+  t.disabled = true; t.required = false;
+  var d = document.getElementById('csDue');
+  d.value = source.due || ''; d.readOnly = !!source.due; d.style.background = source.due ? 'var(--gray-100)' : '';
+  document.getElementById('csDueNote').textContent = source.due ? '(set by the evaluator)' : '(date participants must answer by)';
+  document.getElementById('csTitle').value = source.title || 'Impact Assessment Survey';
+  addField();
+  openModal('createSurveyForm');
 }
 
 function openReviewModal(id, title) {
+  document.querySelector('#modal-reviewAssessment form').reset();
   document.getElementById('review_id').value = id;
   document.getElementById('review_title').textContent = title;
   openModal('reviewAssessment');
@@ -388,7 +430,14 @@ function toggleOptions(sel, i) {
   document.getElementById('opts_'+i).style.display = show ? 'block' : 'none';
 }
 document.addEventListener('DOMContentLoaded', function() {
-  const previous = {{ Illuminate\Support\Js::from(old('action') === 'create_form' ? old() : []) }};
+  const reviewPrevious = {{ Illuminate\Support\Js::from(old('action') === 'review' ? old() : []) }};
+  if (reviewPrevious.action === 'review') {
+    openReviewModal(typeof reviewPrevious.assessment_id === 'string' ? reviewPrevious.assessment_id : '', 'Review Assessment');
+    if (typeof reviewPrevious.ec_notes === 'string') {
+      document.querySelector('#modal-reviewAssessment textarea').value = reviewPrevious.ec_notes;
+    }
+  }
+  const previous = {{ Illuminate\Support\Js::from(old('action') === 'create_form' && old('field_label') !== null ? old() : []) }};
   if (previous.action !== 'create_form') return;
   const assessment = {{ Illuminate\Support\Js::from(isset($creationAssessment) ? [
       'assessmentId' => $creationAssessment->id,

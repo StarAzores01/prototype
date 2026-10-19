@@ -9,6 +9,9 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class ImpactAssessmentController extends Controller
 {
@@ -19,6 +22,7 @@ class ImpactAssessmentController extends Controller
         $forms = ImpactAssessmentForm::with('training')
             ->whereHas('training.participants', fn ($q) => $q->where('beneficiary_id', $beneficiaryId))
             ->whereNotNull('sent_at')
+            ->where('sent_at', '<=', now())
             ->orderByDesc('sent_at')
             ->get();
 
@@ -55,8 +59,7 @@ class ImpactAssessmentController extends Controller
         abort_unless(Auth::guard('beneficiary')->user()?->is_active, 403);
 
         $data = Validator::make($request->all(), [
-            'form_id'     => 'required|integer|exists:impact_assessment_forms,id',
-            'training_id' => 'required|integer|exists:trainings,id',
+            'form_id'     => 'required|integer',
         ])->validate();
 
         return DB::transaction(function () use ($request, $data, $beneficiaryId) {

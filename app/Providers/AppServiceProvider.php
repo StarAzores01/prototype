@@ -6,6 +6,9 @@ use App\View\Composers\BeneficiaryLayoutComposer;
 use App\View\Composers\EcLayoutComposer;
 use App\View\Composers\EvaluatorLayoutComposer;
 use App\View\Composers\TrainerLayoutComposer;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('contact', fn (Request $request) => [
+            Limit::perMinute(5)->by('contact-min|'.$request->ip()),
+            Limit::perHour(30)->by('contact-hour|'.$request->ip()),
+        ]);
+
         View::composer('layouts.ec', EcLayoutComposer::class);
         View::composer('layouts.trainer', TrainerLayoutComposer::class);
         View::composer('layouts.evaluator', EvaluatorLayoutComposer::class);

@@ -145,7 +145,10 @@ class ParticipantController extends Controller
                 ->where('id_number', '!=', '')
                 ->orderBy('id')
                 ->value('id_number')
-                ?: IdGenerator::next('BF', 'participants');
+                ?? IdGenerator::next('BF', 'participants');
+
+            // Normalize only this account; never infer identity from names.
+            Participant::where('beneficiary_id', $account->id)->update(['id_number' => $bfId]);
 
             Participant::create([
                 'full_name'      => $account->full_name,
@@ -173,34 +176,43 @@ class ParticipantController extends Controller
             'id_number'      => 'nullable|string|max:40',
         ])->validate();
 
-        $participant = Participant::findOrFail($data['participant_id']);
+        return DB::transaction(function () use ($data) {
+            $participant = Participant::findOrFail($data['participant_id']);
+            if ($participant->beneficiary_id) {
+                Beneficiary::whereKey($participant->beneficiary_id)->lockForUpdate()->firstOrFail();
+            }
+            $participant = Participant::whereKey($participant->id)->lockForUpdate()->firstOrFail();
 
-        if ($participant->beneficiary_id
-            && Participant::where('beneficiary_id', $participant->beneficiary_id)
-                ->where('training_id', $data['training_id'])
-                ->where('id', '!=', $participant->id)
-                ->exists()) {
-            return back()->with('error', 'That participant is already enrolled in the selected activity.');
-        }
+            if ($participant->beneficiary_id
+                && Participant::where('beneficiary_id', $participant->beneficiary_id)
+                    ->where('training_id', $data['training_id'])
+                    ->where('id', '!=', $participant->id)->exists()) {
+                return back()->with('error', 'That participant is already enrolled in the selected activity.');
+            }
 
-        $personal = [
-            'full_name' => $data['full_name'],
-            'id_number' => $data['id_number'] ?? '',
-            'phone'     => $data['phone'] ?? null,
-            'address'   => $data['address'] ?? null,
-            'age'       => $data['age'] ?? null,
-            'sex'       => $data['sex'] ?? null,
-        ];
+            $canonicalId = $participant->beneficiary_id
+                ? Participant::where('beneficiary_id', $participant->beneficiary_id)
+                    ->whereNotNull('id_number')->where('id_number', '!=', '')
+                    ->orderBy('id')->value('id_number')
+                : null;
+            $personal = [
+                'full_name' => $data['full_name'],
+                'id_number' => $participant->beneficiary_id
+                    ? ($canonicalId ?? IdGenerator::next('BF', 'participants'))
+                    : ($data['id_number'] ?? ''),
+                'phone' => $data['phone'] ?? null, 'address' => $data['address'] ?? null,
+                'age' => $data['age'] ?? null, 'sex' => $data['sex'] ?? null,
+            ];
 
-        // Personal details and User ID belong to the person, so they are kept
-        // the same across all of that account's enrollments. Only the activity
-        // applies to the one enrollment being edited.
-        if ($participant->beneficiary_id) {
-            Participant::where('beneficiary_id', $participant->beneficiary_id)->update($personal);
-        }
-        $participant->update($personal + ['training_id' => $data['training_id']]);
+            // Account details and canonical ID are shared; activity actions
+            // still address the individual enrollment row.
+            if ($participant->beneficiary_id) {
+                Participant::where('beneficiary_id', $participant->beneficiary_id)->update($personal);
+            }
+            $participant->update($personal + ['training_id' => $data['training_id']]);
 
-        return back()->with('success', 'Participant updated.');
+            return back()->with('success', 'Participant updated.');
+        });
     }
 
     private function delete(Request $request)

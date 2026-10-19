@@ -233,7 +233,7 @@ class ProgramController extends Controller
         return redirect()->route('trainer.programs')->with('success', 'Program updated.');
     }
 
-    /** Lead only: hard-delete a program together with all the activities under it. */
+    /** Lead only: delete the program while preserving and unlinking its activities. */
     private function delete(Request $request)
     {
         $data = Validator::make($request->all(), [
@@ -243,15 +243,13 @@ class ProgramController extends Controller
         $program = Program::findOrFail($data['program_id']);
         $this->authorizeLead($program, 'Only this program\'s Project Lead can delete it.');
 
-        // Deleting a program deletes every activity under it too; the
-        // database cascades each activity's participants, attendance,
-        // evaluations, forms and so on. All or nothing.
-        \Illuminate\Support\Facades\DB::transaction(function () use ($program) {
-            $program->trainings()->get()->each->delete();
-            $program->delete();
+        DB::transaction(function () use ($program) {
+            $lockedProgram = Program::whereKey($program->id)->lockForUpdate()->firstOrFail();
+            $lockedProgram->trainings()->update(['program_id' => null]);
+            $lockedProgram->delete();
         });
 
-        return redirect()->route('trainer.programs')->with('success', 'Program deleted.');
+        return redirect()->route('trainer.programs')->with('success', 'Program deleted. Its activities and their records have been preserved.');
     }
 
     /**

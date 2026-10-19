@@ -32,6 +32,11 @@ class User extends Authenticatable
     }
 
     /** Legacy column name compatibility: password_hash instead of password. */
+    public function getAuthPasswordName(): string
+    {
+        return 'password_hash';
+    }
+
     public function getAuthPassword()
     {
         return $this->password_hash;

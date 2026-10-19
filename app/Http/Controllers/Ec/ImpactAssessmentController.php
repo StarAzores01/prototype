@@ -11,8 +11,11 @@ use App\Models\Participant;
 use App\Models\Training;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ImpactAssessmentController extends Controller
 {
@@ -42,6 +45,10 @@ class ImpactAssessmentController extends Controller
     {
         $q = trim($request->query('q', ''));
         $filterStatus = trim($request->query('status', ''));
+        $oldAssessmentId = $request->old('assessment_id');
+        $creationAssessment = is_scalar($oldAssessmentId) && ctype_digit((string) $oldAssessmentId)
+            ? ImpactAssessment::find($oldAssessmentId)
+            : null;
 
         $assessmentsQuery = ImpactAssessment::with(['training', 'evaluator']);
 
@@ -64,6 +71,8 @@ class ImpactAssessmentController extends Controller
             'assessments'  => $assessmentsQuery->orderByDesc('submitted_at')->get(),
             'q'            => $q,
             'filterStatus' => $filterStatus,
+            'trainings'    => Training::orderBy('title')->get(['id', 'title']),
+            'creationAssessment' => $creationAssessment,
         ]);
     }
 
@@ -158,94 +167,147 @@ class ImpactAssessmentController extends Controller
     private function createForm(Request $request)
     {
         $data = Validator::make($request->all(), [
-            'training_id'    => 'required|integer|exists:trainings,id',
-            'assessment_id'  => 'nullable|integer|exists:impact_assessments,id',
-            'due_date'       => 'nullable|date',
-            'form_title'     => 'nullable|string|max:200',
-            'field_label'    => 'nullable|array',
-            'field_type'     => 'nullable|array',
-            'field_type.*'   => 'required|string|in:text,textarea,radio,select,rating',
+            'training_id' => [Rule::requiredIf(! $request->filled('assessment_id')), 'nullable', 'integer', 'exists:trainings,id'],
+            'assessment_id' => 'nullable|integer|exists:impact_assessments,id',
+            'due_date' => 'nullable|date',
+            'form_title' => 'nullable|string|max:200',
+            'field_label' => 'nullable|array',
+            'field_label.*' => 'required|string|max:255',
+            'field_type' => 'nullable|array',
+            'field_type.*' => 'required|string|in:text,textarea,radio,select,rating',
             'field_required' => 'nullable|array',
-            'field_options'  => 'nullable|array',
+            'field_required.*' => 'boolean',
+            'field_options' => 'nullable|array',
+            'field_options.*' => 'nullable|string|max:5000',
         ])->validate();
 
-        $labels = $request->input('field_label', []);
-        $types = $request->input('field_type', []);
-        $requiredIn = $request->input('field_required', []);
-        $optionsIn = $request->input('field_options', []);
-
-        $fields = [];
-        foreach ($labels as $i => $label) {
-            if (trim((string) $label) === '') {
-                continue;
+        return DB::transaction(function () use ($data) {
+            // Every sender locks this row before checking or creating its link.
+            // The form, link and notifications commit or roll back together.
+            $assessment = ! empty($data['assessment_id'])
+                ? ImpactAssessment::whereKey($data['assessment_id'])->lockForUpdate()->first()
+                : null;
+            if (! empty($data['assessment_id']) && ! $assessment) {
+                throw ValidationException::withMessages(['assessment_id' => 'This assessment is no longer available.']);
+            }
+            if ($assessment) {
+                if ($assessment->participant_form_id !== null) {
+                    throw ValidationException::withMessages(['assessment_id' => 'This assessment already has a linked participant form.']);
+                }
+                if (! in_array($assessment->status, ['Submitted', 'Reviewed'], true)) {
+                    throw ValidationException::withMessages(['assessment_id' => 'Only submitted or reviewed assessments can be sent.']);
+                }
+                if (! $assessment->training_id || ! $assessment->training()->exists()) {
+                    throw ValidationException::withMessages(['assessment_id' => 'This assessment has no linked activity.']);
+                }
+                if (isset($data['training_id']) && (int) $data['training_id'] !== (int) $assessment->training_id) {
+                    throw ValidationException::withMessages(['training_id' => 'The activity must match the linked assessment.']);
+                }
+                if ($assessment->form_data === null && (! $assessment->file_name
+                    || ! Storage::disk('local')->exists('uploads/'.$assessment->file_name))) {
+                    throw ValidationException::withMessages(['assessment_id' => 'The uploaded assessment file is unavailable. Please restore the file before creating its participant form.']);
+                }
+                $data['training_id'] = $assessment->training_id;
+                $data['due_date'] = $assessment->due_date?->format('Y-m-d') ?? ($data['due_date'] ?? null);
             }
 
-            $type = $types[$i] ?? 'text';
-            $field = [
-                'label'    => trim($label),
-                'type'     => $type,
-                'required' => isset($requiredIn[$i]),
-            ];
-
-            if ($type === 'rating') {
-                // Rating is a fixed 5-point scale, answered as a multiple choice.
-                $field['type'] = 'radio';
-                $field['options'] = ['5 - Excellent', '4 - Very Good', '3 - Good', '2 - Fair', '1 - Poor'];
-            } elseif (in_array($type, ['radio', 'select'], true)) {
-                $field['options'] = array_values(array_filter(
-                    array_map('trim', explode("\n", $optionsIn[$i] ?? '')),
-                    fn ($option) => $option !== ''
-                ));
-                if ($field['options'] === []) {
-                    throw ValidationException::withMessages(['field_options.'.$i => 'Please add at least one choice for this question.']);
+            if ($assessment && $assessment->form_data !== null) {
+                // Built forms use the evaluator's definition, never posted EC replacements.
+                $fields = $this->assessmentFields($assessment->form_data);
+            } else {
+                $fields = [];
+                foreach ($data['field_label'] ?? [] as $i => $label) {
+                    $type = $data['field_type'][$i] ?? 'text';
+                    $field = [
+                        'label' => trim($label), 'type' => $type,
+                        'required' => (string) ($data['field_required'][$i] ?? '0') === '1',
+                    ];
+                    if ($type === 'rating') {
+                        $field['type'] = 'radio';
+                        $field['options'] = $this->ratingScale();
+                    } elseif (in_array($type, ['radio', 'select'], true)) {
+                        $field['options'] = array_values(array_filter(
+                            array_map('trim', explode("\n", $data['field_options'][$i] ?? '')),
+                            fn ($option) => $option !== ''
+                        ));
+                        if ($field['options'] === []) {
+                            throw ValidationException::withMessages(['field_options.'.$i => 'Please add at least one choice for this question.']);
+                        }
+                    }
+                    $fields[] = $field;
+                }
+                if ($fields === []) {
+                    throw ValidationException::withMessages(['field_label' => 'Please add at least one question.']);
                 }
             }
 
+            $form = ImpactAssessmentForm::create([
+                'training_id' => $data['training_id'],
+                'due_date' => $data['due_date'] ?? null,
+                'title' => $assessment && $assessment->form_data !== null
+                    ? $assessment->title
+                    : (trim((string) ($data['form_title'] ?? '')) ?: 'Impact Assessment Survey'),
+                'fields' => $fields,
+                'created_by' => Auth::guard('web')->id(),
+                'sent_at' => now(),
+            ]);
+            if ($assessment) {
+                $assessment->update(['participant_form_id' => $form->id]);
+            }
+
+            $beneficiaryIds = Participant::where('training_id', $form->training_id)
+                ->whereNotNull('beneficiary_id')->distinct()->pluck('beneficiary_id');
+            foreach ($beneficiaryIds as $beneficiaryId) {
+                Notification::create([
+                    'user_id' => $beneficiaryId, 'role' => 'beneficiary',
+                    'training_id' => $form->training_id,
+                    'message' => 'A new Impact Assessment survey has been sent to you.',
+                    'link' => route('beneficiary.impact_assessment'),
+                ]);
+            }
+
+            return redirect()->route('ec.impact_assessment', ['tab' => 'surveys'])
+                ->with('success', 'Impact assessment form created and sent to participants.');
+        });
+    }
+
+    private function ratingScale(): array
+    {
+        return ['5 - Excellent', '4 - Very Good', '3 - Good', '2 - Fair', '1 - Poor'];
+    }
+
+    private function assessmentFields(mixed $questions): array
+    {
+        if (! is_array($questions) || ! array_is_list($questions) || $questions === []) {
+            throw ValidationException::withMessages(['assessment_id' => 'The evaluator form has no valid questions.']);
+        }
+        $fields = [];
+        foreach ($questions as $question) {
+            if (! is_array($question) || ! is_string($question['label'] ?? null)
+                || trim($question['label']) === ''
+                || ! in_array($question['type'] ?? null, ['text', 'textarea', 'radio', 'select', 'rating'], true)
+                || (isset($question['required']) && ! is_bool($question['required']))) {
+                throw ValidationException::withMessages(['assessment_id' => 'The evaluator form has an invalid question.']);
+            }
+            $field = [
+                'label' => $question['label'], 'type' => $question['type'],
+                'required' => $question['required'] ?? false,
+            ];
+            if ($field['type'] === 'rating') {
+                $field['type'] = 'radio';
+                $field['options'] = $this->ratingScale();
+            } elseif (in_array($field['type'], ['radio', 'select'], true)) {
+                $options = $question['options'] ?? null;
+                if (! is_array($options) || ! array_is_list($options) || $options === []
+                    || count(array_filter($options, fn ($value) => is_string($value) && trim($value) !== '')) !== count($options)) {
+                    throw ValidationException::withMessages(['assessment_id' => 'The evaluator form has invalid question choices.']);
+                }
+                $field['options'] = $options;
+            }
             $fields[] = $field;
         }
 
-        if (empty($fields)) {
-            return redirect()->route('ec.impact_assessment', ['tab' => 'surveys'])->with('error', 'Please add at least one question.');
-        }
-
-        // Created from an evaluator's uploaded file: the activity and due date
-        // come from what the evaluator submitted, and the submission is linked
-        // to the survey so it shows as sent.
-        $assessment = ! empty($data['assessment_id']) ? ImpactAssessment::find($data['assessment_id']) : null;
-        if ($assessment) {
-            $data['training_id'] = $assessment->training_id ?: $data['training_id'];
-            $data['due_date']    = $assessment->due_date?->format('Y-m-d') ?: ($data['due_date'] ?? null);
-        }
-
-        $form = ImpactAssessmentForm::create([
-            'training_id' => $data['training_id'],
-            'due_date'    => $data['due_date'] ?? null,
-            'title'       => trim((string) $request->input('form_title', '')) ?: 'Impact Assessment Survey',
-            'fields'      => $fields,
-            'created_by'  => Auth::guard('web')->id(),
-            'sent_at'     => now(),
-        ]);
-
-        if ($assessment) {
-            $assessment->update(['participant_form_id' => $form->id]);
-        }
-
-        $beneficiaryIds = Participant::where('training_id', $form->training_id)
-            ->whereNotNull('beneficiary_id')
-            ->distinct()
-            ->pluck('beneficiary_id');
-
-        foreach ($beneficiaryIds as $beneficiaryId) {
-            Notification::create([
-                'user_id'     => $beneficiaryId,
-                'role'        => 'beneficiary',
-                'training_id' => $form->training_id,
-                'message'     => 'A new Impact Assessment survey has been sent to you.',
-                'link'        => route('beneficiary.impact_assessment'),
-            ]);
-        }
-
-        return redirect()->route('ec.impact_assessment', ['tab' => 'surveys'])->with('success', 'Impact assessment form created and sent to participants.');
+        return $fields;
     }
 
     private function deleteForm(Request $request)

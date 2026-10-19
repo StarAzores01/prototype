@@ -139,7 +139,7 @@
         <div class="form-group">
           <label class="form-label">Due Date for Participants <span style="color:var(--red)">*</span></label>
           <input type="date" name="due_date" class="form-control" min="{{ now()->format('Y-m-d') }}" required/>
-          <div style="font-size:11.5px;color:var(--gray-400);margin-top:4px">The date participants must answer by. The sent date is recorded automatically when you submit.</div>
+          <div style="font-size:11.5px;color:var(--gray-400);margin-top:4px">The date participants must answer by. The EC reviews and explicitly sends the survey after you submit.</div>
         </div>
         <div class="form-group">
           <label class="form-label">Description / Notes</label>
@@ -155,7 +155,7 @@
           <input type="file" name="assessment_file" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"/>
         </div>
         <div id="iaFormSection" style="display:none">
-          <div style="font-size:12.5px;color:var(--gray-500);margin-bottom:10px">Add your questions. They go to the Extension Coordinator under Evaluator Submissions, who will review them and create the participant survey.</div>
+          <div style="font-size:12.5px;color:var(--gray-500);margin-bottom:10px">Add your questions. They go to the Extension Coordinator under Evaluator Submissions, who will review them and explicitly send the participant survey using these questions.</div>
           <div id="iaQuestions"></div>
           <button type="button" class="btn btn-outline btn-sm" onclick="iaAddQuestion()"><i class="fas fa-plus"></i> Add Question</button>
         </div>
@@ -227,9 +227,35 @@ function iaTypeChange(sel) {
   row.querySelector('.ia-opts').style.display = (sel.value === 'radio' || sel.value === 'select') ? '' : 'none';
 }
 
-// Reopen the modal on the Build a Form tab if validation sent us back with one.
-@if(old('mode') === 'form')
-document.addEventListener('DOMContentLoaded', function () { iaSetMode('form'); });
-@endif
+document.addEventListener('DOMContentLoaded', function () {
+  const previous = {{ Illuminate\Support\Js::from(old('action') === 'submit' ? old() : []) }};
+  if (previous.action !== 'submit') return;
+  const form = document.querySelector('#modal-submitAssessment form');
+  ['title', 'training_id', 'due_date', 'description'].forEach(function (name) {
+    if (typeof previous[name] === 'string' || typeof previous[name] === 'number') {
+      form.elements[name].value = previous[name];
+    }
+  });
+  document.getElementById('iaQuestions').replaceChildren();
+  if (previous.form_label && typeof previous.form_label === 'object') {
+    Object.entries(previous.form_label).forEach(function ([key, label]) {
+      if (typeof label !== 'string') return;
+      iaAddQuestion();
+      const row = document.getElementById('iaQuestions').lastElementChild;
+      row.querySelector('input[name="form_label[]"]').value = label;
+      const type = previous.form_type && previous.form_type[key];
+      const select = row.querySelector('select');
+      select.value = ['text', 'textarea', 'radio', 'select', 'rating'].includes(type) ? type : 'text';
+      iaTypeChange(select);
+      const checkbox = row.querySelector('.ia-req');
+      checkbox.checked = !!(previous.form_required && String(previous.form_required[key]) === '1');
+      iaReqChange(checkbox);
+      const options = previous.form_options && previous.form_options[key];
+      row.querySelector('textarea').value = typeof options === 'string' ? options : '';
+    });
+  }
+  iaSetMode(previous.mode === 'form' ? 'form' : 'file');
+  openModal('submitAssessment');
+});
 </script>
 @endsection

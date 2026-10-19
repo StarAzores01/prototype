@@ -23,6 +23,11 @@ class Beneficiary extends Authenticatable
         return ['is_active' => 'boolean', 'created_at' => 'datetime'];
     }
 
+    public function getAuthPasswordName(): string
+    {
+        return 'password_hash';
+    }
+
     public function getAuthPassword()
     {
         return $this->password_hash;

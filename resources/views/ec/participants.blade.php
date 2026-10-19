@@ -233,6 +233,7 @@
           <div class="form-group">
             <label class="form-label">User ID / ID Number</label>
             <input type="text" name="id_number" id="edit_idnum" class="form-control"/>
+            <small>Registered accounts keep the ID from their oldest enrollment.</small>
           </div>
         </div>
         <div class="form-row">
@@ -323,6 +324,7 @@ function openEditModal(p) {
   document.getElementById('edit_pid').value      = p.id;
   document.getElementById('edit_fullname').value = p.full_name;
   document.getElementById('edit_idnum').value    = p.id_number || '';
+  document.getElementById('edit_idnum').readOnly = !!p.beneficiary_id;
   document.getElementById('edit_phone').value    = p.phone || '';
   document.getElementById('edit_address').value  = p.address || '';
   document.getElementById('edit_age').value      = p.age || '';

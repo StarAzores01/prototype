@@ -242,11 +242,7 @@
               </td>
               <td>{{ $logActionLabels[$log->action] ?? ucfirst($log->action) }}</td>
               <td>
-<<<<<<< Updated upstream
                 <div>{{ $log->item_name ?? '—' }}</div>
-=======
-                <div>{{ $log->item_name ?? '�' }}</div>
->>>>>>> Stashed changes
                 @if($log->item_type)
                 <div style="font-size:11px;color:var(--gray-400)">{{ strtoupper($log->item_type) }}</div>
                 @endif
@@ -284,7 +280,7 @@
             ['Area / Specialization', e($viewProgram->area ?? ' - ')],
             ['Timeline Start', e($viewProgram->timeline_start?->format('Y-m-d') ?? ' - ')],
             ['Timeline End', $timelineEndVal],
-            ['Budget Allocated', 'â‚±'.number_format((float) $viewProgram->budget_allocated, 2)],
+            ['Budget Allocated', '₱'.number_format((float) $viewProgram->budget_allocated, 2)],
             ['Created By', e($viewProgram->creator->full_name ?? ' - ')],
             ['Created', e($viewProgram->created_at?->format('M d, Y') ?? ' - ')],
           ];
@@ -606,7 +602,7 @@ function openDeleteProgramModal(id, title) {
       <input type="hidden" name="action" value="delete"/>
       <input type="hidden" name="program_id" id="deleteProgramId"/>
       <div class="modal-body">
-        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteProgramName"></strong>? This cannot be undone. All activities under this program, with their participants, attendance, evaluations and documents, will also be deleted.</p>
+        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteProgramName"></strong>? This cannot be undone. Its activities will be unlinked from this program and kept, together with their participants, attendance, evaluations, assessments and documents.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('deleteProgram')">Cancel</button>
@@ -656,7 +652,7 @@ function openDeleteProgramModal(id, title) {
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Budget Allocated (â‚±) *</label>
+          <label class="form-label">Budget Allocated (₱) *</label>
           <input type="number" name="budget_allocated" class="form-control" placeholder="e.g. 200000" min="0" step="0.01" required/>
           <div style="font-size:11px;color:var(--gray-400);margin-top:4px">Fixed once saved  -  this can never be changed afterward, by anyone.</div>
         </div>

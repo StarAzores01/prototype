@@ -4,14 +4,13 @@ namespace App\Http\Controllers\Evaluator;
 
 use App\Http\Controllers\Controller;
 use App\Models\ImpactAssessment;
-use App\Models\ImpactAssessmentForm;
-use App\Models\Notification;
-use App\Models\Participant;
 use App\Models\Training;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ImpactAssessmentController extends Controller
 {
@@ -56,7 +55,7 @@ class ImpactAssessmentController extends Controller
             'description'     => 'nullable|string',
             // The activity decides which participants receive the survey, and
             // the due date is what those participants are given to answer by.
-            'training_id'     => 'required|integer|exists:trainings,id',
+            'training_id'     => ['required', 'integer', Rule::exists('trainings', 'id')->where('status', 'Completed')],
             'due_date'        => 'required|date|after_or_equal:today',
             // mimes: content-sniffs the actual bytes (via fileinfo), not just the
             // claimed filename extension — a renamed .php/.html can't pass this.
@@ -65,8 +64,11 @@ class ImpactAssessmentController extends Controller
             'form_label'      => 'nullable|array',
             'form_label.*'    => 'nullable|string|max:255',
             'form_type'       => 'nullable|array',
+            'form_type.*'     => 'required|string|in:text,textarea,radio,select,rating',
             'form_options'    => 'nullable|array',
+            'form_options.*'  => 'nullable|string|max:5000',
             'form_required'   => 'nullable|array',
+            'form_required.*' => 'boolean',
         ], [
             'assessment_file.uploaded' => 'The file is too large. Please choose a file under 5 MB (or use Build a Form).',
             'assessment_file.max'      => 'The file is too large. Please choose a file under 5 MB.',
@@ -82,22 +84,26 @@ class ImpactAssessmentController extends Controller
             $types   = $request->input('form_type', []);
             $options = $request->input('form_options', []);
             $required = $request->input('form_required', []);
-            $allowed = ['text', 'textarea', 'radio', 'select', 'rating'];
 
             $formData = [];
             foreach ($labels as $i => $label) {
                 if (trim((string) $label) === '') {
                     continue;
                 }
-                $type = in_array($types[$i] ?? 'text', $allowed, true) ? $types[$i] : 'text';
-                $isRequired = ($required[$i] ?? '0') === '1';
+                $type = $types[$i] ?? 'text';
+                $isRequired = (string) ($required[$i] ?? '0') === '1';
+
+                if (in_array($type, ['radio', 'select'], true)
+                    && trim((string) ($options[$i] ?? '')) === '') {
+                    throw ValidationException::withMessages(['form_options.'.$i => 'Please add at least one choice for this question.']);
+                }
 
                 $formData[] = [
                     'label'   => trim($label),
                     'type'    => $type,
                     'required' => $isRequired,
                     'options' => in_array($type, ['radio', 'select'], true)
-                        ? array_values(array_filter(array_map('trim', explode("\n", (string) ($options[$i] ?? '')))))
+                        ? array_values(array_filter(array_map('trim', explode("\n", (string) ($options[$i] ?? ''))), fn ($option) => $option !== ''))
                         : [],
                 ];
             }
@@ -157,7 +163,7 @@ class ImpactAssessmentController extends Controller
             'submitted_at'  => now(),
         ]);
 
-        return redirect()->route('evaluator.impact_assessment')->with('success', 'Impact assessment submitted. The Extension Coordinator will review it and create the participant form.');
+        return redirect()->route('evaluator.impact_assessment')->with('success', 'Impact assessment submitted. The Extension Coordinator will review it and explicitly send the participant survey.');
     }
 
     private function delete(Request $request)

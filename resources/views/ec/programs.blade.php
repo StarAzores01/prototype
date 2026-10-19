@@ -674,7 +674,7 @@ function openDeleteProgramModal(id, title) {
       <input type="hidden" name="action" value="delete"/>
       <input type="hidden" name="program_id" id="deleteProgramId"/>
       <div class="modal-body">
-        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteProgramName"></strong>? This cannot be undone. All activities under this program, with their participants, attendance, evaluations and documents, will also be deleted.</p>
+        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteProgramName"></strong>? This cannot be undone. Its activities will be unlinked from this program and kept, together with their participants, attendance, evaluations, assessments and documents.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('deleteProgram')">Cancel</button>

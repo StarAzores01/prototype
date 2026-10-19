@@ -10,7 +10,6 @@ use App\Models\Notification;
 use App\Models\Participant;
 use App\Models\Training;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -18,6 +17,7 @@ use Tests\TestCase;
 
 class EcImpactAssessmentFormCreationTest extends TestCase
 {
+    use \Tests\Concerns\UsesDisposablePostgres;
     private User $ec;
     private User $evaluator;
     private Training $training;
@@ -31,24 +31,7 @@ class EcImpactAssessmentFormCreationTest extends TestCase
     {
         parent::setUp();
 
-        // No database reset traits. Verify the effective connection before
-        // starting any transaction or writing any fixture.
-        $this->assertTrue(app()->environment('testing'));
-        $this->assertFalse(app()->configurationIsCached());
-        $this->assertSame('pgsql', config('database.default'));
-        $this->assertSame('pgsql', config('database.connections.pgsql.driver'));
-        $this->assertSame('pathrive_test', config('database.connections.pgsql.database'));
-        $this->assertEmpty(config('database.connections.pgsql.url'));
-        $connection = DB::connection();
-        $this->assertSame('pathrive_test', $connection->getDatabaseName());
-        $this->assertSame('pgsql', $connection->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME));
-        $this->assertSame('pathrive_test', $connection->selectOne('SELECT current_database() AS name')->name);
-        $connection->beginTransaction();
-        $this->beforeApplicationDestroyed(function () use ($connection) {
-            if ($connection->transactionLevel() > 0) {
-                $connection->rollBack(0);
-            }
-        });
+        $this->beginDisposableDatabaseTransaction();
 
         Storage::fake('local');
         $token = bin2hex(random_bytes(8));
@@ -152,7 +135,6 @@ class EcImpactAssessmentFormCreationTest extends TestCase
     public function test_ineligible_assessment_is_rejected(string $state): void
     {
         match ($state) {
-            'built form' => $this->assessment->update(['form_data' => [['label' => 'Question', 'type' => 'text']]]),
             'empty built form' => $this->assessment->update(['form_data' => []]),
             'no upload' => $this->assessment->update(['file_name' => null]),
             'missing file' => Storage::disk('local')->delete('uploads/ia_test.pdf'),
@@ -165,7 +147,7 @@ class EcImpactAssessmentFormCreationTest extends TestCase
 
     public static function ineligibleStates(): array
     {
-        return array_map(fn ($state) => [$state], ['built form', 'empty built form', 'no upload', 'missing file', 'draft', 'no activity']);
+        return array_map(fn ($state) => [$state], ['empty built form', 'no upload', 'missing file', 'draft', 'no activity']);
     }
 
     public function test_reviewed_upload_is_eligible(): void
@@ -277,6 +259,90 @@ class EcImpactAssessmentFormCreationTest extends TestCase
             ->assertSee('role="alert"', false)->assertSee('Please add at least one choice')
             ->assertViewHas('creationAssessment', fn ($assessment) => $assessment->id === $this->assessment->id)
             ->assertSee('Participant survey')->assertSee('Impact?');
+        $this->assertNoCreation();
+    }
+    public function test_built_form_reuses_evaluator_questions_and_cannot_be_sent_twice(): void
+    {
+        $questions = [
+            ['label' => 'Explain', 'type' => 'textarea', 'required' => false],
+            ['label' => 'Choice', 'type' => 'select', 'required' => true, 'options' => ['0', 'Other']],
+            ['label' => 'Rating', 'type' => 'rating', 'required' => true],
+        ];
+        $this->assessment->update(['form_data' => $questions, 'file_name' => null]);
+        $payload = ['field_label' => [], 'field_type' => [], 'field_required' => [], 'field_options' => []];
+        $this->createForm($payload)->assertSessionHas('success');
+        $form = $this->assessment->fresh()->participantForm;
+        $this->assertSame($questions[0], $form->fields[0]);
+        $this->assertSame($questions[1], $form->fields[1]);
+        $this->assertSame([
+            'label' => 'Rating', 'type' => 'radio', 'required' => true,
+            'options' => ['5 - Excellent', '4 - Very Good', '3 - Good', '2 - Fair', '1 - Poor'],
+        ], $form->fields[2]);
+        $this->assertSame($this->training->id, $form->training_id);
+        $this->assertSame($this->assessment->due_date->toDateString(), $form->due_date->toDateString());
+        $this->createForm($payload)->assertSessionHasErrors('assessment_id');
+        $this->assertSame($this->formCount + 1, ImpactAssessmentForm::count());
+        $this->assertSame($this->notificationCount + 1, Notification::count());
+    }
+
+    public function test_built_form_ignores_posted_question_replacements(): void
+    {
+        $questions = [['label' => 'Original', 'type' => 'text', 'required' => false]];
+        $this->assessment->update(['form_data' => $questions, 'file_name' => null]);
+        $this->createForm()->assertSessionHas('success');
+        $this->assertSame($questions, $this->assessment->fresh()->participantForm->fields);
+    }
+
+    public function test_evaluator_built_submission_waits_for_ec_and_keeps_zero_choice(): void
+    {
+        $this->training->update(['date_start' => now()->subDays(3), 'date_end' => now()->subDay()]);
+        $this->actingAs($this->evaluator, 'web')->post(route('evaluator.impact_assessment.store'), [
+            'action' => 'submit', 'mode' => 'form', 'title' => 'Built submission',
+            'training_id' => $this->training->id, 'due_date' => now()->addWeek()->toDateString(),
+            'form_label' => ['Choice'], 'form_type' => ['radio'],
+            'form_options' => ["0\nOther"], 'form_required' => ['1'],
+        ])->assertSessionHas('success');
+        $assessment = ImpactAssessment::where('title', 'Built submission')->sole();
+        $this->assertNull($assessment->participant_form_id);
+        $this->assertSame(['0', 'Other'], $assessment->form_data[0]['options']);
+        $this->assertTrue($assessment->form_data[0]['required']);
+        $this->assertSame($this->formCount, ImpactAssessmentForm::count());
+        $this->assertSame($this->notificationCount, Notification::count());
+    }
+
+    public function test_evaluator_upload_submission_waits_for_ec(): void
+    {
+        $this->training->update(['date_start' => now()->subDays(3), 'date_end' => now()->subDay()]);
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('assessment.pdf', "%PDF-1.4\nfixture\n%%EOF");
+        $this->actingAs($this->evaluator, 'web')->post(route('evaluator.impact_assessment.store'), [
+            'action' => 'submit', 'mode' => 'file', 'title' => 'File submission',
+            'training_id' => $this->training->id, 'due_date' => now()->addWeek()->toDateString(),
+            'assessment_file' => $file,
+        ])->assertSessionHas('success');
+        $assessment = ImpactAssessment::where('title', 'File submission')->sole();
+        $this->assertNull($assessment->participant_form_id);
+        $this->assertNull($assessment->form_data);
+        Storage::disk('local')->assertExists('uploads/'.$assessment->file_name);
+        $this->assertSame($this->formCount, ImpactAssessmentForm::count());
+        $this->assertSame($this->notificationCount, Notification::count());
+    }
+
+    public function test_multiple_enrollments_notify_each_account_only_once(): void
+    {
+        Participant::create([
+            'full_name' => 'Duplicate enrollment', 'training_id' => $this->training->id,
+            'beneficiary_id' => $this->beneficiary->id, 'is_active' => true,
+        ]);
+        $this->createForm()->assertSessionHas('success');
+        $this->assertSame($this->notificationCount + 1, Notification::count());
+    }
+
+    public function test_review_does_not_send_a_survey(): void
+    {
+        $this->post(route('ec.impact_assessment.store'), [
+            'action' => 'review', 'assessment_id' => $this->assessment->id, 'ec_notes' => 'Ready for sending',
+        ])->assertSessionHas('success');
+        $this->assertSame('Reviewed', $this->assessment->fresh()->status);
         $this->assertNoCreation();
     }
 }

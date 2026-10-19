@@ -4,20 +4,19 @@ namespace App\Http\Controllers\Evaluator;
 
 use App\Http\Controllers\Controller;
 use App\Models\ImpactAssessment;
-use App\Models\ImpactAssessmentForm;
-use App\Models\Notification;
-use App\Models\Participant;
 use App\Models\Training;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ImpactAssessmentController extends Controller
 {
     private array $allowedTypes = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
 
-    private int $maxFileSize = 10 * 1024 * 1024; // 10 MB, same as the original
+    private int $maxFileSize = 5 * 1024 * 1024; // 5 MB
 
     public function index(Request $request)
     {
@@ -56,45 +55,47 @@ class ImpactAssessmentController extends Controller
             'description'     => 'nullable|string',
             // The activity decides which participants receive the survey, and
             // the due date is what those participants are given to answer by.
-            'training_id'     => 'required|integer|exists:trainings,id',
+            'training_id'     => ['required', 'integer', Rule::exists('trainings', 'id')->where('status', 'Completed')],
             'due_date'        => 'required|date|after_or_equal:today',
             // mimes: content-sniffs the actual bytes (via fileinfo), not just the
             // claimed filename extension — a renamed .php/.html can't pass this.
-            'assessment_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png',
+            'assessment_file' => 'nullable|file|max:5120|mimes:pdf,doc,docx,jpg,jpeg,png',
             'mode'            => 'nullable|in:file,form',
             'form_label'      => 'nullable|array',
             'form_label.*'    => 'nullable|string|max:255',
             'form_type'       => 'nullable|array',
+            'form_type.*'     => 'required|string|in:text,textarea,radio,select,rating',
             'form_options'    => 'nullable|array',
+            'form_options.*'  => 'nullable|string|max:5000',
             'form_required'   => 'nullable|array',
-            'form_answer'     => 'nullable|array',
-            'form_answer.*'   => 'nullable|string|max:5000',
+            'form_required.*' => 'boolean',
+        ], [
+            'assessment_file.uploaded' => 'The file is too large. Please choose a file under 5 MB (or use Build a Form).',
+            'assessment_file.max'      => 'The file is too large. Please choose a file under 5 MB.',
+            'assessment_file.mimes'    => 'Only PDF, DOC, DOCX, JPG or PNG files are allowed.',
         ])->validate();
 
-        // "Build a Form" mode: questions + the evaluator's answers are stored
-        // as JSON on the assessment instead of an uploaded file. Each of the
-        // four form_* arrays posts exactly one entry per question row, so
-        // they line up by index.
+        // "Build a Form" mode: the questions are stored as JSON on the
+        // assessment instead of an uploaded file. Each of the form_* arrays
+        // posts exactly one entry per question row, so they line up by index.
         $formData = null;
         if (($data['mode'] ?? 'file') === 'form') {
             $labels  = $request->input('form_label', []);
             $types   = $request->input('form_type', []);
             $options = $request->input('form_options', []);
-            $answers = $request->input('form_answer', []);
             $required = $request->input('form_required', []);
-            $allowed = ['text', 'textarea', 'radio', 'select', 'rating'];
 
             $formData = [];
             foreach ($labels as $i => $label) {
                 if (trim((string) $label) === '') {
                     continue;
                 }
-                $type = in_array($types[$i] ?? 'text', $allowed, true) ? $types[$i] : 'text';
-                $isRequired = ($required[$i] ?? '0') === '1';
-                $answer = trim((string) ($answers[$i] ?? ''));
+                $type = $types[$i] ?? 'text';
+                $isRequired = (string) ($required[$i] ?? '0') === '1';
 
-                if ($isRequired && $answer === '') {
-                    return back()->withInput()->with('error', 'Please answer every required question: "'.trim($label).'".');
+                if (in_array($type, ['radio', 'select'], true)
+                    && trim((string) ($options[$i] ?? '')) === '') {
+                    throw ValidationException::withMessages(['form_options.'.$i => 'Please add at least one choice for this question.']);
                 }
 
                 $formData[] = [
@@ -102,14 +103,25 @@ class ImpactAssessmentController extends Controller
                     'type'    => $type,
                     'required' => $isRequired,
                     'options' => in_array($type, ['radio', 'select'], true)
-                        ? array_values(array_filter(array_map('trim', explode("\n", (string) ($options[$i] ?? '')))))
+                        ? array_values(array_filter(array_map('trim', explode("\n", (string) ($options[$i] ?? ''))), fn ($option) => $option !== ''))
                         : [],
-                    'answer'  => $answer,
                 ];
             }
 
             if (! $formData) {
                 return back()->withInput()->with('error', 'Please add at least one question to your form.');
+            }
+        }
+
+        // File mode needs a real file. Without this check, an upload PHP had
+        // rejected (too big for the server's limit, say) was silently dropped
+        // and the assessment was saved with "No file".
+        if ($formData === null) {
+            $upload = $request->file('assessment_file');
+            if (! $upload || ! $upload->isValid()) {
+                $reason = $upload ? $upload->getErrorMessage() : 'No file was chosen.';
+
+                return back()->withInput()->with('error', 'Your file was not uploaded: '.$reason.' Please choose a PDF, DOC, DOCX, JPG or PNG file under 5 MB, or use Build a Form.');
             }
         }
 
@@ -126,7 +138,7 @@ class ImpactAssessmentController extends Controller
                 return back()->with('error', 'Only PDF, DOC, DOCX, JPG, PNG files are allowed.');
             }
             if ($file->getSize() > $this->maxFileSize) {
-                return back()->with('error', 'File must be under 10 MB.');
+                return back()->with('error', 'File must be under 5 MB.');
             }
 
             $fileName = 'ia_'.bin2hex(random_bytes(8)).'.'.$ext;
@@ -151,51 +163,7 @@ class ImpactAssessmentController extends Controller
             'submitted_at'  => now(),
         ]);
 
-        // Build a Form: the evaluator already wrote the questions, so the EC
-        // has nothing left to build — the survey goes straight to the
-        // activity's participants (sent date = now, due date = the one the
-        // evaluator just set). The evaluator's own answers are not copied.
-        if ($formData) {
-            $survey = ImpactAssessmentForm::create([
-                'training_id' => $assessment->training_id,
-                'title'       => $assessment->title,
-                'fields'      => array_map(function ($q) {
-                    return [
-                        'label'    => $q['label'],
-                        'type'     => $q['type'] === 'rating' ? 'radio' : $q['type'],
-                        'required' => $q['required'],
-                        'options'  => $q['type'] === 'rating'
-                            ? ['5 - Excellent', '4 - Very Good', '3 - Good', '2 - Fair', '1 - Poor']
-                            : $q['options'],
-                    ];
-                }, $formData),
-                'created_by'  => Auth::guard('web')->id(),
-                'sent_at'     => now(),
-                'due_date'    => $data['due_date'],
-            ]);
-
-            $assessment->update(['participant_form_id' => $survey->id]);
-
-            $beneficiaryIds = Participant::where('training_id', $survey->training_id)
-                ->whereNotNull('beneficiary_id')
-                ->distinct()
-                ->pluck('beneficiary_id');
-
-            foreach ($beneficiaryIds as $beneficiaryId) {
-                Notification::create([
-                    'user_id'     => $beneficiaryId,
-                    'role'        => 'beneficiary',
-                    'training_id' => $survey->training_id,
-                    'message'     => 'A new Impact Assessment survey has been sent to you.',
-                    'link'        => route('beneficiary.impact_assessment'),
-                ]);
-            }
-
-            return redirect()->route('evaluator.impact_assessment')
-                ->with('success', 'Impact assessment submitted and sent to the participants ('.$beneficiaryIds->count().').');
-        }
-
-        return redirect()->route('evaluator.impact_assessment')->with('success', 'Impact assessment submitted. The Extension Coordinator will create the participant form.');
+        return redirect()->route('evaluator.impact_assessment')->with('success', 'Impact assessment submitted. The Extension Coordinator will review it and explicitly send the participant survey.');
     }
 
     private function delete(Request $request)

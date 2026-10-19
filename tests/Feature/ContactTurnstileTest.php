@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ContactMessage;
 use App\Models\Notification;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Http;
@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class ContactTurnstileTest extends TestCase
 {
-    use RefreshDatabase;
+    use \Tests\Concerns\UsesDisposablePostgres;
 
     private const SITE_KEY = 'test-site-key-public';
     private const SECRET = 'test-secret-key-DO-NOT-LEAK';
@@ -23,6 +23,7 @@ class ContactTurnstileTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->beginDisposableDatabaseTransaction();
 
         config([
             'services.turnstile.site_key' => self::SITE_KEY,

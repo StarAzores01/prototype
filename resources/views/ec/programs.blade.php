@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', syncManageTeamDropdowns);
   <div style="position:relative;max-width:400px">
     <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
     <input type="text" id="programSearch" placeholder="Search programs..." oninput="filterPrograms()"
-      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      class="page-search"
       onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
   </div>
 </div>
@@ -561,7 +561,7 @@ document.addEventListener('DOMContentLoaded', syncManageTeamDropdowns);
 @if($programs->isEmpty())
 <div class="empty-state"><i class="fas fa-diagram-project"></i><p>No programs yet. <a href="#" onclick="openModal('addProgram')">Create one.</a></p></div>
 @else
-<div class="home-grid" id="programsGrid">
+<div class="home-grid programs-grid" id="programsGrid">
   @foreach($programs as $p)
     @php $icon = \App\Support\TrainingCategoryIcon::icon($p->area); @endphp
     <div class="training-card program-card-item" data-title="{{ strtolower($p->title) }}">
@@ -576,7 +576,10 @@ document.addEventListener('DOMContentLoaded', syncManageTeamDropdowns);
       <div class="training-card-body">
         <div class="training-card-title">{{ $p->title }}</div>
         <div class="training-card-footer" style="margin-top:auto;padding-top:12px">
+<div style="display:flex;flex-direction:column;align-items:flex-start;gap:5px">
           <span class="badge badge-{{ strtolower($p->status) }}">{{ $p->status }}</span>
+@include('partials.date-range', ['start' => $p->timeline_start, 'end' => $p->extended_end_date ?? $p->timeline_end])
+</div>
           <div style="display:flex;gap:5px;align-items:center">
             <button class="btn btn-outline" style="padding:7px 12px;font-size:13px;line-height:1"
               onclick="openEditProgramModal({{ $p->id }}, '{{ addslashes($p->title) }}', '{{ addslashes($p->area) }}', '{{ addslashes($p->description ?? '') }}')">
@@ -671,7 +674,7 @@ function openDeleteProgramModal(id, title) {
       <input type="hidden" name="action" value="delete"/>
       <input type="hidden" name="program_id" id="deleteProgramId"/>
       <div class="modal-body">
-        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteProgramName"></strong>? This cannot be undone. All activities under this program will be unlinked.</p>
+        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteProgramName"></strong>? This cannot be undone. Its activities will be unlinked from this program and kept, together with their participants, attendance, evaluations, assessments and documents.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('deleteProgram')">Cancel</button>

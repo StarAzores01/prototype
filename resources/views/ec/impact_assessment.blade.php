@@ -105,8 +105,22 @@
           <td>{{ $a->submitted_at?->format('M d, Y') ?? '—' }}</td>
           <td>{{ $a->due_date?->format('M d, Y') ?? '—' }}</td>
           <td style="display:flex;gap:6px;flex-wrap:wrap">
-            @if($a->participant_form_id === null && $a->form_data === null && $a->file_name && $a->training_id && in_array($a->status, ['Submitted', 'Reviewed'], true))
-            <button type="button" class="btn btn-sm btn-primary" data-assessment-id="{{ $a->id }}" data-training-id="{{ $a->training_id }}" data-due="{{ $a->due_date?->format('Y-m-d') }}" data-title="{{ $a->title }}" onclick="openFormFromAssessment(this.dataset)"><i class="fas fa-file-lines"></i> Create Participant Form</button>
+            @if($a->status === 'Submitted')
+            <button type="button" class="btn btn-sm btn-outline" data-assessment-id="{{ $a->id }}" data-title="{{ $a->title }}" onclick="openReviewModal(this.dataset.assessmentId, this.dataset.title)"><i class="fas fa-square-check"></i> Review</button>
+            @endif
+            @if($a->participant_form_id === null && $a->training_id && in_array($a->status, ['Submitted', 'Reviewed'], true))
+              @if($a->form_data !== null)
+              <form method="POST" action="{{ route('ec.impact_assessment.store') }}" onsubmit="return confirm('Send the evaluator questions to participants now?')" style="display:inline">
+                @csrf
+                <input type="hidden" name="action" value="create_form"/>
+                <input type="hidden" name="assessment_id" value="{{ $a->id }}"/>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-paper-plane"></i> Send to Participants</button>
+              </form>
+              @elseif($a->file_name)
+              <button type="button" class="btn btn-sm btn-primary" data-assessment-id="{{ $a->id }}" data-training-id="{{ $a->training_id }}" data-due="{{ $a->due_date?->format('Y-m-d') }}" data-title="{{ $a->title }}" onclick="openFormFromAssessment(this.dataset)"><i class="fas fa-file-lines"></i> Create Participant Form</button>
+              @endif
+            @elseif($a->participant_form_id !== null)
+            <span class="badge badge-success">Sent to Participants</span>
             @endif
             <form method="POST" action="{{ route('ec.impact_assessment.store') }}" onsubmit="return confirm('Delete this assessment?')" style="display:inline">
               @csrf
@@ -199,7 +213,7 @@
   <div style="position:relative;max-width:400px">
     <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
     <input type="text" id="surveyFormSearch" placeholder="Search survey forms..." oninput="filterSurveyForms()"
-      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      class="page-search"
       onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
   </div>
 </div>
@@ -380,6 +394,7 @@ function openFormFromAssessment(source) {
 }
 
 function openReviewModal(id, title) {
+  document.querySelector('#modal-reviewAssessment form').reset();
   document.getElementById('review_id').value = id;
   document.getElementById('review_title').textContent = title;
   openModal('reviewAssessment');
@@ -389,35 +404,23 @@ let fieldCount = 0;
 function addField() {
   const i = fieldCount++;
   const div = document.createElement('div');
-  div.style.cssText = 'background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:14px;margin-bottom:12px';
+  div.style.cssText = 'border:1px solid var(--gray-200);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--gray-50)';
   div.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <span style="font-size:12px;font-weight:700;color:var(--gray-500)">Question ${i+1}</span>
-      <button type="button" onclick="this.closest('div[data-field]').remove()" style="background:none;border:none;color:#EF4444;cursor:pointer;font-size:16px"><i class="fas fa-xmark"></i></button>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Label *</label>
-      <input type="text" name="field_label[${i}]" class="form-control" placeholder="e.g. How has this activity impacted your livelihood?" required/>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="form-group">
-        <label class="form-label">Type</label>
+    <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+      <div class="form-group" style="flex:2;min-width:180px;margin:0"><label class="form-label">Question</label>
+        <input type="text" name="field_label[${i}]" class="form-control" placeholder="e.g. How has this activity impacted your livelihood?" required/></div>
+      <div class="form-group" style="min-width:130px;margin:0"><label class="form-label">Type</label>
         <select name="field_type[${i}]" class="form-control" onchange="toggleOptions(this,${i})">
-          <option value="text">Short Text</option>
-          <option value="textarea">Long Text</option>
-          <option value="radio">Multiple Choice</option>
-          <option value="select">Dropdown</option>
-        </select>
-      </div>
-      <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:4px">
-        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer">
-          <input type="checkbox" name="field_required[${i}]" value="1" style="width:15px;height:15px"/> Required
-        </label>
-      </div>
+          <option value="text">Text</option><option value="textarea">Textarea</option>
+          <option value="radio">Radio</option><option value="select">Select</option><option value="rating">Rating</option>
+        </select></div>
+      <div class="form-group" style="margin:0;padding-top:22px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap">
+        <input type="checkbox" name="field_required[${i}]" value="1"/> Required</label></div>
+      <div style="padding-top:22px"><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('div[data-field]').remove()"><i class="fas fa-trash"></i></button></div>
     </div>
-    <div class="form-group" id="opts_${i}" style="display:none">
-      <label class="form-label">Options <span style="font-weight:400;color:var(--gray-400)">(one per line)</span></label>
-      <textarea name="field_options[${i}]" class="form-control" rows="3" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+    <div class="form-group" id="opts_${i}" style="display:none;margin-top:10px">
+      <label class="form-label">Choices (one per line)</label>
+      <textarea name="field_options[${i}]" class="form-control" rows="3" placeholder="Choice 1&#10;Choice 2"></textarea>
     </div>`;
   div.setAttribute('data-field', i);
   document.getElementById('fieldsContainer').appendChild(div);
@@ -427,7 +430,14 @@ function toggleOptions(sel, i) {
   document.getElementById('opts_'+i).style.display = show ? 'block' : 'none';
 }
 document.addEventListener('DOMContentLoaded', function() {
-  const previous = {{ Illuminate\Support\Js::from(old('action') === 'create_form' ? old() : []) }};
+  const reviewPrevious = {{ Illuminate\Support\Js::from(old('action') === 'review' ? old() : []) }};
+  if (reviewPrevious.action === 'review') {
+    openReviewModal(typeof reviewPrevious.assessment_id === 'string' ? reviewPrevious.assessment_id : '', 'Review Assessment');
+    if (typeof reviewPrevious.ec_notes === 'string') {
+      document.querySelector('#modal-reviewAssessment textarea').value = reviewPrevious.ec_notes;
+    }
+  }
+  const previous = {{ Illuminate\Support\Js::from(old('action') === 'create_form' && old('field_label') !== null ? old() : []) }};
   if (previous.action !== 'create_form') return;
   const assessment = {{ Illuminate\Support\Js::from(isset($creationAssessment) ? [
       'assessmentId' => $creationAssessment->id,
@@ -463,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
       row.querySelector('input[type="text"]').value = label;
       const type = previous.field_type && previous.field_type[key];
       const select = row.querySelector('select');
-      select.value = ['text', 'textarea', 'radio', 'select'].includes(type) ? type : 'text';
+      select.value = ['text', 'textarea', 'radio', 'select', 'rating'].includes(type) ? type : 'text';
       toggleOptions(select, i);
       row.querySelector('input[type="checkbox"]').checked = previous.field_required && String(previous.field_required[key]) === '1';
       const options = previous.field_options && previous.field_options[key];

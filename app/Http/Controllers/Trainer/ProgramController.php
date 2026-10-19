@@ -82,6 +82,8 @@ class ProgramController extends Controller
         $programs = $this->withRollup(Program::visibleToTrainer($this->trainerId()))
             ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
             ->orderBy('timeline_start')
+            ->orderBy('timeline_end')
+            ->orderBy('title')
             ->get();
 
         // Grouped by Area for the card grid  -  same treatment as
@@ -231,7 +233,7 @@ class ProgramController extends Controller
         return redirect()->route('trainer.programs')->with('success', 'Program updated.');
     }
 
-    /** Lead only: hard-delete a program and nullify its child activities' program_id. */
+    /** Lead only: delete the program while preserving and unlinking its activities. */
     private function delete(Request $request)
     {
         $data = Validator::make($request->all(), [
@@ -241,10 +243,13 @@ class ProgramController extends Controller
         $program = Program::findOrFail($data['program_id']);
         $this->authorizeLead($program, 'Only this program\'s Project Lead can delete it.');
 
-        $program->trainings()->update(['program_id' => null]);
-        $program->delete();
+        DB::transaction(function () use ($program) {
+            $lockedProgram = Program::whereKey($program->id)->lockForUpdate()->firstOrFail();
+            $lockedProgram->trainings()->update(['program_id' => null]);
+            $lockedProgram->delete();
+        });
 
-        return redirect()->route('trainer.programs')->with('success', 'Program deleted.');
+        return redirect()->route('trainer.programs')->with('success', 'Program deleted. Its activities and their records have been preserved.');
     }
 
     /**

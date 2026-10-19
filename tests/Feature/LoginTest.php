@@ -4,13 +4,18 @@ namespace Tests\Feature;
 
 use App\Models\Beneficiary;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class LoginTest extends TestCase
 {
-    use RefreshDatabase;
+    use \Tests\Concerns\UsesDisposablePostgres;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->beginDisposableDatabaseTransaction();
+    }
 
     private const PASSWORD = 'Tmp-Fake-Pass-123!';
 

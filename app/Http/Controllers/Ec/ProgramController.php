@@ -59,6 +59,8 @@ class ProgramController extends Controller
         $programs = $this->withRollup(Program::query())
             ->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
             ->orderBy('timeline_start')
+            ->orderBy('timeline_end')
+            ->orderBy('title')
             ->get();
 
         // Grouped by Area for the card grid  -  a Program has no further
@@ -215,7 +217,7 @@ class ProgramController extends Controller
         return redirect()->route('ec.programs')->with('success', 'Program updated.');
     }
 
-    /** Hard-delete a program and all its associated data. */
+    /** Delete the program while preserving and unlinking its activities. */
     private function delete(Request $request)
     {
         $data = Validator::make($request->all(), [
@@ -224,12 +226,13 @@ class ProgramController extends Controller
 
         $program = Program::findOrFail($data['program_id']);
 
-        // Nullify program_id on child activities rather than orphaning them.
-        $program->trainings()->update(['program_id' => null]);
+        DB::transaction(function () use ($program) {
+            $lockedProgram = Program::whereKey($program->id)->lockForUpdate()->firstOrFail();
+            $lockedProgram->trainings()->update(['program_id' => null]);
+            $lockedProgram->delete();
+        });
 
-        $program->delete();
-
-        return redirect()->route('ec.programs')->with('success', 'Program deleted.');
+        return redirect()->route('ec.programs')->with('success', 'Program deleted. Its activities and their records have been preserved.');
     }
 
     /**

@@ -22,6 +22,7 @@ class ImpactAssessmentController extends Controller
         $forms = ImpactAssessmentForm::with('training')
             ->whereHas('training.participants', fn ($q) => $q->where('beneficiary_id', $beneficiaryId))
             ->whereNotNull('sent_at')
+            ->where('sent_at', '<=', now())
             ->orderByDesc('sent_at')
             ->get();
 
@@ -78,6 +79,11 @@ class ImpactAssessmentController extends Controller
             if ($form->responses()->where('beneficiary_id', $beneficiaryId)->exists()) {
                 return redirect()->route('beneficiary.impact_assessment')
                     ->with('error', 'You have already submitted this impact assessment and it can no longer be edited.');
+            }
+
+            if ($form->due_date && now()->greaterThan($form->due_date->copy()->endOfDay())) {
+                return redirect()->route('beneficiary.impact_assessment')
+                    ->with('error', 'This impact assessment closed on '.$form->due_date->format('M d, Y').' and can no longer be submitted.');
             }
 
             $answers = $this->validateAnswers($request, $form);

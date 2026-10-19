@@ -101,8 +101,7 @@ Route::middleware(['guest:web,beneficiary', 'no-back-cache'])->group(function ()
     Route::get('/beneficiary-signup', [RegisteredBeneficiaryController::class, 'create'])->name('beneficiary.signup');
     Route::post('/beneficiary-signup', [RegisteredBeneficiaryController::class, 'store']);
 
-    // EC self-registration — no whitelist gate. Moved under /account/ (was
-    // the top-level /ecsignuppage.php).
+    // Keep the legacy named URL resolvable; both public signup actions return 404.
     Route::get('/account/ec-signup', [RegisteredEcController::class, 'create'])->name('ec.signup');
     Route::post('/account/ec-signup', [RegisteredEcController::class, 'store']);
 

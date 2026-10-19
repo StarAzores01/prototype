@@ -80,6 +80,8 @@ class TrainingController extends Controller
 
         $trainings = $query->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
             ->orderBy('date_start')
+            ->orderBy('date_end')
+            ->orderBy('title')
             ->get();
 
         // Grouped by the linked Program ("Project") for the card grid  -
@@ -237,6 +239,9 @@ class TrainingController extends Controller
     private function create(Request $request)
     {
         $data = Validator::make($request->all(), $this->trainingRules() + [
+            'budget_items' => 'sometimes|array',
+            'budget_items.*.quantity' => 'required|numeric|min:0.01',
+            'budget_items.*.unit_cost' => 'required|numeric|min:0',
             'program_id' => 'required|integer|exists:programs,id',
         ])->after(function ($validator) use ($request) {
             $programId = (int) $request->input('program_id');
@@ -267,7 +272,7 @@ class TrainingController extends Controller
             $budgetItems = $request->input('budget_items', []);
             $budgetUsed  = 0;
             foreach ($budgetItems as $item) {
-                $budgetUsed += round((float)($item['quantity'] ?? 0) * (float)($item['unit_cost'] ?? 0), 2);
+                $budgetUsed += round((float) ($item['quantity'] ?? 0) * (float)($item['unit_cost'] ?? 0), 2);
             }
 
             $training = Training::create([
@@ -290,7 +295,7 @@ class TrainingController extends Controller
                     ? 'Other: '.trim($item['other_specify'] ?? '')
                     : ($item['category'] ?? '');
                 if (! $cat) continue;
-                $qty = (float)($item['quantity'] ?? 0);
+                $qty = (float) ($item['quantity'] ?? 0);
                 $uc  = (float)($item['unit_cost'] ?? 0);
                 if ($qty <= 0) continue;
                 \App\Models\BudgetItem::create([

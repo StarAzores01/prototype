@@ -25,7 +25,7 @@
 
 <div class="card">
   <div class="card-header">
-    <div><div class="card-title">All Participants</div><div class="card-subtitle">{{ $participants->count() }} records</div></div>
+    <div><div class="card-title">All Participants</div><div class="card-subtitle">{{ $groups->count() }} {{ \Illuminate\Support\Str::plural('participant', $groups->count()) }}</div></div>
   </div>
   <div class="card-body" style="padding-bottom:0">
     <form method="GET" action="{{ route('ec.participants') }}" class="filter-row">
@@ -43,15 +43,18 @@
       @if($q || $filterTraining)<a href="{{ route('ec.participants') }}" class="btn btn-ghost btn-sm">Clear</a>@endif
     </form>
   </div>
+  <style>
+    /* One line per activity; the Activity, Evaluation and Actions columns use the
+       same line height so each enrollment lines up across the row. */
+    .enr-line { min-height: 44px; display: flex; align-items: center; }
+    .enr-line + .enr-line { border-top: 1px dashed var(--gray-200); }
+  </style>
   <div class="table-wrap">
     <table>
       <thead><tr><th>#</th><th>Name</th><th>User ID</th><th>Phone</th><th>Age / Sex</th><th>Activity</th><th>Account</th><th>Evaluation</th><th>Actions</th></tr></thead>
       <tbody>
-      @forelse($participants as $p)
-        @php
-          $evalStatus = $p->evaluations->first()->status ?? 'Pending';
-          $evalBadge  = $evalStatus === 'Submitted' ? 'badge-submitted' : 'badge-pending';
-        @endphp
+      @forelse($groups as $enr)
+        @php $p = $enr->first(); @endphp
         <tr>
           <td style="color:var(--gray-400)">{{ $loop->iteration }}</td>
           <td>
@@ -60,7 +63,11 @@
           <td style="font-size:12px;color:var(--gray-500)">{{ $p->id_number ?? '—' }}</td>
           <td style="font-size:12px;color:var(--gray-500)">{{ $p->phone ?? '—' }}</td>
           <td style="font-size:12px;color:var(--gray-500)">{{ $p->age ? $p->age.' yrs' : '—' }}{{ ($p->age && $p->sex) ? ' · ' : '' }}{{ $p->sex ?? '' }}</td>
-          <td style="font-size:12px">{{ $p->training->title ?? '—' }}</td>
+          <td style="font-size:12px">
+            @foreach($enr as $e)
+              <div class="enr-line">{{ $e->training->title ?? '—' }}</div>
+            @endforeach
+          </td>
           <td>
             @if($p->beneficiary_id)
               <span class="badge badge-active">Registered</span>
@@ -69,26 +76,38 @@
               <span class="badge badge-pending">Not yet registered</span>
             @endif
           </td>
-          <td><span class="badge {{ $evalBadge }}">{{ $evalStatus }}</span></td>
           <td>
+            @foreach($enr as $e)
+              @php
+                $evalStatus = $e->evaluations->first()->status ?? 'Pending';
+                $evalBadge  = $evalStatus === 'Submitted' ? 'badge-submitted' : 'badge-pending';
+              @endphp
+              <div class="enr-line"><span class="badge {{ $evalBadge }}">{{ $evalStatus }}</span></div>
+            @endforeach
+          </td>
+          <td>
+            @foreach($enr as $e)
+            <div class="enr-line">
             <div class="action-btns" style="align-items:stretch">
-              <button class="btn btn-sm btn-outline" onclick="openEditModal({{ $p->toJson() }})"><i class="fas fa-pen"></i> Edit</button>
+              <button class="btn btn-sm btn-outline" onclick="openEditModal({{ $e->toJson() }})"><i class="fas fa-pen"></i> Edit</button>
               <form method="POST" action="{{ route('ec.participants.store') }}" style="display:inline-flex">
                 @csrf
                 <input type="hidden" name="action" value="toggle"/>
-                <input type="hidden" name="participant_id" value="{{ $p->id }}"/>
-                <button type="submit" class="btn btn-sm {{ $p->is_active ? 'btn-danger' : 'btn-outline' }}"
-                        onclick="return confirm('{{ $p->is_active ? 'Disable' : 'Enable' }} access for {{ addslashes($p->full_name) }}?')">
-                  {!! $p->is_active ? '<i class="fas fa-ban"></i> Disable' : '<i class="fas fa-square-check"></i> Enable' !!}
+                <input type="hidden" name="participant_id" value="{{ $e->id }}"/>
+                <button type="submit" class="btn btn-sm {{ $e->is_active ? 'btn-danger' : 'btn-outline' }}"
+                        onclick="return confirm('{{ $e->is_active ? 'Disable' : 'Enable' }} access for {{ addslashes($e->full_name) }} in {{ addslashes($e->training->title ?? 'this activity') }}?')">
+                  {!! $e->is_active ? '<i class="fas fa-ban"></i> Disable' : '<i class="fas fa-square-check"></i> Enable' !!}
                 </button>
               </form>
-              <form method="POST" action="{{ route('ec.participants.store') }}" style="display:inline-flex" onsubmit="return confirm('Remove this participant?')">
+              <form method="POST" action="{{ route('ec.participants.store') }}" style="display:inline-flex" onsubmit="return confirm('Remove this participant from {{ addslashes($e->training->title ?? 'this activity') }}?')">
                 @csrf
                 <input type="hidden" name="action" value="delete"/>
-                <input type="hidden" name="participant_id" value="{{ $p->id }}"/>
+                <input type="hidden" name="participant_id" value="{{ $e->id }}"/>
                 <button type="submit" class="btn btn-sm btn-danger" style="align-self:stretch;padding-left:12px;padding-right:12px"><i class="fas fa-trash"></i></button>
               </form>
             </div>
+            </div>
+            @endforeach
           </td>
         </tr>
       @empty
@@ -214,6 +233,7 @@
           <div class="form-group">
             <label class="form-label">User ID / ID Number</label>
             <input type="text" name="id_number" id="edit_idnum" class="form-control"/>
+            <small>Registered accounts keep the ID from their oldest enrollment.</small>
           </div>
         </div>
         <div class="form-row">
@@ -304,6 +324,7 @@ function openEditModal(p) {
   document.getElementById('edit_pid').value      = p.id;
   document.getElementById('edit_fullname').value = p.full_name;
   document.getElementById('edit_idnum').value    = p.id_number || '';
+  document.getElementById('edit_idnum').readOnly = !!p.beneficiary_id;
   document.getElementById('edit_phone').value    = p.phone || '';
   document.getElementById('edit_address').value  = p.address || '';
   document.getElementById('edit_age').value      = p.age || '';

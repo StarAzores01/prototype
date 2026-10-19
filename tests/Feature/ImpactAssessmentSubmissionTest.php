@@ -8,14 +8,12 @@ use App\Models\Notification;
 use App\Models\Participant;
 use App\Models\Training;
 use App\Models\User;
-use Illuminate\Database\Connection;
-use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ImpactAssessmentSubmissionTest extends TestCase
 {
-    private ?Connection $testConnection = null;
+    use \Tests\Concerns\UsesDisposablePostgres;
     private Beneficiary $beneficiary;
     private Training $training;
     private Participant $participant;
@@ -25,26 +23,7 @@ class ImpactAssessmentSubmissionTest extends TestCase
     {
         parent::setUp();
 
-        // No database traits: every guard runs BEFORE any write/transaction.
-        $this->assertTrue(app()->environment('testing'), 'Refusing database writes outside testing.');
-        $this->assertFalse(app()->configurationIsCached(), 'Refusing cached database configuration.');
-        $this->assertSame('pgsql', config('database.default'));
-        $this->assertSame('pgsql', config('database.connections.pgsql.driver'));
-        $this->assertSame('pathrive_test', config('database.connections.pgsql.database'));
-        $this->assertEmpty(config('database.connections.pgsql.url'), 'DB_URL must not override the test database.');
-
-        $connection = DB::connection();
-        $this->assertSame('pathrive_test', $connection->getDatabaseName());
-        $this->assertSame('pgsql', $connection->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME));
-        $this->assertSame('pathrive_test', $connection->selectOne('SELECT current_database() AS name')->name);
-
-        $connection->beginTransaction();
-        $this->testConnection = $connection;
-        $this->beforeApplicationDestroyed(function () {
-            if ($this->testConnection?->transactionLevel() > 0) {
-                $this->testConnection->rollBack(0);
-            }
-        });
+        $this->beginDisposableDatabaseTransaction();
 
         $token = bin2hex(random_bytes(8));
         $user = User::create([
@@ -225,5 +204,18 @@ class ImpactAssessmentSubmissionTest extends TestCase
         $this->withCookie(session()->getName(), session()->getId())
             ->get(route('beneficiary.impact_assessment', ['form' => $this->form->id]))
             ->assertOk()->assertSee('Keep this answer')->assertSee('role="alert"', false);
+    }
+    public function test_deadline_rejects_late_submission_without_writes(): void
+    {
+        $this->form->update(['due_date' => now()->subDay()->toDateString()]);
+        $this->submit()->assertSessionHas('error');
+        $this->assertNoResponse();
+    }
+
+    public function test_due_date_allows_submission_until_end_of_day(): void
+    {
+        $this->form->update(['due_date' => now()->toDateString()]);
+        $this->submit()->assertSessionHas('success');
+        $this->assertSame(1, $this->form->responses()->count());
     }
 }

@@ -20,7 +20,7 @@
   <div style="position:relative;max-width:400px">
     <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
     <input type="text" id="skillsEntrySearch" placeholder="Search beneficiary or activity..." oninput="filterSkillsEntries()"
-      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      class="page-search"
       onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
   </div>
 </div>

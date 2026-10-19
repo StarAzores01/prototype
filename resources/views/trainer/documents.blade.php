@@ -197,12 +197,42 @@
   <input type="hidden" name="doc_id" id="docActionId"/>
 </form>
 
+<!-- MODAL: CONFIRM DOCUMENT DELETE -->
+<div class="modal-overlay" id="modal-deleteDoc">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h2><i class="fas fa-trash"></i> Delete Document</h2>
+      <button type="button" class="modal-close" onclick="closeModal('deleteDoc')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--gray-700)">You are about to permanently delete <strong id="deleteDocName" style="word-break:break-word"></strong>. This cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeModal('deleteDoc')">Cancel</button>
+      <button type="button" class="btn btn-danger" onclick="confirmDocDelete()"><i class="fas fa-trash"></i> Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /** Shared by every row rendered via partials.document-rows-table (delete/archive/unarchive) that has $canManage=true. */
 function submitDocAction(action, id, name, needsConfirm) {
-  if (needsConfirm && !confirm('Delete "' + name + '"? This cannot be undone.')) return;
+  if (needsConfirm) {
+    // Deleting a document is permanent: ask for confirmation first.
+    window._pendingDocDelete = { action: action, id: id };
+    document.getElementById('deleteDocName').textContent = name;
+    openModal('deleteDoc');
+    return;
+  }
   document.getElementById('docActionType').value = action;
   document.getElementById('docActionId').value = id;
+  document.getElementById('docActionForm').submit();
+}
+function confirmDocDelete() {
+  var p = window._pendingDocDelete;
+  if (!p) return;
+  document.getElementById('docActionType').value = p.action;
+  document.getElementById('docActionId').value = p.id;
   document.getElementById('docActionForm').submit();
 }
 

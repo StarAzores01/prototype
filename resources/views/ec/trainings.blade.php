@@ -370,7 +370,7 @@
   <div style="position:relative;max-width:400px">
     <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none"></i>
     <input type="text" id="activitySearch" placeholder="Search activities..." oninput="filterActivities()"
-      style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-800);background:var(--white);outline:none"
+      class="page-search"
       onfocus="this.style.borderColor='var(--blue-primary)'" onblur="this.style.borderColor='var(--gray-200)'"/>
   </div>
 </div>
@@ -393,7 +393,7 @@
       @if($project)<span class="badge badge-{{ strtolower($project->status) }}">{{ $project->status }}</span>@endif
       <span class="card-group-count">{{ $projectTrainings->count() }} {{ \Illuminate\Support\Str::plural('activity', $projectTrainings->count()) }}</span>
     </div>
-    <div class="home-grid home-grid-grouped" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));max-width:none">
+    <div class="home-grid home-grid-grouped programs-grid">
       @foreach($projectTrainings as $t)
         @php
           $hs = $statusMap[$t->status] ?? $t->status;
@@ -413,7 +413,10 @@
           <div class="training-card-body">
             <div class="training-card-title">{{ $t->title }}</div>
             <div class="training-card-footer" style="margin-top:8px">
+<div style="display:flex;flex-direction:column;align-items:flex-start;gap:5px">
               <span class="badge {{ $sc }}">{{ $hs }}</span>
+@include('partials.date-range', ['start' => $t->date_start, 'end' => $t->date_end])
+</div>
               <div style="display:flex;gap:5px;align-items:center">
                 <button class="btn btn-outline" style="padding:7px 12px;font-size:13px;line-height:1"
                   onclick="openEditTrainingModal({{ $t->id }}, '{{ addslashes($t->title) }}', '{{ addslashes($t->area) }}', '{{ addslashes($t->description ?? '') }}', '{{ $t->date_start?->format('Y-m-d') ?? '' }}', '{{ $t->date_end?->format('Y-m-d') ?? '' }}', '{{ $t->status }}', {{ (int)$t->target_participants }}, {{ $t->program_id ?? 'null' }})">
@@ -536,7 +539,7 @@ function openDeleteTrainingModal(id, title) {
       <input type="hidden" name="action" value="delete"/>
       <input type="hidden" name="training_id" id="deleteTrainingId"/>
       <div class="modal-body">
-        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteTrainingName"></strong>? This cannot be undone.</p>
+        <p style="font-size:14px;color:var(--gray-700)">Are you sure you want to delete <strong id="deleteTrainingName"></strong>? This cannot be undone, and its participants, attendance, evaluations and documents will be deleted with it.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('deleteTraining')">Cancel</button>

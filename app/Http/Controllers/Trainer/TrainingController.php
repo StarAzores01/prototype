@@ -74,6 +74,8 @@ class TrainingController extends Controller
 
         $trainings = $query->orderByRaw("CASE status WHEN 'Ongoing' THEN 0 WHEN 'Proposed' THEN 1 WHEN 'Completed' THEN 2 ELSE 3 END")
             ->orderBy('date_start')
+            ->orderBy('date_end')
+            ->orderBy('title')
             ->get();
 
         // Grouped by the linked Program ("Project") for the card grid  -  same
@@ -322,6 +324,9 @@ class TrainingController extends Controller
             'date_end'            => 'nullable|date|after_or_equal:date_start',
             'budget_allocated'    => 'nullable|numeric|min:0|max:9999999999.99',
             'target_participants' => 'nullable|integer|min:1',
+            'budget_items' => 'sometimes|array',
+            'budget_items.*.quantity' => 'required|numeric|min:0.01',
+            'budget_items.*.unit_cost' => 'required|numeric|min:0',
             'program_id'          => [
                 'required',
                 'integer',

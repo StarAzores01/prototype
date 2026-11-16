@@ -97,6 +97,44 @@ class ReportController extends Controller
             ->orderByDesc('cnt')
             ->get();
 
+        // Data aggregation of participants by sex. A participant row is one
+        // enrollment, so a person who joined several activities has several
+        // rows; people are de-duplicated by account (beneficiary_id) before
+        // counting, the same way the Participants page groups them.
+        $sexOrder = ['Male' => 0, 'Female' => 1, 'Other' => 2, 'Not specified' => 3];
+        $uniquePeople = Participant::query()
+            ->orderBy('id')
+            ->get(['id', 'full_name', 'beneficiary_id', 'sex', 'age', 'training_id'])
+            ->groupBy(fn ($p) => $p->beneficiary_id ? 'b' . $p->beneficiary_id : 'p' . $p->id)
+            ->map(function ($group) use ($sexOrder) {
+                $sex = $group->pluck('sex')->filter()->first();
+
+                return (object) [
+                    'name'       => $group->first()->full_name,
+                    'sex'        => array_key_exists((string) $sex, $sexOrder) ? $sex : 'Not specified',
+                    'age'        => $group->pluck('age')->filter()->first(),
+                    'activities' => $group->pluck('training_id')->unique()->count(),
+                ];
+            })
+            ->values();
+
+        $sexCounts = collect(array_keys($sexOrder))
+            ->mapWithKeys(fn ($label) => [$label => $uniquePeople->where('sex', $label)->count()]);
+
+        $sexPerTraining = Training::query()
+            ->leftJoin('participants', 'participants.training_id', '=', 'trainings.id')
+            ->selectRaw(
+                "trainings.id, trainings.title,
+                 count(participants.id) filter (where participants.sex = 'Male')::int as male,
+                 count(participants.id) filter (where participants.sex = 'Female')::int as female,
+                 count(participants.id) filter (where participants.sex = 'Other')::int as other,
+                 count(participants.id) filter (where participants.sex is null or participants.sex not in ('Male', 'Female', 'Other'))::int as unspecified,
+                 count(participants.id)::int as total"
+            )
+            ->groupBy('trainings.id')
+            ->orderBy('trainings.title')
+            ->get();
+
         $skillsForms = SkillsForm::with(['training:id,title,area', 'responses'])
             ->orderByDesc('sent_at')
             ->get();
@@ -139,6 +177,9 @@ class ReportController extends Controller
             'statusColorMap'  => $statusColorMap,
             'beneficiaries'   => $beneficiaries,
             'partPerTraining' => $partPerTraining,
+            'sexCounts'       => $sexCounts,
+            'totalPeople'     => $uniquePeople->count(),
+            'sexPerTraining'  => $sexPerTraining,
             'skillsForms'     => $skillsForms,
             'evalForms'       => $evalForms,
             'totalDocuments'  => $totalDocuments,

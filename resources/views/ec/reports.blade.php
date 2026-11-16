@@ -176,6 +176,65 @@ canvas { max-height: 220px; }
     </div>
   </div>
 
+  {{-- Participants by sex: aggregated counts, per-activity breakdown, sorted list --}}
+  <div class="mini-stats">
+    <div class="mini-stat blue">
+      <div class="mini-stat-val">{{ $totalPeople }}</div>
+      <div class="mini-stat-lbl">Total Participants</div>
+    </div>
+    <div class="mini-stat purple">
+      <div class="mini-stat-val">{{ $sexCounts['Male'] }}</div>
+      <div class="mini-stat-lbl">Male</div>
+    </div>
+    <div class="mini-stat orange">
+      <div class="mini-stat-val">{{ $sexCounts['Female'] }}</div>
+      <div class="mini-stat-lbl">Female</div>
+    </div>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="chart-card-title"><i class="fas fa-venus-mars"></i> Participants by Sex</div>
+      @if($totalPeople === 0)
+      <div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">No participants yet.</div>
+      @else
+      <canvas id="chartSex"></canvas>
+      @endif
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title"><i class="fas fa-table"></i> Participants per Activity by Sex</div>
+      @if($sexPerTraining->isEmpty())
+      <div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">No activities yet.</div>
+      @else
+      <div class="table-wrap" style="max-height:300px;overflow:auto">
+      <table class="data-table">
+        <thead>
+          <tr><th>Activity</th><th style="text-align:right">Male</th><th style="text-align:right">Female</th><th style="text-align:right">Total</th></tr>
+        </thead>
+        <tbody>
+          @foreach($sexPerTraining as $row)
+          <tr>
+            <td>{{ $row->title }}</td>
+            <td style="text-align:right">{{ $row->male }}</td>
+            <td style="text-align:right">{{ $row->female }}</td>
+            <td style="text-align:right;font-weight:700">{{ $row->total }}</td>
+          </tr>
+          @endforeach
+        </tbody>
+        <tfoot>
+          <tr style="font-weight:800">
+            <td>Total enrollments</td>
+            <td style="text-align:right">{{ $sexPerTraining->sum('male') }}</td>
+            <td style="text-align:right">{{ $sexPerTraining->sum('female') }}</td>
+            <td style="text-align:right">{{ $sexPerTraining->sum('total') }}</td>
+          </tr>
+        </tfoot>
+      </table>
+      </div>
+      @endif
+    </div>
+  </div>
+
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -329,6 +388,21 @@ new Chart(document.getElementById('chartPartPerTraining'), {
       y: { grid: { display: false }, ticks: { font: { size: 10 } } }
     }
   }
+});
+@endif
+
+// ── Participants by sex (doughnut) ────────────────────────────────────────
+@if($totalPeople > 0)
+new Chart(document.getElementById('chartSex'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Male', 'Female'],
+    datasets: [{ data: [{{ $sexCounts['Male'] }}, {{ $sexCounts['Female'] }}],
+      backgroundColor: ['#1A56DB','#EC4899'],
+      borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } },
+    tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } } }, cutout: '62%' }
 });
 @endif
 
